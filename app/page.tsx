@@ -3,16 +3,11 @@
 
 import { useState } from "react";
 
-/** ✅ 외부 아이콘 패키지(lucide-react) 없이도 빌드되도록: 파일 안에 SVG 아이콘 내장 */
+/** ✅ 외부 아이콘 패키지 없이: 파일 내장 SVG 아이콘 */
 type IconProps = { className?: string };
 
 const IconLoader2 = ({ className }: IconProps) => (
-  <svg
-    className={className}
-    viewBox="0 0 24 24"
-    fill="none"
-    aria-hidden="true"
-  >
+  <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
     <path
       d="M21 12a9 9 0 1 1-2.64-6.36"
       stroke="currentColor"
@@ -55,18 +50,8 @@ const IconTrendingUp = ({ className }: IconProps) => (
 
 const IconUsers = ({ className }: IconProps) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-    <path
-      d="M16 11a4 4 0 1 0-8 0"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-    />
-    <path
-      d="M3 21a7 7 0 0 1 18 0"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-    />
+    <path d="M16 11a4 4 0 1 0-8 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    <path d="M3 21a7 7 0 0 1 18 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
   </svg>
 );
 
@@ -218,7 +203,8 @@ type AnalysisResult = {
     survival_rate?: number;
     death_counts?: Record<string, number>;
     bottleneck_stage?: string;
-    // 백엔드 키가 다를 때 대비(유연)
+
+    // ✅ 백엔드 키가 다를 때 대비
     bottleneck?: string;
     survivalRate?: number;
     deathCounts?: Record<string, number>;
@@ -229,7 +215,7 @@ type AnalysisResult = {
     autopsy_report: string;
     action_plan: string;
     needs_analysis: string;
-    keywords?: string[]; // ✅ 없을 수도 있으니 optional
+    keywords?: string[];
   };
   debate: string;
   pastCases: Array<{ title: string; url: string; content: string }>;
@@ -278,11 +264,7 @@ export default function Home() {
 
   const runAnalysis = async () => {
     if (!productName || !productDesc) {
-      alert(
-        lang === "ko"
-          ? "아이템 이름과 설명을 입력해주세요."
-          : "Please enter product name and description."
-      );
+      alert(lang === "ko" ? "아이템 이름과 설명을 입력해주세요." : "Please enter product name and description.");
       return;
     }
 
@@ -340,19 +322,11 @@ export default function Home() {
   const FunnelChart = ({ simulation }: { simulation: any }) => {
     const stages = ["Seed", "MVP", "PMF", "Scale-up", "Unicorn"];
 
-    const deathCounts: Record<string, number> =
-      simulation?.death_counts ??
-      simulation?.deathCounts ??
-      {};
-
+    const deathCounts: Record<string, number> = simulation?.death_counts ?? simulation?.deathCounts ?? {};
     const bottleneckStage: string =
-      simulation?.bottleneck_stage ??
-      simulation?.bottleneckStage ??
-      simulation?.bottleneck ??
-      "";
+      simulation?.bottleneck_stage ?? simulation?.bottleneckStage ?? simulation?.bottleneck ?? "";
 
-    const maxDeaths =
-      Math.max(...(Object.values(deathCounts) as number[]), 0) || 1;
+    const maxDeaths = Math.max(...(Object.values(deathCounts) as number[]), 0) || 1;
 
     return (
       <div className="space-y-3 mt-4">
@@ -363,18 +337,12 @@ export default function Home() {
 
           return (
             <div key={stage} className="flex items-center gap-2 text-sm text-zinc-300">
-              <span
-                className={`w-20 text-right font-bold ${
-                  isBottleneck ? "text-red-500" : "text-zinc-500"
-                }`}
-              >
+              <span className={`w-20 text-right font-bold ${isBottleneck ? "text-red-500" : "text-zinc-500"}`}>
                 {stage}
               </span>
               <div className="flex-1 h-6 bg-zinc-800 rounded-sm overflow-hidden relative">
                 <div
-                  className={`h-full ${
-                    isBottleneck ? "bg-red-600" : "bg-zinc-600"
-                  } transition-all duration-1000`}
+                  className={`h-full ${isBottleneck ? "bg-red-600" : "bg-zinc-600"} transition-all duration-1000`}
                   style={{ width: `${Math.max(width, deaths > 0 ? 2 : 0)}%` }}
                 />
                 <span className="absolute inset-0 flex items-center justify-end px-2 text-xs font-bold text-white/80">
@@ -390,9 +358,7 @@ export default function Home() {
   };
 
   const TagCloud = ({ keywords }: { keywords?: string[] }) => {
-    if (!keywords || keywords.length === 0) {
-      return <div className="text-zinc-500">No Data</div>;
-    }
+    if (!keywords || keywords.length === 0) return <div className="text-zinc-500">No Data</div>;
 
     const getStyle = (i: number) => {
       const sizes = ["text-sm", "text-base", "text-lg", "text-xl", "text-2xl font-bold"];
@@ -414,10 +380,7 @@ export default function Home() {
     );
   };
 
-  const survival =
-    result?.simulation?.survival_rate ??
-    result?.simulation?.survivalRate ??
-    0;
+  const survival = result?.simulation?.survival_rate ?? result?.simulation?.survivalRate ?? 0;
 
   const bottleneck =
     result?.simulation?.bottleneck_stage ??
@@ -460,6 +423,27 @@ export default function Home() {
           <p className="text-zinc-400 text-lg">{t.subtitle}</p>
         </div>
 
+        {/* ✅ HERO IMAGE / MEME SECTION (public/images/jjal.jpeg) */}
+        <div className="w-full flex justify-center">
+          <div className="w-full max-w-4xl rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900/40 shadow-2xl">
+            <div className="px-4 py-3 text-sm md:text-base font-bold text-zinc-200 border-b border-zinc-800 bg-zinc-950/40">
+              <span className="text-red-400">양심을 버리실 땐</span> → 우측 하단 참고
+            </div>
+
+            <div className="relative">
+              <img
+                src="/images/jjal.jpeg"
+                alt="Startup Hell Meme"
+                className="w-full h-auto object-cover"
+                loading="lazy"
+              />
+              <div className="absolute bottom-3 right-3 text-[11px] md:text-xs px-2 py-1 rounded-md bg-black/60 text-zinc-200 border border-white/10">
+                hell-sim v1
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* 입력 화면 */}
         {!showResults && (
           <div className="bg-zinc-900/50 border border-zinc-800 shadow-2xl backdrop-blur-sm rounded-xl p-6">
@@ -474,9 +458,7 @@ export default function Home() {
             <div className="space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-zinc-300 block">
-                    {t.sellerInfo}
-                  </label>
+                  <label className="text-sm font-bold text-zinc-300 block">{t.sellerInfo}</label>
                   <input
                     type="text"
                     placeholder={t.sellerPlace}
@@ -485,10 +467,9 @@ export default function Home() {
                     className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
                   />
                 </div>
+
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-zinc-300 block">
-                    {t.buyerInfo}
-                  </label>
+                  <label className="text-sm font-bold text-zinc-300 block">{t.buyerInfo}</label>
                   <input
                     type="text"
                     placeholder={t.buyerPlace}
@@ -497,10 +478,9 @@ export default function Home() {
                     className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
                   />
                 </div>
+
                 <div className="space-y-2 md:col-span-2">
-                  <label className="text-sm font-bold text-red-400 block">
-                    {t.itemName}
-                  </label>
+                  <label className="text-sm font-bold text-red-400 block">{t.itemName}</label>
                   <input
                     type="text"
                     placeholder={t.itemNamePlace}
@@ -509,10 +489,9 @@ export default function Home() {
                     className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white font-bold focus:outline-none focus:border-red-500"
                   />
                 </div>
+
                 <div className="space-y-2 md:col-span-2">
-                  <label className="text-sm font-bold text-red-400 block">
-                    {t.itemDesc}
-                  </label>
+                  <label className="text-sm font-bold text-red-400 block">{t.itemDesc}</label>
                   <textarea
                     placeholder={t.itemDescPlace}
                     value={productDesc}
@@ -524,9 +503,7 @@ export default function Home() {
 
               {/* 창업자 특성 슬라이더 */}
               <div>
-                <h3 className="text-lg font-bold text-zinc-200 mb-4 flex items-center gap-2">
-                  {t.traitsTitle}
-                </h3>
+                <h3 className="text-lg font-bold text-zinc-200 mb-4 flex items-center gap-2">{t.traitsTitle}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 p-6 bg-zinc-800/30 rounded-xl border border-zinc-700/50">
                   {Object.keys(t.traits).map((key) => (
                     <div key={key} className="space-y-2">
@@ -544,12 +521,7 @@ export default function Home() {
                         max="10"
                         step="1"
                         value={founderTraits[key as keyof FounderTraits]}
-                        onChange={(e) =>
-                          handleTraitChange(
-                            key as keyof FounderTraits,
-                            parseInt(e.target.value, 10)
-                          )
-                        }
+                        onChange={(e) => handleTraitChange(key as keyof FounderTraits, parseInt(e.target.value, 10))}
                         className="w-full accent-red-500 h-2 bg-zinc-700 rounded-lg appearance-none cursor-pointer"
                       />
                     </div>
@@ -591,9 +563,7 @@ export default function Home() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center relative z-10">
                 <div>
                   <p className="text-zinc-400 text-sm font-bold mb-1">💀 {t.survival}</p>
-                  <p className="text-4xl font-extrabold text-red-500">
-                    {Number(survival).toFixed(1)}%
-                  </p>
+                  <p className="text-4xl font-extrabold text-red-500">{Number(survival).toFixed(1)}%</p>
                 </div>
                 <div>
                   <p className="text-zinc-400 text-sm font-bold mb-1">⚰️ {t.deathCause}</p>
@@ -607,9 +577,7 @@ export default function Home() {
                 </div>
                 <div>
                   <p className="text-zinc-400 text-sm font-bold mb-1">🎯 {t.needsMatch}</p>
-                  <p className="text-2xl font-bold text-orange-400">
-                    {result.stats.consumer_needs}점
-                  </p>
+                  <p className="text-2xl font-bold text-orange-400">{result.stats.consumer_needs}점</p>
                 </div>
               </div>
             </div>
@@ -620,9 +588,7 @@ export default function Home() {
                 <button
                   onClick={() => setActiveTab("summary")}
                   className={`py-2 text-sm font-bold rounded-md transition-all ${
-                    activeTab === "summary"
-                      ? "bg-red-600 text-white"
-                      : "text-zinc-400 hover:text-white"
+                    activeTab === "summary" ? "bg-red-600 text-white" : "text-zinc-400 hover:text-white"
                   }`}
                 >
                   {t.tabSummary}
@@ -630,9 +596,7 @@ export default function Home() {
                 <button
                   onClick={() => setActiveTab("autopsy")}
                   className={`py-2 text-sm font-bold rounded-md transition-all ${
-                    activeTab === "autopsy"
-                      ? "bg-red-600 text-white"
-                      : "text-zinc-400 hover:text-white"
+                    activeTab === "autopsy" ? "bg-red-600 text-white" : "text-zinc-400 hover:text-white"
                   }`}
                 >
                   {t.tabAutopsy}
@@ -640,16 +604,14 @@ export default function Home() {
                 <button
                   onClick={() => setActiveTab("voc")}
                   className={`py-2 text-sm font-bold rounded-md transition-all ${
-                    activeTab === "voc"
-                      ? "bg-red-600 text-white"
-                      : "text-zinc-400 hover:text-white"
+                    activeTab === "voc" ? "bg-red-600 text-white" : "text-zinc-400 hover:text-white"
                   }`}
                 >
                   {t.tabVoc}
                 </button>
               </div>
 
-              {/* 탭 1 */}
+              {/* 탭 1: 종합 요약 */}
               {activeTab === "summary" && (
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -683,21 +645,17 @@ export default function Home() {
                 </div>
               )}
 
-              {/* 탭 2 */}
+              {/* 탭 2: 부검 리포트 */}
               {activeTab === "autopsy" && (
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="bg-zinc-900/50 border border-red-900/50 rounded-xl p-6">
                       <h3 className="text-lg font-bold text-red-400 mb-4">{t.autopsyTitle}</h3>
-                      <p className="text-zinc-300 text-sm leading-relaxed whitespace-pre-wrap">
-                        {result.report.autopsy_report}
-                      </p>
+                      <p className="text-zinc-300 text-sm leading-relaxed whitespace-pre-wrap">{result.report.autopsy_report}</p>
                     </div>
                     <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6">
                       <h3 className="text-lg font-bold text-orange-400 mb-4">{t.needsTitle}</h3>
-                      <p className="text-zinc-300 text-sm leading-relaxed whitespace-pre-wrap">
-                        "{result.report.needs_analysis}"
-                      </p>
+                      <p className="text-zinc-300 text-sm leading-relaxed whitespace-pre-wrap">"{result.report.needs_analysis}"</p>
                     </div>
                   </div>
 
@@ -712,7 +670,7 @@ export default function Home() {
                 </div>
               )}
 
-              {/* 탭 3 */}
+              {/* 탭 3: 독설 좌담회 */}
               {activeTab === "voc" && (
                 <div className="bg-zinc-900/50 border border-zinc-800 shadow-xl rounded-xl p-6">
                   <h3 className="text-xl font-bold text-white mb-4">{t.vocTitle}</h3>
