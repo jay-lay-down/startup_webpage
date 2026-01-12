@@ -8,7 +8,8 @@ export type Stats = {
   consumer_needs: number;
 
   concept_fit: number;
-  monetization: number;
+  price_fit: number;
+  business_model_fit: number;
   distribution: number;
   market_scope: number;
   potential_customers: number;
@@ -251,7 +252,8 @@ export class StartupMCTS {
       Seed: {
         founder: 0.20,
         concept_fit: 0.16,
-        monetization: 0.16,
+        price_fit: 0.08,
+        business_model_fit: 0.08,
         consumer_needs: 0.18,
         product: 0.12,
         potential_customers: 0.10,
@@ -263,7 +265,8 @@ export class StartupMCTS {
       MVP: {
         founder: 0.14,
         concept_fit: 0.14,
-        monetization: 0.14,
+        price_fit: 0.07,
+        business_model_fit: 0.07,
         consumer_needs: 0.18,
         product: 0.14,
         distribution: 0.10,
@@ -277,7 +280,8 @@ export class StartupMCTS {
         product: 0.16,
         distribution: 0.16,
         marketing: 0.14,
-        monetization: 0.14,
+        price_fit: 0.07,
+        business_model_fit: 0.07,
         concept_fit: 0.10,
         potential_customers: 0.08,
         strategy: 0.04,
@@ -289,7 +293,8 @@ export class StartupMCTS {
         marketing: 0.20,
         market_scope: 0.14,
         distribution: 0.14,
-        monetization: 0.10,
+        price_fit: 0.05,
+        business_model_fit: 0.05,
         potential_customers: 0.10,
         product: 0.06,
         concept_fit: 0.04,
@@ -302,7 +307,8 @@ export class StartupMCTS {
         market_scope: 0.18,
         distribution: 0.12,
         potential_customers: 0.12,
-        monetization: 0.08,
+        price_fit: 0.04,
+        business_model_fit: 0.04,
         product: 0.04,
         concept_fit: 0.02,
         consumer_needs: 0.02,
@@ -349,6 +355,13 @@ export class StartupMCTS {
       "Scale-up": 0,
       Unicorn: 0,
     };
+    const stageEntries: Record<Stage, number> = {
+      Seed: 0,
+      MVP: 0,
+      PMF: 0,
+      "Scale-up": 0,
+      Unicorn: 0,
+    };
 
     let survivors = 0;
 
@@ -356,6 +369,7 @@ export class StartupMCTS {
       let diedAt: Stage | null = null;
 
       for (const stage of STAGES) {
+        stageEntries[stage]++;
         if (Math.random() > this.getSurvivalProb(stats, stage)) {
           diedAt = stage;
           break;
@@ -366,8 +380,24 @@ export class StartupMCTS {
       else survivors++;
     }
 
-    const bottleneckStage = (Object.keys(deathCounts) as Stage[]).reduce((a, b) =>
-      deathCounts[a] > deathCounts[b] ? a : b
+    const deathRates = (Object.keys(stageEntries) as Stage[]).reduce(
+      (acc, stage) => {
+        acc[stage] = stageEntries[stage] > 0 ? deathCounts[stage] / stageEntries[stage] : 0;
+        return acc;
+      },
+      {} as Record<Stage, number>
+    );
+
+    const stageSurvivalRates = (Object.keys(stageEntries) as Stage[]).reduce(
+      (acc, stage) => {
+        acc[stage] = stageEntries[stage] > 0 ? 1 - deathRates[stage] : 0;
+        return acc;
+      },
+      {} as Record<Stage, number>
+    );
+
+    const bottleneckStage = (Object.keys(deathRates) as Stage[]).reduce((a, b) =>
+      deathRates[a] > deathRates[b] ? a : b
     );
 
     const audienceScore = clamp0to100((stats as any)?.potential_customers, 50);
@@ -378,6 +408,9 @@ export class StartupMCTS {
     return {
       survival_rate: survivalRate,
       death_counts: deathCounts,
+      stage_entries: stageEntries,
+      death_rates: deathRates,
+      stage_survival_rates: stageSurvivalRates,
       bottleneck_stage: bottleneckStage,
 
       potential_customers_score: audienceScore,
@@ -386,6 +419,9 @@ export class StartupMCTS {
       // legacy
       survivalRate,
       deathCounts,
+      stageEntries,
+      deathRates,
+      stageSurvivalRates,
       bottleneck: bottleneckStage,
       potentialCustomersScore: audienceScore,
       potentialCustomersBand: band,
@@ -467,9 +503,10 @@ export class StartupMCTS {
       const mk = clamp0to100((stats as any)?.marketing, 50);
       const d = clamp0to100((stats as any)?.distribution, 50);
       const st = clamp0to100((stats as any)?.strategy, 50);
-      const mo = clamp0to100((stats as any)?.monetization, 50);
+      const pr = clamp0to100((stats as any)?.price_fit, 50);
+      const bm = clamp0to100((stats as any)?.business_model_fit, 50);
 
-      const executionScore = 0.25 * p + 0.25 * mk + 0.2 * d + 0.2 * st + 0.1 * mo;
+      const executionScore = 0.25 * p + 0.25 * mk + 0.2 * d + 0.2 * st + 0.05 * pr + 0.05 * bm;
       const penFrac = clamp01(scoreToFrac(executionScore, 58, 10) * maxPen);
 
       const acquiredCustomers = Math.max(0, samCustomers * penFrac);

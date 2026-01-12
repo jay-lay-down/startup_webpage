@@ -71,7 +71,7 @@ const IconHeart = ({ className }: IconProps) => (
   </svg>
 );
 
-// extra icons for 10 stats / market
+// extra icons for 11 stats / market
 const IconDollar = ({ className }: IconProps) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
     <path d="M12 2v20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -81,6 +81,14 @@ const IconDollar = ({ className }: IconProps) => (
       strokeWidth="2"
       strokeLinecap="round"
     />
+  </svg>
+);
+
+const IconCash = ({ className }: IconProps) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <rect x="3" y="6" width="18" height="12" rx="2" stroke="currentColor" strokeWidth="2" />
+    <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" />
+    <path d="M7 10h.01M17 14h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
   </svg>
 );
 
@@ -204,7 +212,8 @@ const translations = {
     statNeeds: "시장 니즈",
 
     statConcept: "컨셉 적합",
-    statMonetization: "수익화/단위경제",
+    statPriceFit: "가격 적합",
+    statBusinessModel: "BM 타당성",
     statDistribution: "유통/채널 실행",
     statScope: "시장 확장성",
     statPotential: "잠재고객(지갑)",
@@ -314,7 +323,8 @@ const translations = {
     statNeeds: "Market Needs",
 
     statConcept: "Concept fit",
-    statMonetization: "Monetization",
+    statPriceFit: "Price fit",
+    statBusinessModel: "Business model fit",
     statDistribution: "Distribution",
     statScope: "Market scope",
     statPotential: "Potential buyers",
@@ -377,7 +387,8 @@ type AnalysisResult = {
     consumer_needs: number;
 
     concept_fit: number;
-    monetization: number;
+    price_fit: number;
+    business_model_fit: number;
     distribution: number;
     market_scope: number;
     potential_customers: number;
@@ -606,7 +617,8 @@ export default function Home() {
         consumer_needs: "Pain intensity + urgency + willingness to pay.",
 
         concept_fit: "Clarity/uniqueness/positioning fit.",
-        monetization: "Unit economics, pricing, margin, monetization logic.",
+        price_fit: "Pricing rationality, willingness to pay, value alignment.",
+        business_model_fit: "Revenue model, margin, unit economics viability.",
         distribution: "Channel fit + ops/logistics/partner feasibility.",
         market_scope: "Regulation/competition/expandability across segments/regions.",
         potential_customers: "Size of buyers who can actually pay + reachable.",
@@ -623,7 +635,8 @@ export default function Home() {
       consumer_needs: "고객이 실제로 돈을 낼지(강도/긴급성/지불의사).",
 
       concept_fit: "컨셉 명확도/차별성/포지셔닝 적합.",
-      monetization: "단위경제/마진/가격/수익 구조 타당성.",
+      price_fit: "가격의 합리성/지불의사/가격-가치 정합성.",
+      business_model_fit: "BM/마진/단위경제 타당성.",
       distribution: "유통/채널 실행 난이도(운영·물류·파트너).",
       market_scope: "규제/경쟁/확장성(국가·세그·제품 확장 가능).",
       potential_customers: "지갑 있는 잠재고객 + 도달가능성.",
@@ -751,8 +764,12 @@ export default function Home() {
   const FunnelChart = ({ simulation }: { simulation: any }) => {
     const stages = ["Seed", "MVP", "PMF", "Scale-up", "Unicorn"];
     const deathCounts: Record<string, number> = simulation?.death_counts ?? simulation?.deathCounts ?? {};
+    const deathRates: Record<string, number> = simulation?.death_rates ?? simulation?.deathRates ?? {};
+    const stageSurvivalRates: Record<string, number> =
+      simulation?.stage_survival_rates ?? simulation?.stageSurvivalRates ?? {};
     const bottleneckStage: string =
       simulation?.bottleneck_stage ?? simulation?.bottleneckStage ?? simulation?.bottleneck ?? "";
+    const survivalLabel = lang === "en" ? "survive" : "생존";
 
     const maxDeaths = Math.max(...(Object.values(deathCounts) as number[]), 0) || 1;
 
@@ -762,6 +779,7 @@ export default function Home() {
           const deaths = deathCounts[stage] || 0;
           const isBottleneck = stage === bottleneckStage;
           const width = (deaths / maxDeaths) * 100;
+          const dropRate = Math.round(((deathRates[stage] ?? 0) * 100) * 10) / 10;
 
           return (
             <div key={stage} className="flex items-center gap-2 text-sm text-zinc-300">
@@ -774,12 +792,25 @@ export default function Home() {
                   style={{ width: `${Math.max(width, deaths > 0 ? 2 : 0)}%` }}
                 />
                 <span className="absolute inset-0 flex items-center justify-end px-2 text-xs font-bold text-white/80">
-                  {deaths > 0 ? `☠️ ${deaths}` : ""}
+                  {deaths > 0 ? `☠️ ${deaths} · ${dropRate}%` : ""}
                 </span>
               </div>
             </div>
           );
         })}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-xs text-zinc-400 mt-2">
+          {stages.map((stage) => {
+            const survivalRate = Math.round(((stageSurvivalRates[stage] ?? 0) * 100) * 10) / 10;
+            return (
+              <div key={`survival-${stage}`} className="flex items-center justify-center gap-1">
+                <span className="font-bold text-zinc-500">{stage}</span>
+                <span>
+                  {survivalRate}% {survivalLabel}
+                </span>
+              </div>
+            );
+          })}
+        </div>
         <p className="text-center text-xs text-zinc-500 mt-2">
           {t.funnelDesc}
           <span className="ml-2 inline-block align-middle">
@@ -1463,7 +1494,7 @@ export default function Home() {
                     <div className="bg-zinc-900/50 border border-zinc-800 h-full rounded-xl p-6">
                       <h3 className="flex items-center gap-2 text-lg font-bold text-white mb-6">
                         <IconTrendingUp className="w-5 h-5 text-blue-400" />
-                        10 Stats
+                        11 Stats
                       </h3>
 
                       <div className="grid grid-cols-1 gap-6">
@@ -1518,11 +1549,18 @@ export default function Home() {
                             tooltip={statTooltips.concept_fit}
                           />
                           <StatBar
-                            label={t.statMonetization}
-                            value={result.stats.monetization}
+                            label={t.statPriceFit}
+                            value={result.stats.price_fit}
                             icon={IconDollar}
                             colorClass="text-emerald-400"
-                            tooltip={statTooltips.monetization}
+                            tooltip={statTooltips.price_fit}
+                          />
+                          <StatBar
+                            label={t.statBusinessModel}
+                            value={result.stats.business_model_fit}
+                            icon={IconCash}
+                            colorClass="text-lime-400"
+                            tooltip={statTooltips.business_model_fit}
                           />
                           <StatBar
                             label={t.statDistribution}
