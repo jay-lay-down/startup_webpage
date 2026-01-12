@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { tavily } from "@tavily/core";
-// ✅ Stats 타입 불러오기
+// ✅ Stats 타입을 가져옵니다.
 import { StartupMCTS, type Stats } from "@/lib/mcts";
 import { JsonOutputParser } from "@langchain/core/output_parsers";
 import { PromptTemplate } from "@langchain/core/prompts";
@@ -54,8 +54,7 @@ export async function POST(req: Request) {
       format_instructions: statsParser.getFormatInstructions(),
     });
 
-    // ✅ [핵심 수정] AI가 준 데이터를 안전하게 숫자로 변환 (없으면 0점 처리)
-    // 이렇게 하면 타입 에러도 사라지고, 실행 중 오류도 방지됩니다.
+    // ✅ [핵심] 여기서 AI 데이터를 안전한 숫자로 변환합니다.
     const safeStats: Stats = {
       product: Number(rawStats.product) || 0,
       team: Number(rawStats.team) || 0,
@@ -64,7 +63,7 @@ export async function POST(req: Request) {
       consumer_needs: Number(rawStats.consumer_needs) || 0,
     };
 
-    // 3. MCTS 시뮬레이션 (이제 안전한 데이터만 들어감)
+    // 3. MCTS 시뮬레이션 (안전한 safeStats를 넣습니다)
     const mcts = new StartupMCTS(1200);
     const simulation = mcts.run(safeStats);
 
