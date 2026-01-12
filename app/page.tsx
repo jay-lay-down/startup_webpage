@@ -1,10 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { Share2, Terminal, AlertTriangle, ExternalLink, PlayCircle } from "lucide-react";
+import { Terminal, AlertTriangle, ExternalLink, PlayCircle } from "lucide-react";
 
 export default function Home() {
+  // ✅ 인트로 페이지 표시 여부 상태 (초기값 true)
+  const [showStartPage, setShowStartPage] = useState(true);
+  
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
 
@@ -60,12 +64,49 @@ export default function Home() {
     value: result.simulation.deathCounts[key]
   })) : [];
 
+  // ✅ 인트로 화면 (START 버튼 누르기 전)
+  if (showStartPage) {
+    return (
+      <main className="min-h-screen bg-[#050505] text-gray-200 font-sans flex flex-col justify-center items-center p-4">
+        <div className="text-center space-y-8 animate-in fade-in duration-1000 max-w-2xl w-full">
+          <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight leading-tight">
+            당신의 아이디어가<br/>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-600">쓰레기통</span>에 들어가는 시간은?
+          </h1>
+          
+          {/* ✅ 밈 이미지 영역 (jjal.jpeg) */}
+          <div className="relative w-full mx-auto aspect-[4/3] rounded-2xl overflow-hidden border-2 border-white/10 shadow-2xl shadow-red-900/30 rotate-[-2deg] hover:rotate-0 transition-transform duration-300">
+            <Image
+              src="/images/jjal.jpeg" 
+              alt="양심을 버리십니까? 아뇨 전 쓰레기를 버리는데요"
+              fill
+              className="object-cover"
+              priority
+            />
+          </div>
+
+          {/* ✅ START 버튼 */}
+          <div>
+            <button
+              onClick={() => setShowStartPage(false)}
+              className="px-10 py-5 bg-gradient-to-r from-red-600 to-rose-600 rounded-full font-black text-2xl text-white shadow-lg shadow-red-900/40 hover:scale-105 active:scale-95 transition-all animate-bounce"
+            >
+              START 🔥
+            </button>
+            <p className="text-gray-500 text-sm mt-4">⚠️ 마음의 준비를 하고 누르세요.</p>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  // ✅ 메인 평가 화면 (START 버튼 누른 후)
   return (
     <main className="min-h-screen bg-[#050505] text-gray-200 font-sans selection:bg-red-500/30">
       <div className="max-w-4xl mx-auto p-4 md:p-8">
         
         {/* Header */}
-        <header className="mb-10 text-center space-y-4">
+        <header className="mb-10 text-center space-y-4 animate-in slide-in-from-top duration-700">
           <div className="inline-block px-3 py-1 rounded-full bg-red-900/30 text-red-400 text-xs font-bold border border-red-900/50 mb-2">
             WARNING: BRUTAL REALITY
           </div>
@@ -73,28 +114,28 @@ export default function Home() {
             💀 스타트업 <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-600">지옥 시뮬레이터</span>
           </h1>
           <p className="text-gray-400 text-lg">
-            당신의 아이디어가 쓰레기통으로 가기까지: <span className="font-mono text-yellow-500">계산 중...</span>
+            입력하신 데이터를 바탕으로 냉혹한 생존 확률을 계산합니다.
           </p>
         </header>
 
         {/* Input Section */}
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10 animate-in slide-in-from-bottom duration-700 delay-100">
           <Card title="🙋‍♂️ 판매자 (나)">
-            <Select label="연령대" value={formData.sellerAge} onChange={(e) => setFormData({...formData, sellerAge: e.target.value})} options={["10대", "20대", "30대", "40대", "50대 이상"]} />
-            <Input label="성향/약점" placeholder="예: 귀찮음이 많음, 실행력 부족" value={formData.sellerStyle} onChange={(e) => setFormData({...formData, sellerStyle: e.target.value})} />
+            <Select label="연령대" value={formData.sellerAge} onChange={(e: any) => setFormData({...formData, sellerAge: e.target.value})} options={["10대", "20대", "30대", "40대", "50대 이상"]} />
+            <Input label="성향/약점" placeholder="예: 귀찮음이 많음, 실행력 부족" value={formData.sellerStyle} onChange={(e: any) => setFormData({...formData, sellerStyle: e.target.value})} />
           </Card>
 
           <Card title="🎯 타겟 (너)">
-            <Select label="연령대" value={formData.buyerAge} onChange={(e) => setFormData({...formData, buyerAge: e.target.value})} options={["10대", "20대", "30대", "40대", "50대 이상"]} />
-            <Input label="특징" placeholder="예: 가성비충, 인스타 중독" value={formData.buyerTraits} onChange={(e) => setFormData({...formData, buyerTraits: e.target.value})} />
+            <Select label="연령대" value={formData.buyerAge} onChange={(e: any) => setFormData({...formData, buyerAge: e.target.value})} options={["10대", "20대", "30대", "40대", "50대 이상"]} />
+            <Input label="특징" placeholder="예: 가성비충, 인스타 중독" value={formData.buyerTraits} onChange={(e: any) => setFormData({...formData, buyerTraits: e.target.value})} />
           </Card>
 
           <Card title="📦 아이템 (그것)" className="md:col-span-2">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-3">
               <div className="md:col-span-3">
-                <Input label="아이템명" placeholder="예: AI기반 자동 칫솔" value={formData.productName} onChange={(e) => setFormData({...formData, productName: e.target.value})} />
+                <Input label="아이템명" placeholder="예: AI기반 자동 칫솔" value={formData.productName} onChange={(e: any) => setFormData({...formData, productName: e.target.value})} />
               </div>
-              <Input label="가격" placeholder="예: 35,000원" value={formData.productPrice} onChange={(e) => setFormData({...formData, productPrice: e.target.value})} />
+              <Input label="가격" placeholder="예: 35,000원" value={formData.productPrice} onChange={(e: any) => setFormData({...formData, productPrice: e.target.value})} />
             </div>
             <label className="block text-xs font-bold text-gray-500 uppercase mb-1">상세 설명</label>
             <textarea 
@@ -107,7 +148,7 @@ export default function Home() {
         </section>
 
         {/* Action Button */}
-        <div className="mb-16">
+        <div className="mb-16 animate-in slide-in-from-bottom duration-700 delay-200">
           <button 
             onClick={handleRun}
             disabled={loading}
