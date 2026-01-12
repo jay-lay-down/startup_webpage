@@ -233,9 +233,9 @@ const translations = {
     // market section
     marketSectionTitle: "🥧 시장점유율 시뮬레이션",
     marketModeLabel: "시장정보 입력 방식",
-    marketModeNone: "안 할래요(점유율 계산 X)",
-    marketModeAuto: "모름 → 자동 시장조사(Tavily + AI)",
-    marketModeManual: "알아요 → 직접 입력(3점 추정: min/mode/max)",
+    marketModeNone: "필요없음",
+    marketModeAuto: "AI 자동 시장조사",
+    marketModeManual: "직접 입력",
     marketManualHint:
       "가능한 '연간' 기준으로 넣으세요. 예: 시장매출(연간), 평균가격(1회 결제), 구매빈도(연/인), 침투율 상한(0~1).",
     marketTabTitle: "시장점유율/파이 먹기",
@@ -831,6 +831,19 @@ export default function Home() {
             </div>
           );
         })}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-xs text-zinc-400 mt-2">
+          {stages.map((stage) => {
+            const survivalRate = Math.round(((stageSurvivalRates[stage] ?? 0) * 100) * 10) / 10;
+            return (
+              <div key={`survival-${stage}`} className="flex items-center justify-center gap-1">
+                <span className="font-bold text-zinc-500">{stage}</span>
+                <span>
+                  {survivalRate}% {survivalLabel}
+                </span>
+              </div>
+            );
+          })}
+        </div>
         <p className="text-center text-xs text-zinc-500 mt-2">
           {t.funnelDesc}
           <span className="ml-2 inline-block align-middle">
