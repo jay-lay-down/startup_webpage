@@ -46,9 +46,7 @@ async function fetchAvailableModels(apiKey: string): Promise<string[]> {
     cache: "no-store",
   });
 
-  if (!res.ok) {
-    throw new Error(`ListModels 실패: HTTP ${res.status} ${res.statusText}`);
-  }
+  if (!res.ok) throw new Error(`ListModels 실패: HTTP ${res.status} ${res.statusText}`);
 
   const data = (await res.json()) as { models?: ModelInfo[] };
 
@@ -106,8 +104,8 @@ async function getModelCandidates(apiKey: string): Promise<string[]> {
   }
 }
 
-// ✅ 여기 제네릭 constraint를 Record<string, any> -> object 로 완화 (TS 에러 방지)
-async function generateJsonWithFallback<T extends object>(
+// ✅ JsonOutputParser가 보통 Record<string, any> 제약을 걸고 있어서 여기서도 동일 제약 유지(빌드 에러 방지)
+async function generateJsonWithFallback<T extends Record<string, any>>(
   apiKey: string,
   prompt: PromptTemplate,
   inputVariables: Record<string, any>,
@@ -158,9 +156,9 @@ async function generateTextWithFallback(
   throw new Error(`모든 Gemini 모델(TEXT) 호출 실패. last=${extractErrMsg(lastError)}`);
 }
 
-function toInt0to100(v: any): number {
+function toInt0to100(v: any, fallback = 50): number {
   const n = Number(v);
-  if (!Number.isFinite(n)) return 0;
+  if (!Number.isFinite(n)) return fallback;
   return Math.max(0, Math.min(100, Math.round(n)));
 }
 
@@ -168,10 +166,10 @@ function toInt0to100(v: any): number {
 function stripMarkdownArtifacts(s: any): string {
   const text = String(s ?? "");
   return text
-    .replace(/\*\*/g, "")          // ** 제거
-    .replace(/`+/g, "")            // 백틱 제거
-    .replace(/^\s*[-*]\s+/gm, "")  // - bullet 제거
-    .replace(/^#+\s*/gm, "")       // # heading 제거
+    .replace(/\*\*/g, "") // ** 제거
+    .replace(/`+/g, "") // 백틱 제거
+    .replace(/^\s*[-*]\s+/gm, "") // - bullet 제거
+    .replace(/^#+\s*/gm, "") // # heading 제거
     .trim();
 }
 
@@ -191,6 +189,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json().catch(() => null);
+
     const language = body?.language ?? "ko";
     const sellerInfo = body?.sellerInfo ?? "";
     const buyerInfo = body?.buyerInfo ?? "";
@@ -204,15 +203,47 @@ export async function POST(req: Request) {
       );
     }
 
+    // ✅ 새 설문 항목(프론트가 아직 안 보내도 깨지지 않게 안전하게 읽음)
+    const concept = body?.concept ?? productInfo?.concept ?? "";
+    const price = body?.price ?? productInfo?.price ?? "";
+    const businessModel = body?.businessModel ?? productInfo?.businessModel ?? productInfo?.bm ?? "";
+    const salesChannel = body?.salesChannel ?? productInfo?.salesChannel ?? productInfo?.channel ?? "";
+    const salesCountry = body?.salesCountry ?? productInfo?.salesCountry ?? productInfo?.country ?? "";
+    const category = body?.category ?? productInfo?.category ?? "";
+
+    const enrichedProductInfo = {
+      ...productInfo,
+      concept,
+      price,
+      businessModel,
+      salesChannel,
+      salesCountry,
+      category,
+    };
+
     console.log("🔥 분석 시작:", productInfo.name);
 
-    // --- Tavily 검색 ---
+    // --- Tavily 검색 (유사아이템/실패사례/리뷰 불만 등) ---
     const tvly = tavily({ apiKey: tavilyKey });
     let marketData = "시장 데이터 없음";
     let pastCases: Array<{ title: string; url: string; content: string }> = [];
 
     try {
-      const q = `${productInfo.name} 실패 사례 경쟁사 리뷰 불만 대체재`;
+      // ✅ 새 설문 항목을 검색 쿼리에 같이 태워서 “유사/망한 사례” 정확도 올림
+      const q = [
+        productInfo.name,
+        category,
+        salesCountry,
+        salesChannel,
+        typeof price === "string" ? price : String(price ?? ""),
+        "실패 사례",
+        "경쟁사",
+        "리뷰 불만",
+        "대체재",
+      ]
+        .filter(Boolean)
+        .join(" ");
+
       const searchResult = await tvly.search(q, { searchDepth: "advanced", maxResults: 5 });
 
       marketData = (searchResult.results ?? [])
@@ -228,19 +259,36 @@ export async function POST(req: Request) {
       console.error("Tavily 검색 실패(무시하고 진행):", extractErrMsg(e));
     }
 
-    // --- Stats JSON ---
-    // ✅ Stats 타입이 이제 { product, founder, strategy, marketing, consumer_needs } 임 (mcts.ts 기준)
+    // ------------------------------
+    // ✅ Stats JSON (이제 10개 스탯)
+    // - 기존 5개 + (concept_fit/monetization/distribution/market_scope/potential_customers)
+    // ------------------------------
     const statsParser = new JsonOutputParser<Stats>();
 
     const statsPrompt = PromptTemplate.fromTemplate(
       `너는 냉소적인 스타트업 검증관이다.
-아래 정보와 시장데이터를 기반으로 5대 스탯(0~100 정수)을 JSON으로 출력하라.
+아래 정보와 시장데이터를 기반으로 스탯(0~100 정수)을 JSON으로 출력하라.
 
 중요:
 - 초기 스타트업은 팀이 없을 수 있다. 따라서 'team'을 평가하지 않는다.
 - 대신 창업자 개인 역량을 'founder' 점수로 평가한다.
 - founder 점수는 아래 '창업자 특성(1~10)'을 강하게 반영하라.
 - strategy 점수에도 창업자 특성(실행력/불확실성 내성/설득력/리소스 감각)을 반영하라.
+
+추가 설문 항목(반드시 반영):
+- 컨셉: {concept}
+- 가격: {price}
+- BM(돈 버는 법): {businessModel}
+- 판매채널: {salesChannel}
+- 판매국가: {salesCountry}
+- 카테고리: {category}
+
+추가 스탯 정의(0~100):
+- concept_fit: 컨셉 명확도/차별성/포지셔닝 적합
+- monetization: BM 타당성 + 가격/마진/단위경제성 가능성
+- distribution: 판매채널 적합도 + 실행 난이도(운영/물류/파트너) + 고객획득 현실성
+- market_scope: 국가/카테고리의 규제/경쟁/확장성(멀티국가/멀티세그로 갈 수 있는지)
+- potential_customers: 잠재고객 규모(지갑 있는 사람) + 도달가능성(채널/국가/가격 기준)
 
 입력 정보:
 - 판매자: {sellerInfo}
@@ -256,7 +304,10 @@ export async function POST(req: Request) {
 - 값은 0~100 정수
 
 {format_instructions}
-JSON 키: product, founder, strategy, marketing, consumer_needs`
+
+JSON 키(정확히 이 키들로):
+product, founder, strategy, marketing, consumer_needs,
+concept_fit, monetization, distribution, market_scope, potential_customers`
     );
 
     const rawStats = await generateJsonWithFallback<Stats>(
@@ -265,28 +316,43 @@ JSON 키: product, founder, strategy, marketing, consumer_needs`
       {
         sellerInfo,
         buyerInfo,
-        productInfo: JSON.stringify(productInfo),
+        productInfo: JSON.stringify(enrichedProductInfo),
         founderTraits: JSON.stringify(founderTraits ?? {}),
         marketData,
+        concept: String(concept ?? ""),
+        price: typeof price === "string" ? price : String(price ?? ""),
+        businessModel: String(businessModel ?? ""),
+        salesChannel: String(salesChannel ?? ""),
+        salesCountry: String(salesCountry ?? ""),
+        category: String(category ?? ""),
         format_instructions: statsParser.getFormatInstructions(),
       },
       statsParser,
       0.3
     );
 
+    // ✅ 안전 보정(없는 키는 50으로)
     const safeStats: Stats = {
-      product: toInt0to100((rawStats as any).product),
-      founder: toInt0to100((rawStats as any).founder),
-      strategy: toInt0to100((rawStats as any).strategy),
-      marketing: toInt0to100((rawStats as any).marketing),
-      consumer_needs: toInt0to100((rawStats as any).consumer_needs),
+      product: toInt0to100((rawStats as any).product, 50),
+      founder: toInt0to100((rawStats as any).founder, 50),
+      strategy: toInt0to100((rawStats as any).strategy, 50),
+      marketing: toInt0to100((rawStats as any).marketing, 50),
+      consumer_needs: toInt0to100((rawStats as any).consumer_needs, 50),
+
+      concept_fit: toInt0to100((rawStats as any).concept_fit, 50),
+      monetization: toInt0to100((rawStats as any).monetization, 50),
+      distribution: toInt0to100((rawStats as any).distribution, 50),
+      market_scope: toInt0to100((rawStats as any).market_scope, 50),
+      potential_customers: toInt0to100((rawStats as any).potential_customers, 50),
     };
 
     // --- MCTS ---
     const mcts = new StartupMCTS(1500);
     const simulation = mcts.run(safeStats);
 
+    // ------------------------------
     // --- Report JSON (유튜브 추천 쿼리 + 키워드 포함) ---
+    // ------------------------------
     type ReportShape = {
       death_cause: string;
       autopsy_report: string;
@@ -304,12 +370,14 @@ JSON 키: product, founder, strategy, marketing, consumer_needs`
 - death_cause (짧게)
 - autopsy_report (줄글)
 - needs_analysis (줄글)
-- action_plan (번호 리스트를 "1) ...\\n2) ..." 형태로. 마크다운 금지. **, *, # 같은 기호 쓰지 마.)
+- action_plan (번호 리스트를 "1. ...\\n2. ..." 형태로. 마크다운 금지. **, *, # 같은 기호 쓰지 마.)
 - youtube_queries (배열, string 3개: "아이템/시장/실패사례"로 유튜브 검색할 문장)
 - keywords (배열, string 10개: 워드클라우드용 핵심 키워드)
 
 입력:
+- 아이템/설문: {item}
 - 스탯: {stats}
+- 시뮬레이션 요약: {sim}
 - 가장 많이 죽은 구간: {bottleneck}
 - 시장데이터: {marketData}
 
@@ -325,7 +393,9 @@ JSON 키: product, founder, strategy, marketing, consumer_needs`
       googleKey,
       reportPrompt,
       {
+        item: JSON.stringify(enrichedProductInfo),
         stats: JSON.stringify(safeStats),
+        sim: JSON.stringify(simulation),
         bottleneck: (simulation as any).bottleneck_stage ?? (simulation as any).bottleneck ?? "",
         marketData,
         format_instructions: reportParser.getFormatInstructions(),
@@ -357,7 +427,7 @@ ${debateLangInstr}
 
 1) 마포구 VC (냉소적) 2) 테헤란로 창업가 (현실적) 3) 까칠한 얼리어답터 (불만 많음)
 
-아이템: {item}
+아이템/설문: {item}
 스탯: {stats}
 시장데이터 요약: {marketData}
 
@@ -370,7 +440,7 @@ ${debateLangInstr}
       googleKey,
       debatePrompt,
       {
-        item: JSON.stringify(productInfo),
+        item: JSON.stringify(enrichedProductInfo),
         stats: JSON.stringify(safeStats),
         marketData,
       },
@@ -379,11 +449,11 @@ ${debateLangInstr}
 
     return NextResponse.json({
       success: true,
-      stats: safeStats,     // ✅ founder 포함
-      simulation,           // ✅ survival_rate / death_counts / bottleneck_stage 포함
-      report,               // ✅ youtube_queries + keywords 유지
+      stats: safeStats, // ✅ 10개 스탯 포함
+      simulation, // ✅ survival_rate / death_counts / bottleneck_stage + 잠재고객 밴드 포함(MCTS에서)
+      report, // ✅ youtube_queries + keywords 유지
       debate,
-      pastCases,            // ✅ 유사/실패사례 링크 유지
+      pastCases, // ✅ Tavily 유사/실패사례 링크 유지
     });
   } catch (error: any) {
     console.error("Server Error:", extractErrMsg(error));
