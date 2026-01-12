@@ -71,7 +71,7 @@ const IconHeart = ({ className }: IconProps) => (
   </svg>
 );
 
-// extra icons for 10 stats / market
+// extra icons for 11 stats / market
 const IconDollar = ({ className }: IconProps) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
     <path d="M12 2v20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -81,6 +81,14 @@ const IconDollar = ({ className }: IconProps) => (
       strokeWidth="2"
       strokeLinecap="round"
     />
+  </svg>
+);
+
+const IconCash = ({ className }: IconProps) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <rect x="3" y="6" width="18" height="12" rx="2" stroke="currentColor" strokeWidth="2" />
+    <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" />
+    <path d="M7 10h.01M17 14h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
   </svg>
 );
 
@@ -133,7 +141,7 @@ function InfoTip({ text }: { text: string }) {
 // --- 언어팩 ---
 const translations = {
   ko: {
-    title: "☠️ 스타트업 지옥 시뮬레이터",
+    title: "스타트업 지옥 시뮬레이터",
     subtitle: "안녕하세요. 쓰레기를 버려주세요.",
     startBtn: "🔥 START",
     startSub: "버튼 누르면 체크리스트가 열립니다.",
@@ -204,7 +212,8 @@ const translations = {
     statNeeds: "시장 니즈",
 
     statConcept: "컨셉 적합",
-    statMonetization: "수익화/단위경제",
+    statPriceFit: "가격 적합",
+    statBusinessModel: "BM 타당성",
     statDistribution: "유통/채널 실행",
     statScope: "시장 확장성",
     statPotential: "잠재고객(지갑)",
@@ -244,7 +253,7 @@ const translations = {
     marketYou: "당신(추정 매출)",
   },
   en: {
-    title: "☠️ Startup Hell Simulator",
+    title: "Startup Hell Simulator",
     subtitle: "We brutally simulate how fast your idea will fail.",
     startBtn: "🔥 Start",
     startSub: "Click to open the survey.",
@@ -314,7 +323,8 @@ const translations = {
     statNeeds: "Market Needs",
 
     statConcept: "Concept fit",
-    statMonetization: "Monetization",
+    statPriceFit: "Price fit",
+    statBusinessModel: "Business model fit",
     statDistribution: "Distribution",
     statScope: "Market scope",
     statPotential: "Potential buyers",
@@ -377,7 +387,8 @@ type AnalysisResult = {
     consumer_needs: number;
 
     concept_fit: number;
-    monetization: number;
+    price_fit: number;
+    business_model_fit: number;
     distribution: number;
     market_scope: number;
     potential_customers: number;
@@ -401,6 +412,13 @@ type AnalysisResult = {
   marketAssumptionsUsed?: any;
   marketSizingSources?: Array<{ title: string; url: string; content: string }>;
   marketAutoMeta?: { assumed_fields: string[]; rationale: string } | null;
+  priceReference?: {
+    min?: number;
+    max?: number;
+    currency_or_unit_note?: string;
+    source?: string;
+    user_price?: number | null;
+  } | null;
   error?: string;
 };
 
@@ -473,6 +491,27 @@ function TextBlock({ text }: { text: string }) {
   );
 }
 
+function ActionList({ text }: { text: string }) {
+  const cleaned = cleanText(text);
+  const numbered = cleaned.split(/\s*\d+\.\s+/).map((l) => l.trim()).filter(Boolean);
+  let items = numbered.length > 1 ? numbered : cleaned.split("\n").map((l) => l.trim()).filter(Boolean);
+  if (items.length <= 1 && cleaned.includes(",")) {
+    items = cleaned.split(",").map((l) => l.trim()).filter(Boolean);
+  }
+  return (
+    <ul className="space-y-3 text-zinc-200 text-sm leading-relaxed">
+      {items.map((it, i) => (
+        <li key={i} className="flex items-start gap-3">
+          <span className="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded border border-red-500/60 bg-red-950/30">
+            <span className="h-2 w-2 rounded-sm bg-red-400/70" />
+          </span>
+          <span>{it.replace(/^[\-\u2022•]\s*/, "").trim()}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function extractKeywordsFromDebate(debate: string): string[] {
   const txt = debate || "";
   const line = txt
@@ -518,6 +557,25 @@ function fmtMoney(v: number | null | undefined) {
   return String(Math.round(v));
 }
 
+function fmtInt(v: number | null | undefined) {
+  if (v == null || !Number.isFinite(v)) return "-";
+  return Math.round(v).toLocaleString();
+}
+
+function fmtTri(tri: any) {
+  if (!tri || typeof tri !== "object") return "-";
+  const min = Number(tri.min);
+  const mode = Number(tri.mode);
+  const max = Number(tri.max);
+  if (![min, mode, max].every(Number.isFinite)) return "-";
+  return `${fmtInt(min)} / ${fmtInt(mode)} / ${fmtInt(max)}`;
+}
+
+function safeNumber(v: any, fallback = 0) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+}
+
 export default function Home() {
   const [lang, setLang] = useState<Lang>("ko");
   const t = translations[lang];
@@ -527,6 +585,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [activeTab, setActiveTab] = useState<"summary" | "autopsy" | "voc" | "market" | "links">("summary");
+  const [skullImgError, setSkullImgError] = useState(false);
 
   // form state
   const [categoryPreset, setCategoryPreset] = useState<string>("가전");
@@ -606,7 +665,8 @@ export default function Home() {
         consumer_needs: "Pain intensity + urgency + willingness to pay.",
 
         concept_fit: "Clarity/uniqueness/positioning fit.",
-        monetization: "Unit economics, pricing, margin, monetization logic.",
+        price_fit: "Pricing rationality, willingness to pay, value alignment.",
+        business_model_fit: "Revenue model, margin, unit economics viability.",
         distribution: "Channel fit + ops/logistics/partner feasibility.",
         market_scope: "Regulation/competition/expandability across segments/regions.",
         potential_customers: "Size of buyers who can actually pay + reachable.",
@@ -623,7 +683,8 @@ export default function Home() {
       consumer_needs: "고객이 실제로 돈을 낼지(강도/긴급성/지불의사).",
 
       concept_fit: "컨셉 명확도/차별성/포지셔닝 적합.",
-      monetization: "단위경제/마진/가격/수익 구조 타당성.",
+      price_fit: "가격의 합리성/지불의사/가격-가치 정합성.",
+      business_model_fit: "BM/마진/단위경제 타당성.",
       distribution: "유통/채널 실행 난이도(운영·물류·파트너).",
       market_scope: "규제/경쟁/확장성(국가·세그·제품 확장 가능).",
       potential_customers: "지갑 있는 잠재고객 + 도달가능성.",
@@ -727,7 +788,7 @@ export default function Home() {
   };
 
   // --- UI helpers ---
-  const StatBar = ({ label, value, icon: Icon, colorClass, tooltip }: any) => (
+  const StatBar = ({ label, value, icon: Icon, colorClass, barColor, tooltip }: any) => (
     <div className="space-y-2">
       <div className="flex justify-between text-sm font-bold items-center text-zinc-300">
         <div className="flex items-center gap-2">
@@ -741,8 +802,8 @@ export default function Home() {
       </div>
       <div className="h-3 w-full bg-zinc-800 rounded-full overflow-hidden">
         <div
-          className={`h-full ${colorClass.replace("text", "bg")} transition-all duration-1000`}
-          style={{ width: `${Math.max(0, Math.min(100, value))}%` }}
+          className="h-full transition-all duration-1000"
+          style={{ width: `${Math.max(0, Math.min(100, value))}%`, backgroundColor: barColor }}
         />
       </div>
     </div>
@@ -751,35 +812,70 @@ export default function Home() {
   const FunnelChart = ({ simulation }: { simulation: any }) => {
     const stages = ["Seed", "MVP", "PMF", "Scale-up", "Unicorn"];
     const deathCounts: Record<string, number> = simulation?.death_counts ?? simulation?.deathCounts ?? {};
+    const deathRates: Record<string, number> = simulation?.death_rates ?? simulation?.deathRates ?? {};
+    const stageSurvivalRates: Record<string, number> =
+      simulation?.stage_survival_rates ?? simulation?.stageSurvivalRates ?? {};
+    const stageEntries: Record<string, number> = simulation?.stage_entries ?? simulation?.stageEntries ?? {};
     const bottleneckStage: string =
       simulation?.bottleneck_stage ?? simulation?.bottleneckStage ?? simulation?.bottleneck ?? "";
-
-    const maxDeaths = Math.max(...(Object.values(deathCounts) as number[]), 0) || 1;
+    const survivalLabel = lang === "en" ? "survive" : "생존";
+    const heatmapLabel = lang === "en" ? "Death heatmap (N)" : "사망자 히트맵(N)";
+    const maxDeaths = Math.max(...(Object.values(deathCounts) as number[]), 1);
 
     return (
       <div className="space-y-3 mt-4">
         {stages.map((stage) => {
           const deaths = deathCounts[stage] || 0;
+          const entries = stageEntries[stage] || 0;
           const isBottleneck = stage === bottleneckStage;
-          const width = (deaths / maxDeaths) * 100;
+          const dropRate = Math.round(((deathRates[stage] ?? 0) * 100) * 10) / 10;
+          const survivalRate = Math.round(((stageSurvivalRates[stage] ?? 0) * 100) * 10) / 10;
+          const width = survivalRate;
 
           return (
-            <div key={stage} className="flex items-center gap-2 text-sm text-zinc-300">
-              <span className={`w-20 text-right font-bold ${isBottleneck ? "text-red-500" : "text-zinc-500"}`}>
-                {stage}
-              </span>
-              <div className="flex-1 h-6 bg-zinc-800 rounded-sm overflow-hidden relative">
-                <div
-                  className={`h-full ${isBottleneck ? "bg-red-600" : "bg-zinc-600"} transition-all duration-1000`}
-                  style={{ width: `${Math.max(width, deaths > 0 ? 2 : 0)}%` }}
-                />
-                <span className="absolute inset-0 flex items-center justify-end px-2 text-xs font-bold text-white/80">
-                  {deaths > 0 ? `☠️ ${deaths}` : ""}
+            <div key={stage} className="space-y-2 text-sm text-zinc-300">
+              <div className="flex items-center justify-between text-xs text-zinc-500">
+                <span className="font-bold">{stage}</span>
+                <span>N={fmtInt(entries)}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 h-6 bg-zinc-800 rounded-sm overflow-hidden relative">
+                  <div
+                    className={`h-full ${isBottleneck ? "bg-red-600" : "bg-zinc-600"} transition-all duration-1000`}
+                    style={{ width: `${Math.max(width, deaths > 0 ? 2 : 0)}%` }}
+                  />
+                  <span className="absolute inset-0 flex items-center justify-end px-2 text-xs font-bold text-white/80">
+                    {deaths > 0 ? `☠️ ${fmtInt(deaths)} · ${dropRate}%` : ""}
+                  </span>
+                </div>
+                <span className={`w-20 text-right font-bold ${isBottleneck ? "text-red-500" : "text-zinc-400"}`}>
+                  {survivalRate}% {survivalLabel}
                 </span>
               </div>
             </div>
           );
         })}
+        <div className="mt-4 space-y-2">
+          <div className="text-xs text-zinc-500">{heatmapLabel}</div>
+          <div className="grid grid-cols-5 gap-2">
+            {stages.map((stage) => {
+              const deaths = deathCounts[stage] || 0;
+              const intensity = Math.min(1, Math.max(0, deaths / maxDeaths));
+              const bg = `rgba(239, 68, 68, ${0.15 + 0.75 * intensity})`;
+              return (
+                <div
+                  key={`heat-${stage}`}
+                  className="rounded-md border border-zinc-800 px-2 py-2 text-center text-xs font-bold text-white"
+                  style={{ backgroundColor: bg }}
+                  title={`${stage}: ${fmtInt(deaths)}`}
+                >
+                  <div className="text-[11px] text-white/80">{stage}</div>
+                  <div className="text-sm">{fmtInt(deaths)}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
         <p className="text-center text-xs text-zinc-500 mt-2">
           {t.funnelDesc}
           <span className="ml-2 inline-block align-middle">
@@ -808,6 +904,126 @@ export default function Home() {
     );
   };
 
+  const PriceReferenceCard = ({ priceReference }: { priceReference?: AnalysisResult["priceReference"] | null }) => {
+    if (!priceReference) {
+      return <div className="text-xs text-zinc-500">{lang === "en" ? "No price reference data." : "가격 비교 데이터 없음"}</div>;
+    }
+    const min = Number(priceReference.min);
+    const max = Number(priceReference.max);
+    const userPrice = Number(priceReference.user_price);
+    const hasRange = Number.isFinite(min) && Number.isFinite(max) && min > 0 && max > 0 && min <= max;
+    const hasUser = Number.isFinite(userPrice);
+
+    if (!hasRange && !hasUser) {
+      return <div className="text-xs text-zinc-500">{lang === "en" ? "No price reference data." : "가격 비교 데이터 없음"}</div>;
+    }
+
+    const range = hasRange ? max - min : 0;
+    const position = hasRange && hasUser && range > 0 ? Math.max(0, Math.min(100, ((userPrice - min) / range) * 100)) : 0;
+    const note = priceReference.currency_or_unit_note ? ` (${priceReference.currency_or_unit_note})` : "";
+    const title = lang === "en" ? `Price reference range${note}` : `가격 적합도 참고 범위${note}`;
+    const rangeLabel = lang === "en" ? "Comparable price range" : "유사 제품 가격 범위";
+    const myPriceLabel = lang === "en" ? "Your price" : "내 가격";
+
+    return (
+      <div className="mt-4 rounded-xl border border-zinc-800 bg-zinc-950/40 p-4">
+        <div className="text-sm font-bold text-zinc-200">{title}</div>
+        {hasRange ? (
+          <div className="mt-2 text-xs text-zinc-400">
+            {rangeLabel}: {fmtInt(min)} ~ {fmtInt(max)}
+          </div>
+        ) : (
+          <div className="mt-2 text-xs text-zinc-400">{rangeLabel}: -</div>
+        )}
+        <div className="mt-3">
+          <div className="relative h-2 rounded-full bg-zinc-800">
+            {hasRange && (
+              <div
+                className="absolute inset-0 rounded-full bg-gradient-to-r from-emerald-500/40 via-yellow-400/40 to-red-500/40"
+              />
+            )}
+            {hasUser && hasRange && (
+              <div
+                className="absolute -top-1 h-4 w-0.5 bg-white"
+                style={{ left: `calc(${position}% - 1px)` }}
+              />
+            )}
+          </div>
+          {hasUser ? (
+            <div className="mt-2 text-xs text-zinc-300">
+              {myPriceLabel}: <span className="font-bold text-white">{fmtInt(userPrice)}</span>
+            </div>
+          ) : (
+            <div className="mt-2 text-xs text-zinc-500">{myPriceLabel}: -</div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const MarketAssumptionsCard = ({ assumptions }: { assumptions: AnalysisResult["marketAssumptionsUsed"] }) => {
+    if (!assumptions || typeof assumptions !== "object") {
+      return (
+        <div className="text-xs text-zinc-500">
+          {lang === "en" ? "No market assumptions available." : "시장 가정 데이터 없음"}
+        </div>
+      );
+    }
+
+    const source = String((assumptions as any).source ?? "");
+    const usedFallback = Boolean((assumptions as any).used_synthetic_fallback);
+    const missing = Array.isArray((assumptions as any).missing_fields) ? (assumptions as any).missing_fields : [];
+    const ready = Boolean((assumptions as any).ready);
+
+    return (
+      <div className="space-y-3 text-xs text-zinc-300">
+        <div className="flex flex-wrap gap-2">
+          <span className="rounded-full border border-zinc-700 bg-zinc-950/60 px-2 py-1 text-[11px]">
+            {ready ? (lang === "en" ? "Ready" : "사용 가능") : lang === "en" ? "Missing" : "누락"}
+          </span>
+          {source && (
+            <span className="rounded-full border border-zinc-700 bg-zinc-950/60 px-2 py-1 text-[11px]">source: {source}</span>
+          )}
+          {usedFallback && (
+            <span className="rounded-full border border-red-700/60 bg-red-950/40 px-2 py-1 text-[11px] text-red-200">
+              {lang === "en" ? "fallback used" : "보수 추정 포함"}
+            </span>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div>
+            <div className="text-zinc-500">market_customers</div>
+            <div className="font-semibold">{fmtTri((assumptions as any).market_customers)}</div>
+          </div>
+          <div>
+            <div className="text-zinc-500">market_revenue</div>
+            <div className="font-semibold">{fmtTri((assumptions as any).market_revenue)}</div>
+          </div>
+          <div>
+            <div className="text-zinc-500">price</div>
+            <div className="font-semibold">{fmtTri((assumptions as any).price)}</div>
+          </div>
+          <div>
+            <div className="text-zinc-500">purchase_freq_per_year</div>
+            <div className="font-semibold">{fmtTri((assumptions as any).purchase_freq_per_year)}</div>
+          </div>
+          <div>
+            <div className="text-zinc-500">max_penetration</div>
+            <div className="font-semibold">{fmtTri((assumptions as any).max_penetration)}</div>
+          </div>
+        </div>
+
+        {missing.length > 0 && (
+          <div className="text-[11px] text-red-200">
+            {lang === "en" ? "Missing fields: " : "누락 필드: "}
+            {missing.join(", ")}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const getFounderScore = (r: AnalysisResult | null) => {
     const s: any = r?.stats ?? {};
     return Number(s.founder ?? s.team ?? 0);
@@ -824,16 +1040,19 @@ export default function Home() {
 
   const revLayers = useMemo(() => {
     const rev = marketLayers?.revenue ?? {};
-    const total = Number(rev?.total_market_p50 ?? rev?.total_market ?? 0);
-    const sam = Number(rev?.addressable_sam_p50 ?? rev?.sam ?? 0);
-    const som = Number(rev?.obtainable_som_p50 ?? rev?.som ?? 0);
-    const you = Number(rev?.your_revenue_p50 ?? rev?.you ?? 0);
+    const total = safeNumber(rev?.total_market_p50 ?? rev?.total_market ?? 0);
+    const sam = safeNumber(rev?.addressable_sam_p50 ?? rev?.sam ?? 0);
+    const som = safeNumber(rev?.obtainable_som_p50 ?? rev?.som ?? 0);
+    const you = safeNumber(rev?.your_revenue_p50 ?? rev?.you ?? 0);
     return { total, sam, som, you };
   }, [marketLayers]);
 
-  const shareP50 = Number(marketShare?.p50 ?? marketShare?.share_p50 ?? 0);
-  const shareP10 = Number(marketShare?.p10 ?? marketShare?.share_p10 ?? 0);
-  const shareP90 = Number(marketShare?.p90 ?? marketShare?.share_p90 ?? 0);
+  const shareRawP50 = safeNumber(marketShare?.share_p50_pct ?? marketShare?.p50 ?? marketShare?.share_p50 ?? 0);
+  const shareRawP10 = safeNumber(marketShare?.share_p10_pct ?? marketShare?.p10 ?? marketShare?.share_p10 ?? 0);
+  const shareRawP90 = safeNumber(marketShare?.share_p90_pct ?? marketShare?.p90 ?? marketShare?.share_p90 ?? 0);
+  const shareP50 = shareRawP50 > 1 ? shareRawP50 : shareRawP50 * 100;
+  const shareP10 = shareRawP10 > 1 ? shareRawP10 : shareRawP10 * 100;
+  const shareP90 = shareRawP90 > 1 ? shareRawP90 : shareRawP90 * 100;
   const shareBand = String(marketShare?.band ?? marketShare?.audience_band ?? "");
 
   const MarketAreaBar = ({
@@ -847,10 +1066,15 @@ export default function Home() {
     som: number;
     you: number;
   }) => {
-    const base = total > 0 ? total : 1;
-    const samPct = Math.max(0, Math.min(100, (sam / base) * 100));
-    const somPct = Math.max(0, Math.min(100, (som / base) * 100));
-    const youPct = Math.max(0, Math.min(100, (you / base) * 100));
+    const safeTotal = Number.isFinite(total) ? total : 0;
+    const safeSam = Number.isFinite(sam) ? sam : 0;
+    const safeSom = Number.isFinite(som) ? som : 0;
+    const safeYou = Number.isFinite(you) ? you : 0;
+    const base = safeTotal > 0 ? safeTotal : 1;
+    const samPct = Math.max(0, Math.min(100, (safeSam / base) * 100));
+    const somPct = Math.max(0, Math.min(100, (safeSom / base) * 100));
+    const youPct = Math.max(0, Math.min(100, (safeYou / base) * 100));
+    const hasData = safeTotal > 0 || safeSam > 0 || safeSom > 0 || safeYou > 0;
 
     return (
       <div className="space-y-3">
@@ -869,26 +1093,34 @@ export default function Home() {
 
           <div className="absolute inset-0 flex items-center justify-between px-3 text-xs font-bold text-white/90">
             <span>{t.marketGraphTitle}</span>
-            <span>{total > 0 ? `Total=${fmtMoney(total)}` : ""}</span>
+            <span>{safeTotal > 0 ? `Total=${fmtMoney(safeTotal)}` : ""}</span>
           </div>
         </div>
+
+        {!hasData && (
+          <div className="rounded-xl border border-zinc-800 bg-zinc-950/40 p-4 text-sm text-zinc-400">
+            {lang === "en"
+              ? "Market sizing data is incomplete. Showing placeholder bar."
+              : "시장 데이터가 부족해 요약 그래프만 표시합니다."}
+          </div>
+        )}
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
           <div className="p-3 rounded-xl bg-zinc-950/40 border border-zinc-800">
             <div className="text-zinc-400 text-xs font-bold">{t.marketTotal}</div>
-            <div className="text-white font-extrabold mt-1">{fmtMoney(total)}</div>
+            <div className="text-white font-extrabold mt-1">{fmtMoney(safeTotal)}</div>
           </div>
           <div className="p-3 rounded-xl bg-zinc-950/40 border border-zinc-800">
             <div className="text-zinc-400 text-xs font-bold">{t.marketSAM}</div>
-            <div className="text-blue-200 font-extrabold mt-1">{fmtMoney(sam)}</div>
+            <div className="text-blue-200 font-extrabold mt-1">{fmtMoney(safeSam)}</div>
           </div>
           <div className="p-3 rounded-xl bg-zinc-950/40 border border-zinc-800">
             <div className="text-zinc-400 text-xs font-bold">{t.marketSOM}</div>
-            <div className="text-orange-200 font-extrabold mt-1">{fmtMoney(som)}</div>
+            <div className="text-orange-200 font-extrabold mt-1">{fmtMoney(safeSom)}</div>
           </div>
           <div className="p-3 rounded-xl bg-zinc-950/40 border border-zinc-800">
             <div className="text-zinc-400 text-xs font-bold">{t.marketYou}</div>
-            <div className="text-red-200 font-extrabold mt-1">{fmtMoney(you)}</div>
+            <div className="text-red-200 font-extrabold mt-1">{fmtMoney(safeYou)}</div>
           </div>
         </div>
       </div>
@@ -923,8 +1155,20 @@ export default function Home() {
 
         {/* 공통 헤더 */}
         <div className="text-center space-y-2 pt-8">
-          <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500 tracking-tight">
-            {t.title}
+          <h1 className="flex flex-wrap items-center justify-center gap-3 text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500 tracking-tight">
+            {!skullImgError ? (
+              <img
+                src="/images/OIP.webp"
+                alt="Skull"
+                className="h-10 w-10 md:h-12 md:w-12 object-contain"
+                onError={() => setSkullImgError(true)}
+              />
+            ) : (
+              <span aria-hidden="true" className="text-3xl md:text-4xl">
+                ☠️
+              </span>
+            )}
+            <span>{t.title}</span>
           </h1>
           <p className="text-zinc-400 text-lg">{t.subtitle}</p>
         </div>
@@ -1463,7 +1707,7 @@ export default function Home() {
                     <div className="bg-zinc-900/50 border border-zinc-800 h-full rounded-xl p-6">
                       <h3 className="flex items-center gap-2 text-lg font-bold text-white mb-6">
                         <IconTrendingUp className="w-5 h-5 text-blue-400" />
-                        10 Stats
+                        11 Stats
                       </h3>
 
                       <div className="grid grid-cols-1 gap-6">
@@ -1474,6 +1718,7 @@ export default function Home() {
                             value={result.stats.product}
                             icon={IconShoppingCart}
                             colorClass="text-blue-400"
+                            barColor="#60A5FA"
                             tooltip={statTooltips.product}
                           />
                           <StatBar
@@ -1481,6 +1726,7 @@ export default function Home() {
                             value={getFounderScore(result)}
                             icon={IconUsers}
                             colorClass="text-green-400"
+                            barColor="#4ADE80"
                             tooltip={statTooltips.founder}
                           />
                           <StatBar
@@ -1488,6 +1734,7 @@ export default function Home() {
                             value={result.stats.strategy}
                             icon={IconTarget}
                             colorClass="text-purple-400"
+                            barColor="#C084FC"
                             tooltip={statTooltips.strategy}
                           />
                           <StatBar
@@ -1495,6 +1742,7 @@ export default function Home() {
                             value={result.stats.marketing}
                             icon={IconTrendingUp}
                             colorClass="text-yellow-400"
+                            barColor="#FACC15"
                             tooltip={statTooltips.marketing}
                           />
                           <StatBar
@@ -1502,6 +1750,7 @@ export default function Home() {
                             value={result.stats.consumer_needs}
                             icon={IconHeart}
                             colorClass="text-red-400"
+                            barColor="#F87171"
                             tooltip={statTooltips.consumer_needs}
                           />
                         </div>
@@ -1515,20 +1764,31 @@ export default function Home() {
                             value={result.stats.concept_fit}
                             icon={IconTarget}
                             colorClass="text-blue-300"
+                            barColor="#93C5FD"
                             tooltip={statTooltips.concept_fit}
                           />
                           <StatBar
-                            label={t.statMonetization}
-                            value={result.stats.monetization}
+                            label={t.statPriceFit}
+                            value={result.stats.price_fit}
                             icon={IconDollar}
                             colorClass="text-emerald-400"
-                            tooltip={statTooltips.monetization}
+                            barColor="#34D399"
+                            tooltip={statTooltips.price_fit}
+                          />
+                          <StatBar
+                            label={t.statBusinessModel}
+                            value={result.stats.business_model_fit}
+                            icon={IconCash}
+                            colorClass="text-lime-400"
+                            barColor="#A3E635"
+                            tooltip={statTooltips.business_model_fit}
                           />
                           <StatBar
                             label={t.statDistribution}
                             value={result.stats.distribution}
                             icon={IconTruck}
                             colorClass="text-orange-400"
+                            barColor="#FB923C"
                             tooltip={statTooltips.distribution}
                           />
                           <StatBar
@@ -1536,6 +1796,7 @@ export default function Home() {
                             value={result.stats.market_scope}
                             icon={IconGlobe}
                             colorClass="text-purple-300"
+                            barColor="#D8B4FE"
                             tooltip={statTooltips.market_scope}
                           />
                           <StatBar
@@ -1543,6 +1804,7 @@ export default function Home() {
                             value={result.stats.potential_customers}
                             icon={IconPie}
                             colorClass="text-rose-300"
+                            barColor="#FDA4AF"
                             tooltip={statTooltips.potential_customers}
                           />
                         </div>
@@ -1562,6 +1824,7 @@ export default function Home() {
                   <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6">
                     <h3 className="text-lg font-bold text-white mb-4">{t.cloudTitle}</h3>
                     <TagCloud words={keywords} />
+                    <PriceReferenceCard priceReference={result?.priceReference} />
                   </div>
                 </div>
               )}
@@ -1586,7 +1849,7 @@ export default function Home() {
                       <h3 className="text-xl font-bold text-red-200">{t.actionTitle}</h3>
                     </div>
                     <div className="p-6 bg-red-950/20">
-                      <TextBlock text={result.report.action_plan} />
+                      <ActionList text={result.report.action_plan} />
                     </div>
                   </div>
                 </div>
@@ -1623,11 +1886,9 @@ export default function Home() {
                         <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div className="p-4 rounded-xl bg-zinc-950/40 border border-zinc-800">
                             <div className="text-zinc-400 text-xs font-bold">{t.marketShareTitle}</div>
-                            <div className="text-3xl font-extrabold text-red-300 mt-2">
-                              {(shareP50 * 100).toFixed(2)}%
-                            </div>
+                            <div className="text-3xl font-extrabold text-red-300 mt-2">{shareP50.toFixed(2)}%</div>
                             <div className="text-xs text-zinc-500 mt-2">
-                              p10 {(shareP10 * 100).toFixed(2)}% · p90 {(shareP90 * 100).toFixed(2)}%
+                              p10 {shareP10.toFixed(2)}% · p90 {shareP90.toFixed(2)}%
                             </div>
                           </div>
 
@@ -1641,9 +1902,9 @@ export default function Home() {
 
                           <div className="p-4 rounded-xl bg-zinc-950/40 border border-zinc-800">
                             <div className="text-zinc-400 text-xs font-bold">{t.marketAssumptionsTitle}</div>
-                            <pre className="mt-2 text-xs text-zinc-300 whitespace-pre-wrap font-mono">
-{JSON.stringify(result.marketAssumptionsUsed ?? null, null, 2)}
-                            </pre>
+                            <div className="mt-3">
+                              <MarketAssumptionsCard assumptions={result.marketAssumptionsUsed ?? null} />
+                            </div>
                           </div>
                         </div>
 

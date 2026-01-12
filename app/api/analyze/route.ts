@@ -161,7 +161,7 @@ async function generateTextWithFallback(
   throw new Error(`모든 Gemini 모델(TEXT) 호출 실패. last=${extractErrMsg(lastError)}`);
 }
 
-function toInt0to100(v: any, fallback = 50): number {
+function toInt0to100(v: any, fallback = 35): number {
   const n = Number(v);
   if (!Number.isFinite(n)) return fallback;
   return Math.max(0, Math.min(100, Math.round(n)));
@@ -185,11 +185,20 @@ type AutoMarketShape = {
   market_customers?: Tri;
   market_revenue?: Tri;
   price?: Tri;
+  price_range_min?: number;
+  price_range_max?: number;
   purchase_freq_per_year?: Tri;
   max_penetration?: Tri;
   assumed_fields?: string[];
   rationale?: string;
   currency_or_unit_note?: string;
+};
+
+type PriceRangeReference = {
+  min?: number;
+  max?: number;
+  currency_or_unit_note?: string;
+  source?: "tavily" | "user" | "synthetic";
 };
 
 function safeTri(v: any): Tri | undefined {
@@ -200,6 +209,114 @@ function safeTri(v: any): Tri | undefined {
   if (![min, mode, max].every(Number.isFinite)) return undefined;
   if (!(min <= mode && mode <= max)) return undefined;
   return { min, mode, max };
+}
+
+function safeNumValue(v: any): number | undefined {
+  const n = Number(v);
+  if (!Number.isFinite(n)) return undefined;
+  return n;
+}
+
+function parsePriceValue(raw: any): number | null {
+  if (raw == null) return null;
+  if (typeof raw === "number" && Number.isFinite(raw)) return raw;
+  const text = String(raw);
+  const match = text.replace(/,/g, "").match(/(\d+(\.\d+)?)/);
+  if (!match) return null;
+  const n = Number(match[1]);
+  return Number.isFinite(n) ? n : null;
+}
+
+function clampScore0to100(v: number): number {
+  if (!Number.isFinite(v)) return 0;
+  return Math.max(0, Math.min(100, Math.round(v)));
+}
+
+type AgeBand = {
+  min: number;
+  max: number;
+  label: string;
+};
+
+function extractAgeBand(text: string): AgeBand | null {
+  if (!text) return null;
+  const src = text.toLowerCase();
+  const decadeMatch = src.match(/(\d{2})\s*대/);
+  if (decadeMatch) {
+    const decade = Number(decadeMatch[1]);
+    if (Number.isFinite(decade) && decade >= 10 && decade <= 90) {
+      return { min: decade, max: decade + 9, label: `${decade}대` };
+    }
+  }
+
+  if (/(mz|엠지|m\s*z)/i.test(src)) return { min: 20, max: 39, label: "MZ" };
+  if (/z세대|gen\s*z/.test(src)) return { min: 15, max: 29, label: "Z" };
+  if (/알파세대|gen\s*alpha/.test(src)) return { min: 10, max: 14, label: "Alpha" };
+  if (/대학생|college/.test(src)) return { min: 18, max: 25, label: "대학생" };
+  if (/청소년|teen/.test(src)) return { min: 13, max: 19, label: "청소년" };
+  if (/청년/.test(src)) return { min: 20, max: 34, label: "청년" };
+  if (/중장년/.test(src)) return { min: 40, max: 69, label: "중장년" };
+  if (/시니어|실버|노년|노인|장년/.test(src)) return { min: 60, max: 79, label: "시니어" };
+  if (/화이트\s*칼라|office|직장인/.test(src)) return { min: 25, max: 49, label: "직장인" };
+
+  return null;
+}
+
+function midpoint(band: AgeBand) {
+  return (band.min + band.max) / 2;
+}
+
+function clampScore(v: number) {
+  return Math.max(0, Math.min(100, Math.round(v)));
+}
+
+function applyContextAdjustments(
+  stats: Stats,
+  context: {
+    sellerInfo?: string;
+    buyerInfo?: string;
+    salesChannel?: string;
+  }
+): Stats {
+  const updated = { ...stats };
+  const sellerBand = extractAgeBand(String(context.sellerInfo ?? ""));
+  const buyerBand = extractAgeBand(String(context.buyerInfo ?? ""));
+  const channelText = String(context.salesChannel ?? "").toLowerCase();
+
+  if (sellerBand && buyerBand) {
+    const gap = Math.abs(midpoint(sellerBand) - midpoint(buyerBand));
+    if (gap >= 30) {
+      updated.founder = clampScore(updated.founder - 8);
+      updated.strategy = clampScore(updated.strategy - 8);
+      updated.marketing = clampScore(updated.marketing - 6);
+    } else if (gap >= 20) {
+      updated.founder = clampScore(updated.founder - 5);
+      updated.strategy = clampScore(updated.strategy - 5);
+      updated.marketing = clampScore(updated.marketing - 4);
+    }
+  }
+
+  const youthChannels = ["인스타", "instagram", "릴스", "reels", "틱톡", "tiktok", "쇼츠", "shorts", "snap", "디스코드"];
+  const seniorChannels = ["네이버 밴드", "밴드", "카카오톡", "카톡", "오프라인", "전단", "홈쇼핑", "신문", "라디오", "현수막", "약국", "마트", "전화"];
+
+  if (buyerBand) {
+    const isSenior = buyerBand.min >= 50;
+    const isYoung = buyerBand.max <= 29;
+    const hasYouthChannel = youthChannels.some((k) => channelText.includes(k));
+    const hasSeniorChannel = seniorChannels.some((k) => channelText.includes(k));
+
+    if (isSenior && hasYouthChannel) {
+      updated.marketing = clampScore(updated.marketing - 10);
+      updated.distribution = clampScore(updated.distribution - 7);
+    }
+
+    if (isYoung && hasSeniorChannel) {
+      updated.marketing = clampScore(updated.marketing - 8);
+      updated.distribution = clampScore(updated.distribution - 5);
+    }
+  }
+
+  return updated;
 }
 
 function compactSources(results: any[], maxLen = 600) {
@@ -257,10 +374,12 @@ async function autoBuildMarketAssumptions({
   sizingDataText: string;
   sizingSources: Array<{ title: string; url: string; content: string }>;
   meta: { assumed_fields: string[]; rationale: string };
+  priceRange?: PriceRangeReference | null;
 }> {
   let sizingSources: Array<{ title: string; url: string; content: string }> = [];
   let sizingDataText = "시장규모 데이터 없음";
   let meta = { assumed_fields: [] as string[], rationale: "" };
+  let priceRange: PriceRangeReference | null = null;
 
   try {
     const q = buildMarketSizingQuery({
@@ -303,6 +422,8 @@ async function autoBuildMarketAssumptions({
 - market_customers: 전체 시장 고객수(연간 구매자 수 등)
 - market_revenue: 전체 시장 매출(연간)
 - price: 평균 판매가(1회 결제 기준)
+- price_range_min: 유사 제품/대체재의 최저 가격
+- price_range_max: 유사 제품/대체재의 최고 가격
 - purchase_freq_per_year: 고객 1명당 연간 구매 횟수
 - max_penetration: 침투율 상한(0~1)
 - assumed_fields: 추정으로 채운 키 목록
@@ -356,6 +477,17 @@ Tavily 결과:
       source: "tavily",
     };
 
+    const minPrice = safeNumValue((raw as any).price_range_min);
+    const maxPrice = safeNumValue((raw as any).price_range_max);
+    if (minPrice != null || maxPrice != null) {
+      priceRange = {
+        min: minPrice,
+        max: maxPrice,
+        currency_or_unit_note: String((raw as any).currency_or_unit_note ?? ""),
+        source: "tavily",
+      };
+    }
+
     meta = {
       assumed_fields: Array.isArray(raw.assumed_fields) ? raw.assumed_fields.map(String) : [],
       rationale: String(raw.rationale ?? ""),
@@ -366,6 +498,7 @@ Tavily 결과:
       sizingDataText,
       sizingSources,
       meta,
+      priceRange,
     };
   } catch (e: any) {
     console.error("Tavily/시장규모 추출 실패(무시하고 계속):", extractErrMsg(e));
@@ -374,6 +507,7 @@ Tavily 결과:
       sizingDataText,
       sizingSources,
       meta,
+      priceRange,
     };
   }
 }
@@ -482,6 +616,8 @@ export async function POST(req: Request) {
     let marketAutoMeta: { assumed_fields: string[]; rationale: string } = { assumed_fields: [], rationale: "" };
 
     let marketAssumptionsForMcts: MarketAssumptionsInput | undefined = undefined;
+    let priceReference: PriceRangeReference | null = null;
+    const inputPriceValue = parsePriceValue(price);
 
     if (marketMode === "manual" && manualMarketAssumptions) {
       marketAssumptionsForMcts = { ...(manualMarketAssumptions as any), source: "user" };
@@ -506,6 +642,7 @@ export async function POST(req: Request) {
       marketSizingData = auto.sizingDataText;
       marketSizingSources = auto.sizingSources;
       marketAutoMeta = auto.meta;
+      priceReference = auto.priceRange ?? null;
     }
 
     // ✅ LLM에 들어갈 시장데이터는 합쳐서(실패사례 + 규모)
@@ -515,7 +652,7 @@ export async function POST(req: Request) {
         : marketData;
 
     // ------------------------------
-    // ✅ Stats JSON (10개 스탯)
+    // ✅ Stats JSON (11개 스탯)
     // ------------------------------
     const statsParser = new JsonOutputParser<Stats>();
 
@@ -528,6 +665,20 @@ export async function POST(req: Request) {
 - 대신 창업자 개인 역량을 'founder' 점수로 평가한다.
 - founder 점수는 아래 '창업자 특성(1~10)'을 강하게 반영하라.
 - strategy 점수에도 창업자 특성(실행력/불확실성 내성/설득력/리소스 감각)을 반영하라.
+- sellerInfo에서 드러나는 도메인 지식/경험/연령대를 고려해 founder/strategy를 조정하라.
+- buyerInfo에서 드러나는 연령대/세그먼트를 고려해 consumer_needs와 marketing을 조정하라.
+- 창업자 연령대/경험과 타겟 연령대가 크게 어긋나면 founder/strategy/marketing을 보수적으로 낮춰라.
+- 타겟 연령대와 채널/마케팅 방식이 어긋나면 marketing/distribution을 낮춰라.
+- 컨셉이 고객 니즈/타겟과 불일치하면 concept_fit과 consumer_needs를 보수적으로 낮춰라.
+
+[채점 규칙(중요)]
+- 대부분의 아이디어는 40~55가 정상 범위다. 근거 없이 70+를 주지 마라.
+- 70+는 구체적 근거(명확한 타겟, 대체재 대비 큰 개선, 현실적 채널/CAC 추정 등)가 있을 때만 가능.
+- 85+는 트랙션/실적 등 강한 증거 없으면 금지.
+- business_model_fit < 40 또는 distribution < 40이면 consumer_needs는 최대 65로 캡.
+- consumer_needs가 70+면 needs_analysis에서 지불의사/긴급성/대체재 대비 우위를 반드시 긍정적으로 설명해야 한다.
+- needs_analysis가 부정적이면 consumer_needs를 55 이하로 내린다.
+- price_fit은 유사 제품/대체재 가격 범위와 사용자가 입력한 가격을 비교해 현실적으로 판단하라.
 
 추가 설문 항목(반드시 반영):
 - 컨셉: {concept}
@@ -539,7 +690,8 @@ export async function POST(req: Request) {
 
 추가 스탯 정의(0~100):
 - concept_fit: 컨셉 명확도/차별성/포지셔닝 적합
-- monetization: BM 타당성 + 가격/마진/단위경제성 가능성
+- price_fit: 가격의 합리성/지불의사/가격-가치 정합성
+- business_model_fit: BM(수익모델/마진/단위경제) 타당성
 - distribution: 판매채널 적합도 + 실행 난이도(운영/물류/파트너) + 고객획득 현실성
 - market_scope: 국가/카테고리의 규제/경쟁/확장성(멀티국가/멀티세그로 갈 수 있는지)
 - potential_customers: 잠재고객 규모(지갑 있는 사람) + 도달가능성(채널/국가/가격 기준)
@@ -561,7 +713,7 @@ export async function POST(req: Request) {
 
 JSON 키(정확히 이 키들로):
 product, founder, strategy, marketing, consumer_needs,
-concept_fit, monetization, distribution, market_scope, potential_customers`
+concept_fit, price_fit, business_model_fit, distribution, market_scope, potential_customers`
     );
 
     const rawStats = await generateJsonWithFallback<Stats>(
@@ -587,28 +739,58 @@ concept_fit, monetization, distribution, market_scope, potential_customers`
 
     // ✅ 안전 보정
     const safeStats: Stats = {
-      product: toInt0to100((rawStats as any).product, 50),
-      founder: toInt0to100((rawStats as any).founder, 50),
-      strategy: toInt0to100((rawStats as any).strategy, 50),
-      marketing: toInt0to100((rawStats as any).marketing, 50),
-      consumer_needs: toInt0to100((rawStats as any).consumer_needs, 50),
+      product: toInt0to100((rawStats as any).product, 35),
+      founder: toInt0to100((rawStats as any).founder, 35),
+      strategy: toInt0to100((rawStats as any).strategy, 35),
+      marketing: toInt0to100((rawStats as any).marketing, 35),
+      consumer_needs: toInt0to100((rawStats as any).consumer_needs, 35),
 
-      concept_fit: toInt0to100((rawStats as any).concept_fit, 50),
-      monetization: toInt0to100((rawStats as any).monetization, 50),
-      distribution: toInt0to100((rawStats as any).distribution, 50),
-      market_scope: toInt0to100((rawStats as any).market_scope, 50),
-      potential_customers: toInt0to100((rawStats as any).potential_customers, 50),
+      concept_fit: toInt0to100((rawStats as any).concept_fit, 35),
+      price_fit: toInt0to100((rawStats as any).price_fit, 35),
+      business_model_fit: toInt0to100((rawStats as any).business_model_fit, 35),
+      distribution: toInt0to100((rawStats as any).distribution, 35),
+      market_scope: toInt0to100((rawStats as any).market_scope, 35),
+      potential_customers: toInt0to100((rawStats as any).potential_customers, 35),
+    };
+
+    const contextAdjustedStats = applyContextAdjustments(safeStats, {
+      sellerInfo,
+      buyerInfo,
+      salesChannel,
+    });
+
+    const adjustedPriceFit = (() => {
+      if (!priceReference || inputPriceValue == null) return contextAdjustedStats.price_fit;
+      const min = Number(priceReference.min);
+      const max = Number(priceReference.max);
+      if (!Number.isFinite(min) || !Number.isFinite(max) || min <= 0 || max <= 0 || min > max) {
+        return contextAdjustedStats.price_fit;
+      }
+      let penalty = 0;
+      if (inputPriceValue < min) {
+        penalty = ((min - inputPriceValue) / min) * 120;
+      } else if (inputPriceValue > max) {
+        penalty = ((inputPriceValue - max) / max) * 120;
+      } else {
+        penalty = -5;
+      }
+      return clampScore0to100(contextAdjustedStats.price_fit - penalty);
+    })();
+
+    const finalStats: Stats = {
+      ...contextAdjustedStats,
+      price_fit: adjustedPriceFit,
     };
 
     // --- MCTS (시장점유율 포함) ---
     const mcts = new StartupMCTS(1500);
 
-    // ✅ "임의 말고" => synthetic fallback 금지
-    // - auto 모드에서도 Gemini가 max_penetration을 "보수적 추정"으로 채우도록 이미 유도했음
+    // ✅ 기본: manual/none은 synthetic fallback 금지
+    // - auto 모드에서는 부족한 값이 있어도 prior로 채워서 시장규모 계산은 진행
     const simulation = mcts.runWithMarket(
-      safeStats,
+      finalStats,
       marketAssumptionsForMcts,
-      { allow_synthetic_fallback: false }
+      { allow_synthetic_fallback: marketMode === "auto" }
     );
 
     // ------------------------------
@@ -623,6 +805,23 @@ concept_fit, monetization, distribution, market_scope, potential_customers`
       keywords: string[];
       market_takeaway?: string;
     };
+
+    const weaknessFactors = (() => {
+      const pairs: Array<{ key: string; label: string; score: number }> = [
+        { key: "concept_fit", label: "컨셉", score: finalStats.concept_fit },
+        { key: "price_fit", label: "가격", score: finalStats.price_fit },
+        { key: "business_model_fit", label: "BM", score: finalStats.business_model_fit },
+        { key: "distribution", label: "채널/유통", score: finalStats.distribution },
+        { key: "market_scope", label: "시장 확장성", score: finalStats.market_scope },
+        { key: "potential_customers", label: "잠재고객", score: finalStats.potential_customers },
+        { key: "product", label: "제품력", score: finalStats.product },
+        { key: "strategy", label: "전략", score: finalStats.strategy },
+        { key: "marketing", label: "마케팅", score: finalStats.marketing },
+        { key: "consumer_needs", label: "니즈", score: finalStats.consumer_needs },
+        { key: "founder", label: "창업자", score: finalStats.founder },
+      ];
+      return pairs.sort((a, b) => a.score - b.score).slice(0, 3);
+    })();
 
     const reportParser = new JsonOutputParser<ReportShape>();
     const reportPrompt = PromptTemplate.fromTemplate(
@@ -641,13 +840,15 @@ concept_fit, monetization, distribution, market_scope, potential_customers`
 - 아이템/설문: {item}
 - 스탯: {stats}
 - 시뮬레이션: {sim}
-- 가장 많이 죽은 구간: {bottleneck}
+- 드랍률 기준 병목: {bottleneck}
+- 점수 약점 TOP3: {weaknessFactors}
 - 시장데이터: {marketData}
 
 주의:
 - JSON만 출력
 - action_plan에 마크다운 금지(특히 ** 사용 금지)
 - keywords는 "단어/짧은 구" 중심
+- death_cause는 bottleneck 단계가 아니라 점수 약점 TOP3를 근거로 짧게 요약
 
 {format_instructions}`
     );
@@ -657,9 +858,10 @@ concept_fit, monetization, distribution, market_scope, potential_customers`
       reportPrompt,
       {
         item: JSON.stringify(enrichedProductInfo),
-        stats: JSON.stringify(safeStats),
+        stats: JSON.stringify(finalStats),
         sim: JSON.stringify(simulation),
         bottleneck: (simulation as any).bottleneck_stage ?? (simulation as any).bottleneck ?? "",
+        weaknessFactors: JSON.stringify(weaknessFactors),
         marketData: combinedMarketData,
         format_instructions: reportParser.getFormatInstructions(),
       },
@@ -677,6 +879,55 @@ concept_fit, monetization, distribution, market_scope, potential_customers`
       keywords: Array.isArray(reportRaw.keywords) ? reportRaw.keywords.slice(0, 10) : [],
       market_takeaway: String((reportRaw as any).market_takeaway ?? ""),
     };
+
+    // --- Consistency Validator (stats vs. narrative) ---
+    type ValidateShape = {
+      needs_analysis: string;
+      death_cause: string;
+    };
+
+    const validateParser = new JsonOutputParser<ValidateShape>();
+    const validatePrompt = PromptTemplate.fromTemplate(
+      `너는 일관성 검증관이다. 아래 stats와 needs_analysis가 모순되면 반드시 수정하라.
+
+규칙:
+- needs_analysis가 부정적/회의적이면 consumer_needs는 55 이하가 자연스럽다. 문장을 그에 맞게 정리하라.
+- consumer_needs가 70 이상이면 지불의사/긴급성/대체재 대비 우위가 명확히 긍정적으로 드러나야 한다.
+- business_model_fit < 40 또는 distribution < 40이면 지나친 낙관을 제거하라.
+- concept_fit이 낮으면 니즈와 컨셉의 불일치를 간결히 언급하라.
+- death_cause는 점수 약점 TOP3를 근거로 짧게 요약하라.
+
+입력 stats: {stats}
+입력 needs_analysis: {needs}
+점수 약점 TOP3: {weaknessFactors}
+
+JSON만 출력.
+{format_instructions}`
+    );
+
+    const validated = await generateJsonWithFallback<ValidateShape>(
+      googleKey,
+      validatePrompt,
+      {
+        stats: JSON.stringify(finalStats),
+        needs: report.needs_analysis,
+        weaknessFactors: JSON.stringify(weaknessFactors),
+        format_instructions: validateParser.getFormatInstructions(),
+      },
+      validateParser,
+      0.2
+    );
+
+    report.needs_analysis = stripMarkdownArtifacts(validated.needs_analysis ?? report.needs_analysis);
+    report.death_cause = stripMarkdownArtifacts(validated.death_cause ?? report.death_cause);
+
+    const launchReadiness = Math.round(
+      0.5 * finalStats.consumer_needs + 0.25 * finalStats.distribution + 0.25 * finalStats.business_model_fit
+    );
+    const pmfProbability =
+      Math.round(((simulation as any)?.stage_reach_rates?.PMF ?? (simulation as any)?.stageReachRates?.PMF ?? 0) * 1000) /
+      10;
+    const unicornProbability = Math.round((Number((simulation as any)?.survival_rate ?? (simulation as any)?.survivalRate ?? 0)) * 10) / 10;
 
     // --- Debate TEXT ---
     const debateLangInstr = language === "en" ? "Write the conversation in natural English." : "한국어 대화체로 작성.";
@@ -702,7 +953,7 @@ ${debateLangInstr}
       debatePrompt,
       {
         item: JSON.stringify(enrichedProductInfo),
-        stats: JSON.stringify(safeStats),
+        stats: JSON.stringify(finalStats),
         marketData: combinedMarketData,
         marketShare: JSON.stringify((simulation as any).market_share ?? null),
       },
@@ -712,8 +963,21 @@ ${debateLangInstr}
     return NextResponse.json({
       success: true,
 
-      stats: safeStats, // ✅ 10개 스탯
+      stats: finalStats, // ✅ 11개 스탯
       simulation,       // ✅ survival + (market_needed/market_share/market_layers 포함)
+      rollups: {
+        launch_readiness: launchReadiness,
+        pmf_probability: pmfProbability,
+        unicorn_probability: unicornProbability,
+      },
+      priceReference: priceReference
+        ? {
+            ...priceReference,
+            user_price: inputPriceValue,
+          }
+        : inputPriceValue == null
+          ? null
+          : { user_price: inputPriceValue },
       report,
       debate,
 
@@ -721,7 +985,8 @@ ${debateLangInstr}
 
       // ✅ AUTO 시장조사 결과(프론트에서 "근거 보기"에 쓰기 좋음)
       marketMode,
-      marketAssumptionsUsed: marketAssumptionsForMcts ?? null,
+      marketAssumptionsUsed:
+        (simulation as any)?.market_assumptions ?? (simulation as any)?.marketAssumptions ?? marketAssumptionsForMcts ?? null,
       marketSizingSources: marketMode === "auto" ? marketSizingSources : [],
       marketAutoMeta: marketMode === "auto" ? marketAutoMeta : null,
     });
