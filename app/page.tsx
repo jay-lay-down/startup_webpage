@@ -120,12 +120,12 @@ export default function Home() {
 
         {/* Input Section */}
         <section className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10 animate-in slide-in-from-bottom duration-700 delay-100">
-          <Card title="🙋‍♂️ 판매자 (나)">
+          <Card title="🙋‍♂️ 판매자">
             <Select label="연령대" value={formData.sellerAge} onChange={(e: any) => setFormData({...formData, sellerAge: e.target.value})} options={["10대", "20대", "30대", "40대", "50대 이상"]} />
             <Input label="성향/약점" placeholder="예: 귀찮음이 많음, 실행력 부족" value={formData.sellerStyle} onChange={(e: any) => setFormData({...formData, sellerStyle: e.target.value})} />
           </Card>
 
-          <Card title="🎯 타겟 (너)">
+          <Card title="🎯 타겟">
             <Select label="연령대" value={formData.buyerAge} onChange={(e: any) => setFormData({...formData, buyerAge: e.target.value})} options={["10대", "20대", "30대", "40대", "50대 이상"]} />
             <Input label="특징" placeholder="예: 가성비충, 인스타 중독" value={formData.buyerTraits} onChange={(e: any) => setFormData({...formData, buyerTraits: e.target.value})} />
           </Card>
