@@ -71,6 +71,44 @@ const IconHeart = ({ className }: IconProps) => (
   </svg>
 );
 
+// extra icons for 10 stats / market
+const IconDollar = ({ className }: IconProps) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path d="M12 2v20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    <path
+      d="M17 7.5c0-2-2.2-3.5-5-3.5s-5 1.5-5 3.5 2.2 3.5 5 3.5 5 1.5 5 3.5-2.2 3.5-5 3.5-5-1.5-5-3.5"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
+const IconTruck = ({ className }: IconProps) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path d="M3 7h11v10H3V7Z" stroke="currentColor" strokeWidth="2" />
+    <path d="M14 10h4l3 3v4h-7v-7Z" stroke="currentColor" strokeWidth="2" />
+    <circle cx="7" cy="19" r="1" fill="currentColor" />
+    <circle cx="18" cy="19" r="1" fill="currentColor" />
+  </svg>
+);
+
+const IconGlobe = ({ className }: IconProps) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
+    <path d="M3 12h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    <path d="M12 3c3 3 3 15 0 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    <path d="M12 3c-3 3-3 15 0 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+  </svg>
+);
+
+const IconPie = ({ className }: IconProps) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path d="M12 12V3a9 9 0 1 1-9 9h9Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+    <path d="M12 3a9 9 0 0 1 9 9h-9V3Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+  </svg>
+);
+
 /** ✅ 간단 툴팁 (외부 패키지 없이) */
 function InfoTip({ text }: { text: string }) {
   if (!text) return null;
@@ -79,11 +117,10 @@ function InfoTip({ text }: { text: string }) {
       <span
         className="ml-2 inline-flex items-center justify-center w-5 h-5 rounded-full border border-zinc-700 text-zinc-300 text-xs font-black bg-zinc-900/60 cursor-help select-none"
         aria-label="info"
-        title={text} // ✅ 기본 브라우저 툴팁(백업)
+        title={text}
       >
         i
       </span>
-      {/* custom tooltip */}
       <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-2 w-[260px] opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">
         <span className="block text-xs leading-relaxed text-zinc-100 bg-zinc-950 border border-zinc-800 rounded-xl p-3 shadow-2xl">
           {text}
@@ -106,7 +143,6 @@ const translations = {
     formTitle: "쓰레기통 입장 신청서",
     formDesc: "최대한 솔직하게 적으세요. 어차피 AI가 다 알아챕니다.",
 
-    // ✅ 품목/카테고리(맨 앞)
     itemCategory: "🏷️ 품목/카테고리 (필수)",
     itemCategoryPlace: "예: 가전 / 뷰티 / 식품 / SaaS / 교육 / 헬스케어 ...",
     itemCategoryPreset: "품목 선택",
@@ -117,10 +153,24 @@ const translations = {
     sellerPlace: "예: 30대 개발자, 영업 경험 없음",
     buyerInfo: "🎯 타겟 고객 정보",
     buyerPlace: "예: 20대 대학생, 가성비 중시",
+
     itemName: "📦 아이템 이름 (필수)",
     itemNamePlace: "예: AI 기반 자동 칫솔",
     itemDesc: "📝 아이템 설명 (구체적으로)",
     itemDescPlace: "상세 기능과 가격을 적어주세요.",
+
+    // extra fields for better market research
+    concept: "🧩 컨셉(포지셔닝 한 줄)",
+    conceptPlace: "예: '월 1만원으로 집안 먼지/털 자동 해결' 같은 한 줄",
+    price: "💳 가격(대략)",
+    pricePlace: "예: 19,900원 / $29 / 월 9.99 ...",
+    businessModel: "🧾 BM(돈 버는 법)",
+    businessModelPlace: "예: 구독/1회 구매/수수료/광고/리텐션 업셀...",
+    salesChannel: "🛒 판매 채널",
+    salesChannelPlace: "예: 쿠팡/아마존/D2C/오프라인 유통/앱스토어...",
+    salesCountry: "🌍 판매 국가",
+    salesCountryPlace: "예: 한국/미국/일본/동남아...",
+
     traitsTitle: "🧠 창업자 DNA 자가진단 (1~10점)",
     traits: {
       obsession: "고객/문제 집착",
@@ -140,15 +190,25 @@ const translations = {
     deathCause: "주 사망 원인",
     bottleneck: "최대 병목 구간",
     needsMatch: "니즈 일치도",
+
     tabSummary: "📊 종합 요약",
     tabAutopsy: "🧾 부검 리포트",
     tabVoc: "🗣️ 독설 좌담회",
+    tabMarket: "🥧 시장점유율",
     tabLinks: "🔗 추천/유사사례",
+
     statProduct: "제품 경쟁력",
-    statTeam: "팀 역량",
+    statFounder: "창업자 역량",
     statStrategy: "시장 전략",
     statMarketing: "마케팅",
     statNeeds: "시장 니즈",
+
+    statConcept: "컨셉 적합",
+    statMonetization: "수익화/단위경제",
+    statDistribution: "유통/채널 실행",
+    statScope: "시장 확장성",
+    statPotential: "잠재고객(지갑)",
+
     funnelTitle: "Death Funnel",
     funnelDesc: "단계별 ㅈ망 가능성",
     cloudTitle: "☁️ 핵심 키워드",
@@ -160,6 +220,28 @@ const translations = {
     casesTitle: "🧩 유사 아이템/실패 사례(검색 결과)",
     retryBtn: "🔄 다시하기",
     editBtn: "✍️ 설문 수정",
+
+    // market section
+    marketSectionTitle: "🥧 시장점유율 시뮬레이션",
+    marketModeLabel: "시장정보 입력 방식",
+    marketModeNone: "안 할래요(점유율 계산 X)",
+    marketModeAuto: "모름 → 자동 시장조사(Tavily + AI)",
+    marketModeManual: "알아요 → 직접 입력(3점 추정: min/mode/max)",
+    marketManualHint:
+      "가능한 '연간' 기준으로 넣으세요. 예: 시장매출(연간), 평균가격(1회 결제), 구매빈도(연/인), 침투율 상한(0~1).",
+    marketTabTitle: "시장점유율/파이 먹기",
+    marketNeededMsg:
+      "시장점유율 계산에 필요한 시장정보가 부족합니다. 설문에서 '자동 시장조사' 또는 '직접 입력'을 선택해주세요.",
+    marketAssumptionsTitle: "사용된 시장 가정",
+    marketSourcesTitle: "자동 시장조사 출처(일부)",
+    marketMetaTitle: "자동 추정 메모",
+    marketShareTitle: "예상 시장점유율(Revenue 기준)",
+    marketShareNote: "모델은 '생존'을 통과한 시뮬레이션 런에서만 점유율을 계산합니다.",
+    marketGraphTitle: "면적(파이) 시각화",
+    marketTotal: "전체 시장(추정)",
+    marketSAM: "도달 가능한 시장(SAM)",
+    marketSOM: "실제로 먹을 수 있는 파이(SOM)",
+    marketYou: "당신(추정 매출)",
   },
   en: {
     title: "☠️ Startup Hell Simulator",
@@ -172,7 +254,6 @@ const translations = {
     formTitle: "Hell Gate Application",
     formDesc: "Be honest. AI knows everything anyway.",
 
-    // ✅ Category (top)
     itemCategory: "🏷️ Category (Required)",
     itemCategoryPlace: "e.g. Home appliance / Beauty / Food / SaaS / Education / Healthcare ...",
     itemCategoryPreset: "Select category",
@@ -183,10 +264,23 @@ const translations = {
     sellerPlace: "e.g. 30yo Dev, No sales exp",
     buyerInfo: "🎯 Target Audience",
     buyerPlace: "e.g. College students, Price sensitive",
+
     itemName: "📦 Product Name (Required)",
     itemNamePlace: "e.g. AI Toothbrush",
     itemDesc: "📝 Description (Specific)",
     itemDescPlace: "Features, price, how it works...",
+
+    concept: "🧩 Concept (one-liner positioning)",
+    conceptPlace: "e.g. 'Solve dust & hair automatically for $9.99/mo'",
+    price: "💳 Price (rough)",
+    pricePlace: "e.g. $29 / 19,900 KRW / $9.99/mo ...",
+    businessModel: "🧾 Business model",
+    businessModelPlace: "Subscription / One-off purchase / Commission / Ads ...",
+    salesChannel: "🛒 Sales channel",
+    salesChannelPlace: "Amazon / Coupang / D2C / Offline retail / App store ...",
+    salesCountry: "🌍 Country",
+    salesCountryPlace: "Korea / US / Japan / SEA ...",
+
     traitsTitle: "🧠 Founder DNA Test (1-10)",
     traits: {
       obsession: "Customer Obsession",
@@ -206,15 +300,25 @@ const translations = {
     deathCause: "Main Cause of Death",
     bottleneck: "Major Bottleneck",
     needsMatch: "Needs Match",
+
     tabSummary: "📊 Summary",
     tabAutopsy: "🧾 Autopsy",
     tabVoc: "🗣️ Debate",
+    tabMarket: "🥧 Market Share",
     tabLinks: "🔗 Links/Cases",
+
     statProduct: "Product",
-    statTeam: "Team",
+    statFounder: "Founder",
     statStrategy: "Strategy",
     statMarketing: "Marketing",
     statNeeds: "Market Needs",
+
+    statConcept: "Concept fit",
+    statMonetization: "Monetization",
+    statDistribution: "Distribution",
+    statScope: "Market scope",
+    statPotential: "Potential buyers",
+
     funnelTitle: "Death Funnel",
     funnelDesc: "Deaths per stage (higher is worse)",
     cloudTitle: "☁️ Keywords",
@@ -226,20 +330,60 @@ const translations = {
     casesTitle: "🧩 Similar items / failure cases (search results)",
     retryBtn: "🔄 Restart",
     editBtn: "✍️ Edit Survey",
+
+    marketSectionTitle: "🥧 Market share simulation",
+    marketModeLabel: "Market info mode",
+    marketModeNone: "Skip (no market share)",
+    marketModeAuto: "I don't know → Auto research (Tavily + AI)",
+    marketModeManual: "I know → Manual input (min/mode/max)",
+    marketManualHint:
+      "Use yearly basis if possible. e.g. market revenue (yearly), avg price (per purchase), purchase freq (per year), max penetration (0~1).",
+    marketTabTitle: "Market share / pie slice",
+    marketNeededMsg:
+      "Not enough market data for share calculation. Choose 'Auto research' or 'Manual input' in the survey.",
+    marketAssumptionsTitle: "Market assumptions used",
+    marketSourcesTitle: "Auto research sources",
+    marketMetaTitle: "Auto estimation notes",
+    marketShareTitle: "Estimated market share (Revenue)",
+    marketShareNote: "Share is computed only for runs that survive through stages.",
+    marketGraphTitle: "Area (pie) visualization",
+    marketTotal: "Total market",
+    marketSAM: "Addressable (SAM)",
+    marketSOM: "Obtainable (SOM)",
+    marketYou: "You (revenue)",
   },
 } as const;
 
 type Lang = keyof typeof translations;
 
-// ✅ 스탯은 뒤에서 10개로 늘릴 거지만, 지금은 기존 5개 구조 유지(프론트 먼저)
+type Tri = { min: number; mode: number; max: number };
+type MarketMode = "none" | "manual" | "auto";
+
+type MarketAssumptionsInput = {
+  market_customers?: Tri;
+  market_revenue?: Tri;
+  price?: Tri;
+  purchase_freq_per_year?: Tri;
+  max_penetration?: Tri;
+};
+
 type AnalysisResult = {
   success: boolean;
   stats: {
     product: number;
-    team: number;
+    founder: number;
     strategy: number;
     marketing: number;
     consumer_needs: number;
+
+    concept_fit: number;
+    monetization: number;
+    distribution: number;
+    market_scope: number;
+    potential_customers: number;
+
+    // legacy fallback (혹시 예전 데이터가 남아있을 경우)
+    team?: number;
   };
   simulation: any;
   report: {
@@ -249,9 +393,14 @@ type AnalysisResult = {
     needs_analysis: string;
     youtube_queries?: string[];
     keywords?: string[];
+    market_takeaway?: string;
   };
   debate: string;
   pastCases: Array<{ title: string; url: string; content: string }>;
+  marketMode?: MarketMode;
+  marketAssumptionsUsed?: any;
+  marketSizingSources?: Array<{ title: string; url: string; content: string }>;
+  marketAutoMeta?: { assumed_fields: string[]; rationale: string } | null;
   error?: string;
 };
 
@@ -272,12 +421,10 @@ function cleanText(input: string): string {
   if (!input) return "";
   return (
     input
-      // markdown 굵게/기울임/코드/헤딩 흔적 제거
       .replace(/\*\*/g, "")
       .replace(/__/g, "")
       .replace(/`+/g, "")
       .replace(/^#+\s?/gm, "")
-      // 혹시 남아있는 불필요한 마크다운 리스트 기호 정리
       .replace(/^\s*-\s+/gm, "• ")
       .replace(/^\s*\*\s+/gm, "• ")
       .trim()
@@ -287,16 +434,16 @@ function cleanText(input: string): string {
 /** 텍스트를 "목록/문단"으로 보기 좋게 렌더 (마크다운 없이) */
 function TextBlock({ text }: { text: string }) {
   const cleaned = cleanText(text);
-  const lines = cleaned.split("\n").map((l) => l.trim()).filter(Boolean);
+  const lines = cleaned
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
 
   const hasOrdered = lines.some((l) => /^\d+\.\s+/.test(l));
   const hasBullets = lines.some((l) => /^•\s+/.test(l));
 
-  // ordered list
   if (hasOrdered) {
-    const items = lines
-      .map((l) => l.replace(/^\d+\.\s+/, "").trim())
-      .filter(Boolean);
+    const items = lines.map((l) => l.replace(/^\d+\.\s+/, "").trim()).filter(Boolean);
     return (
       <ol className="list-decimal pl-5 space-y-2 text-zinc-200 text-sm leading-relaxed">
         {items.map((it, i) => (
@@ -306,7 +453,6 @@ function TextBlock({ text }: { text: string }) {
     );
   }
 
-  // bullet list
   if (hasBullets) {
     const items = lines.map((l) => l.replace(/^•\s+/, "").trim()).filter(Boolean);
     return (
@@ -318,7 +464,6 @@ function TextBlock({ text }: { text: string }) {
     );
   }
 
-  // paragraphs
   return (
     <div className="space-y-3 text-zinc-200 text-sm leading-relaxed whitespace-pre-wrap">
       {cleaned.split("\n\n").map((p, i) => (
@@ -349,6 +494,30 @@ function youtubeSearchUrl(q: string) {
   return `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`;
 }
 
+function safeNum(v: string): number | null {
+  const x = Number(String(v ?? "").replace(/,/g, "").trim());
+  return Number.isFinite(x) ? x : null;
+}
+
+function triFromStrings(minS: string, modeS: string, maxS: string): Tri | undefined {
+  const min = safeNum(minS);
+  const mode = safeNum(modeS);
+  const max = safeNum(maxS);
+  if (min == null || mode == null || max == null) return undefined;
+  if (!(min <= mode && mode <= max)) return undefined;
+  return { min, mode, max };
+}
+
+function fmtMoney(v: number | null | undefined) {
+  if (v == null || !Number.isFinite(v)) return "-";
+  // 너무 큰 수는 K/M/B로
+  const abs = Math.abs(v);
+  if (abs >= 1_000_000_000) return `${(v / 1_000_000_000).toFixed(2)}B`;
+  if (abs >= 1_000_000) return `${(v / 1_000_000).toFixed(2)}M`;
+  if (abs >= 1_000) return `${(v / 1_000).toFixed(2)}K`;
+  return String(Math.round(v));
+}
+
 export default function Home() {
   const [lang, setLang] = useState<Lang>("ko");
   const t = translations[lang];
@@ -357,10 +526,9 @@ export default function Home() {
 
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
-  const [activeTab, setActiveTab] = useState<"summary" | "autopsy" | "voc" | "links">("summary");
+  const [activeTab, setActiveTab] = useState<"summary" | "autopsy" | "voc" | "market" | "links">("summary");
 
   // form state
-  // ✅ 품목/카테고리(맨 앞)
   const [categoryPreset, setCategoryPreset] = useState<string>("가전");
   const [categoryCustom, setCategoryCustom] = useState<string>("");
 
@@ -373,6 +541,37 @@ export default function Home() {
   const [buyerInfo, setBuyerInfo] = useState("");
   const [productName, setProductName] = useState("");
   const [productDesc, setProductDesc] = useState("");
+
+  // extra fields
+  const [concept, setConcept] = useState("");
+  const [priceText, setPriceText] = useState("");
+  const [businessModel, setBusinessModel] = useState("");
+  const [salesChannel, setSalesChannel] = useState("");
+  const [salesCountry, setSalesCountry] = useState("");
+
+  // market settings
+  const [marketMode, setMarketMode] = useState<MarketMode>("auto");
+
+  // manual market inputs (strings)
+  const [mRevMin, setMRevMin] = useState("");
+  const [mRevMode, setMRevMode] = useState("");
+  const [mRevMax, setMRevMax] = useState("");
+
+  const [mPriceMin, setMPriceMin] = useState("");
+  const [mPriceMode, setMPriceMode] = useState("");
+  const [mPriceMax, setMPriceMax] = useState("");
+
+  const [mFreqMin, setMFreqMin] = useState("");
+  const [mFreqMode, setMFreqMode] = useState("");
+  const [mFreqMax, setMFreqMax] = useState("");
+
+  const [mPenMin, setMPenMin] = useState("");
+  const [mPenMode, setMPenMode] = useState("");
+  const [mPenMax, setMPenMax] = useState("");
+
+  const [mCustMin, setMCustMin] = useState("");
+  const [mCustMode, setMCustMode] = useState("");
+  const [mCustMax, setMCustMax] = useState("");
 
   const [founderTraits, setFounderTraits] = useState<FounderTraits>({
     obsession: 5,
@@ -400,23 +599,59 @@ export default function Home() {
   const statTooltips = useMemo(() => {
     if (lang === "en") {
       return {
-        product: "How strong the product itself is: differentiation, quality, feasibility, and defensibility.",
-        team: "Execution capacity as a team: speed, collaboration, and ability to deliver consistently.",
-        strategy: "Go-to-market & positioning: target clarity, competition angle, and realistic plan.",
-        marketing: "Ability to acquire customers: channels, messaging, CAC realism, and growth levers.",
-        consumer_needs: "Whether you solve a real pain point people will pay for (intensity + urgency + willingness).",
-        funnel: "Deaths by stage. Higher bars mean the idea tends to die at that stage in simulation.",
+        product: "Differentiation, quality, feasibility, defensibility.",
+        founder: "Founder capacity: execution, leadership, grit, persuasion.",
+        strategy: "Go-to-market & positioning realism.",
+        marketing: "Customer acquisition ability & channel realism.",
+        consumer_needs: "Pain intensity + urgency + willingness to pay.",
+
+        concept_fit: "Clarity/uniqueness/positioning fit.",
+        monetization: "Unit economics, pricing, margin, monetization logic.",
+        distribution: "Channel fit + ops/logistics/partner feasibility.",
+        market_scope: "Regulation/competition/expandability across segments/regions.",
+        potential_customers: "Size of buyers who can actually pay + reachable.",
+
+        funnel: "Deaths by stage. Higher bars mean the idea tends to die there.",
+        market: "Market share is estimated using market assumptions + survival runs.",
       };
     }
     return {
-      product: "제품 자체의 힘: 차별성/품질/기술·운영 실현가능성/모방 방어력.",
-      team: "팀으로 실행할 수 있는 체력: 속도/협업/꾸준한 딜리버리 능력.",
-      strategy: "시장/포지셔닝/진입 전략: 타겟 명확도, 경쟁각, 현실적인 플랜.",
-      marketing: "고객 획득력: 채널 적합도, 메시지, CAC 현실성, 성장 레버.",
-      consumer_needs: "고객이 돈을 실제로 사용할지?",
-      funnel: "단계별로 어디서 제일 많이 망하는지? 막대가 높을수록 그 구간이 지옥.",
+      product: "제품 자체의 힘: 차별성/품질/실현가능성/모방 방어.",
+      founder: "창업자 역량: 실행/리더십/멘탈/설득/리소스 감각.",
+      strategy: "시장/포지셔닝/진입 전략의 현실성.",
+      marketing: "고객 획득력: 채널 적합, CAC 현실성, 성장 레버.",
+      consumer_needs: "고객이 실제로 돈을 낼지(강도/긴급성/지불의사).",
+
+      concept_fit: "컨셉 명확도/차별성/포지셔닝 적합.",
+      monetization: "단위경제/마진/가격/수익 구조 타당성.",
+      distribution: "유통/채널 실행 난이도(운영·물류·파트너).",
+      market_scope: "규제/경쟁/확장성(국가·세그·제품 확장 가능).",
+      potential_customers: "지갑 있는 잠재고객 + 도달가능성.",
+
+      funnel: "단계별로 어디서 제일 많이 망하는지. 막대 높을수록 그 구간이 지옥.",
+      market: "시장점유율은 '시장가정 + 생존한 런' 기반으로 추정됩니다.",
     };
   }, [lang]);
+
+  const buildManualMarketAssumptions = (): MarketAssumptionsInput | null => {
+    const market_revenue = triFromStrings(mRevMin, mRevMode, mRevMax);
+    const price = triFromStrings(mPriceMin, mPriceMode, mPriceMax);
+    const purchase_freq_per_year = triFromStrings(mFreqMin, mFreqMode, mFreqMax);
+    const max_penetration = triFromStrings(mPenMin, mPenMode, mPenMax);
+    const market_customers = triFromStrings(mCustMin, mCustMode, mCustMax);
+
+    // 최소 조건: 매출 또는 고객수 + (가격/빈도) 중 일부라도 있어야 계산이 의미 있음
+    if (!market_revenue && !market_customers) return null;
+    if (!max_penetration) return null;
+
+    return {
+      market_revenue: market_revenue ?? undefined,
+      market_customers: market_customers ?? undefined,
+      price: price ?? undefined,
+      purchase_freq_per_year: purchase_freq_per_year ?? undefined,
+      max_penetration: max_penetration ?? undefined,
+    };
+  };
 
   const runAnalysis = async () => {
     if (!itemCategory) {
@@ -428,8 +663,22 @@ export default function Home() {
       return;
     }
 
+    if (marketMode === "manual") {
+      const m = buildManualMarketAssumptions();
+      if (!m) {
+        alert(
+          lang === "ko"
+            ? "직접 입력을 선택하셨습니다. 최소한 '시장매출(또는 고객수)' + '침투율 상한(0~1)'은 넣어주세요. (min/mode/max)"
+            : "Manual mode: please provide at least market revenue(or customers) + max penetration (0~1) as min/mode/max."
+        );
+        return;
+      }
+    }
+
     setLoading(true);
     try {
+      const marketAssumptions = marketMode === "manual" ? buildManualMarketAssumptions() : null;
+
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -437,10 +686,27 @@ export default function Home() {
           language: lang,
           sellerInfo,
           buyerInfo,
-          // ✅ category를 함께 보냄 (다음에 ROUTE/MCTS에서 점수 반영)
           category: itemCategory,
-          productInfo: { name: productName, desc: productDesc, category: itemCategory },
+          productInfo: {
+            name: productName,
+            desc: productDesc,
+            category: itemCategory,
+            concept,
+            price: priceText,
+            businessModel,
+            salesChannel,
+            salesCountry,
+          },
+          concept,
+          price: priceText,
+          businessModel,
+          salesChannel,
+          salesCountry,
+
           founderTraits,
+
+          marketMode,
+          ...(marketMode === "manual" && marketAssumptions ? { marketAssumptions } : {}),
         }),
       });
 
@@ -448,7 +714,7 @@ export default function Home() {
 
       if (data?.success) {
         setResult(data);
-        setStep("result"); // ✅ 결과 화면으로 "전환" (아래로 추가 X)
+        setStep("result");
         setActiveTab("summary");
       } else {
         alert("Error: " + (data?.error ?? "Unknown error"));
@@ -542,12 +808,92 @@ export default function Home() {
     );
   };
 
+  const getFounderScore = (r: AnalysisResult | null) => {
+    const s: any = r?.stats ?? {};
+    return Number(s.founder ?? s.team ?? 0);
+  };
+
   const survival = Number(result?.simulation?.survival_rate ?? result?.simulation?.survivalRate ?? 0);
   const bottleneck =
-    result?.simulation?.bottleneck_stage ??
-    result?.simulation?.bottleneckStage ??
-    result?.simulation?.bottleneck ??
-    "-";
+    result?.simulation?.bottleneck_stage ?? result?.simulation?.bottleneckStage ?? result?.simulation?.bottleneck ?? "-";
+
+  // market extract helpers
+  const marketNeeded = Boolean(result?.simulation?.market_needed ?? false);
+  const marketShare = result?.simulation?.market_share ?? null;
+  const marketLayers = result?.simulation?.market_layers ?? null;
+
+  const revLayers = useMemo(() => {
+    const rev = marketLayers?.revenue ?? {};
+    const total = Number(rev?.total_market_p50 ?? rev?.total_market ?? 0);
+    const sam = Number(rev?.addressable_sam_p50 ?? rev?.sam ?? 0);
+    const som = Number(rev?.obtainable_som_p50 ?? rev?.som ?? 0);
+    const you = Number(rev?.your_revenue_p50 ?? rev?.you ?? 0);
+    return { total, sam, som, you };
+  }, [marketLayers]);
+
+  const shareP50 = Number(marketShare?.p50 ?? marketShare?.share_p50 ?? 0);
+  const shareP10 = Number(marketShare?.p10 ?? marketShare?.share_p10 ?? 0);
+  const shareP90 = Number(marketShare?.p90 ?? marketShare?.share_p90 ?? 0);
+  const shareBand = String(marketShare?.band ?? marketShare?.audience_band ?? "");
+
+  const MarketAreaBar = ({
+    total,
+    sam,
+    som,
+    you,
+  }: {
+    total: number;
+    sam: number;
+    som: number;
+    you: number;
+  }) => {
+    const base = total > 0 ? total : 1;
+    const samPct = Math.max(0, Math.min(100, (sam / base) * 100));
+    const somPct = Math.max(0, Math.min(100, (som / base) * 100));
+    const youPct = Math.max(0, Math.min(100, (you / base) * 100));
+
+    return (
+      <div className="space-y-3">
+        <div className="h-10 bg-zinc-800 rounded-xl overflow-hidden relative border border-zinc-700">
+          {/* total base */}
+          <div className="absolute inset-0 bg-zinc-700/30" />
+
+          {/* SAM overlay */}
+          <div className="absolute inset-y-0 left-0 bg-blue-600/30" style={{ width: `${samPct}%` }} />
+
+          {/* SOM overlay */}
+          <div className="absolute inset-y-0 left-0 bg-orange-600/35" style={{ width: `${somPct}%` }} />
+
+          {/* YOU overlay */}
+          <div className="absolute inset-y-0 left-0 bg-red-600/55" style={{ width: `${youPct}%` }} />
+
+          <div className="absolute inset-0 flex items-center justify-between px-3 text-xs font-bold text-white/90">
+            <span>{t.marketGraphTitle}</span>
+            <span>{total > 0 ? `Total=${fmtMoney(total)}` : ""}</span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+          <div className="p-3 rounded-xl bg-zinc-950/40 border border-zinc-800">
+            <div className="text-zinc-400 text-xs font-bold">{t.marketTotal}</div>
+            <div className="text-white font-extrabold mt-1">{fmtMoney(total)}</div>
+          </div>
+          <div className="p-3 rounded-xl bg-zinc-950/40 border border-zinc-800">
+            <div className="text-zinc-400 text-xs font-bold">{t.marketSAM}</div>
+            <div className="text-blue-200 font-extrabold mt-1">{fmtMoney(sam)}</div>
+          </div>
+          <div className="p-3 rounded-xl bg-zinc-950/40 border border-zinc-800">
+            <div className="text-zinc-400 text-xs font-bold">{t.marketSOM}</div>
+            <div className="text-orange-200 font-extrabold mt-1">{fmtMoney(som)}</div>
+          </div>
+          <div className="p-3 rounded-xl bg-zinc-950/40 border border-zinc-800">
+            <div className="text-zinc-400 text-xs font-bold">{t.marketYou}</div>
+            <div className="text-red-200 font-extrabold mt-1">{fmtMoney(you)}</div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   // ------------------------------
   // Render
@@ -588,7 +934,6 @@ export default function Home() {
         ======================= */}
         {step === "home" && (
           <div className="space-y-6">
-            {/* HERO IMAGE */}
             <div className="w-full flex justify-center">
               <div className="w-full max-w-4xl rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900/40 shadow-2xl">
                 <div className="px-4 py-3 text-sm md:text-base font-bold text-zinc-200 border-b border-zinc-800 bg-zinc-950/40">
@@ -598,13 +943,12 @@ export default function Home() {
                 <div className="relative">
                   <img src="/images/jjal.jpeg" alt="Startup Hell Meme" className="w-full h-auto object-cover" />
                   <div className="absolute bottom-3 right-3 text-[11px] md:text-xs px-2 py-1 rounded-md bg-black/60 text-zinc-200 border border-white/10">
-                    hell-sim v1
+                    hell-sim v2
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* START BUTTON */}
             <div className="max-w-4xl mx-auto text-center space-y-3">
               <p className="text-zinc-400">{t.startSub}</p>
               <button
@@ -637,7 +981,7 @@ export default function Home() {
 
               <div className="space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* ✅ 품목/카테고리: 맨 앞 */}
+                  {/* ✅ 품목/카테고리 */}
                   <div className="space-y-2 md:col-span-2">
                     <label className="text-sm font-bold text-red-400 block">{t.itemCategory}</label>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -678,8 +1022,8 @@ export default function Home() {
                     </div>
                     <p className="text-xs text-zinc-500 mt-1">
                       {lang === "ko"
-                        ? "품목은 가격/채널/국가 같은 현실 제약(예: 가전 100원 불가)을 반영하기 위한 핵심 입력입니다."
-                        : "Category helps apply real-world constraints (e.g., a fridge can’t be sold for $1)."}
+                        ? "품목은 가격/채널/국가 같은 현실 제약을 반영하기 위한 핵심 입력입니다."
+                        : "Category helps apply real-world constraints."}
                     </p>
                   </div>
 
@@ -725,6 +1069,268 @@ export default function Home() {
                       className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white min-h-[120px] focus:outline-none focus:border-red-500"
                     />
                   </div>
+
+                  {/* optional fields (help auto market research + scoring) */}
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="text-sm font-bold text-zinc-300 block">{t.concept}</label>
+                    <input
+                      type="text"
+                      placeholder={t.conceptPlace}
+                      value={concept}
+                      onChange={(e) => setConcept(e.target.value)}
+                      className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-zinc-300 block">{t.price}</label>
+                    <input
+                      type="text"
+                      placeholder={t.pricePlace}
+                      value={priceText}
+                      onChange={(e) => setPriceText(e.target.value)}
+                      className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-zinc-300 block">{t.businessModel}</label>
+                    <input
+                      type="text"
+                      placeholder={t.businessModelPlace}
+                      value={businessModel}
+                      onChange={(e) => setBusinessModel(e.target.value)}
+                      className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-zinc-300 block">{t.salesChannel}</label>
+                    <input
+                      type="text"
+                      placeholder={t.salesChannelPlace}
+                      value={salesChannel}
+                      onChange={(e) => setSalesChannel(e.target.value)}
+                      className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-zinc-300 block">{t.salesCountry}</label>
+                    <input
+                      type="text"
+                      placeholder={t.salesCountryPlace}
+                      value={salesCountry}
+                      onChange={(e) => setSalesCountry(e.target.value)}
+                      className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Market share section */}
+                <div className="bg-zinc-900/40 border border-zinc-800 rounded-xl p-6">
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className="text-lg font-extrabold text-white">{t.marketSectionTitle}</h3>
+                    <InfoTip text={statTooltips.market} />
+                  </div>
+
+                  <div className="text-sm text-zinc-400 mb-4">{t.marketModeLabel}</div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setMarketMode("none")}
+                      className={`p-4 rounded-xl border font-bold text-sm text-left transition ${
+                        marketMode === "none"
+                          ? "border-red-600 bg-red-600/20 text-white"
+                          : "border-zinc-800 bg-zinc-950/30 text-zinc-300 hover:bg-zinc-900"
+                      }`}
+                    >
+                      {t.marketModeNone}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setMarketMode("auto")}
+                      className={`p-4 rounded-xl border font-bold text-sm text-left transition ${
+                        marketMode === "auto"
+                          ? "border-blue-600 bg-blue-600/15 text-white"
+                          : "border-zinc-800 bg-zinc-950/30 text-zinc-300 hover:bg-zinc-900"
+                      }`}
+                    >
+                      {t.marketModeAuto}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setMarketMode("manual")}
+                      className={`p-4 rounded-xl border font-bold text-sm text-left transition ${
+                        marketMode === "manual"
+                          ? "border-orange-600 bg-orange-600/15 text-white"
+                          : "border-zinc-800 bg-zinc-950/30 text-zinc-300 hover:bg-zinc-900"
+                      }`}
+                    >
+                      {t.marketModeManual}
+                    </button>
+                  </div>
+
+                  {marketMode === "manual" && (
+                    <div className="mt-5 space-y-3">
+                      <div className="text-xs text-zinc-500">{t.marketManualHint}</div>
+
+                      {/* inputs */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* market revenue */}
+                        <div className="p-4 rounded-xl bg-zinc-950/40 border border-zinc-800">
+                          <div className="text-sm font-bold text-zinc-200 mb-2">
+                            시장매출(연간) <span className="text-zinc-500 text-xs">(숫자)</span>
+                          </div>
+                          <div className="grid grid-cols-3 gap-2">
+                            <input
+                              value={mRevMin}
+                              onChange={(e) => setMRevMin(e.target.value)}
+                              placeholder="min"
+                              className="p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                            />
+                            <input
+                              value={mRevMode}
+                              onChange={(e) => setMRevMode(e.target.value)}
+                              placeholder="mode"
+                              className="p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                            />
+                            <input
+                              value={mRevMax}
+                              onChange={(e) => setMRevMax(e.target.value)}
+                              placeholder="max"
+                              className="p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                            />
+                          </div>
+                        </div>
+
+                        {/* market customers */}
+                        <div className="p-4 rounded-xl bg-zinc-950/40 border border-zinc-800">
+                          <div className="text-sm font-bold text-zinc-200 mb-2">
+                            시장 고객수(연간 구매자) <span className="text-zinc-500 text-xs">(선택)</span>
+                          </div>
+                          <div className="grid grid-cols-3 gap-2">
+                            <input
+                              value={mCustMin}
+                              onChange={(e) => setMCustMin(e.target.value)}
+                              placeholder="min"
+                              className="p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                            />
+                            <input
+                              value={mCustMode}
+                              onChange={(e) => setMCustMode(e.target.value)}
+                              placeholder="mode"
+                              className="p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                            />
+                            <input
+                              value={mCustMax}
+                              onChange={(e) => setMCustMax(e.target.value)}
+                              placeholder="max"
+                              className="p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                            />
+                          </div>
+                        </div>
+
+                        {/* price */}
+                        <div className="p-4 rounded-xl bg-zinc-950/40 border border-zinc-800">
+                          <div className="text-sm font-bold text-zinc-200 mb-2">
+                            평균 가격(1회 결제) <span className="text-zinc-500 text-xs">(숫자)</span>
+                          </div>
+                          <div className="grid grid-cols-3 gap-2">
+                            <input
+                              value={mPriceMin}
+                              onChange={(e) => setMPriceMin(e.target.value)}
+                              placeholder="min"
+                              className="p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                            />
+                            <input
+                              value={mPriceMode}
+                              onChange={(e) => setMPriceMode(e.target.value)}
+                              placeholder="mode"
+                              className="p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                            />
+                            <input
+                              value={mPriceMax}
+                              onChange={(e) => setMPriceMax(e.target.value)}
+                              placeholder="max"
+                              className="p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                            />
+                          </div>
+                        </div>
+
+                        {/* freq */}
+                        <div className="p-4 rounded-xl bg-zinc-950/40 border border-zinc-800">
+                          <div className="text-sm font-bold text-zinc-200 mb-2">
+                            구매빈도(연/인) <span className="text-zinc-500 text-xs">(숫자)</span>
+                          </div>
+                          <div className="grid grid-cols-3 gap-2">
+                            <input
+                              value={mFreqMin}
+                              onChange={(e) => setMFreqMin(e.target.value)}
+                              placeholder="min"
+                              className="p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                            />
+                            <input
+                              value={mFreqMode}
+                              onChange={(e) => setMFreqMode(e.target.value)}
+                              placeholder="mode"
+                              className="p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                            />
+                            <input
+                              value={mFreqMax}
+                              onChange={(e) => setMFreqMax(e.target.value)}
+                              placeholder="max"
+                              className="p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                            />
+                          </div>
+                        </div>
+
+                        {/* max penetration */}
+                        <div className="p-4 rounded-xl bg-zinc-950/40 border border-zinc-800 md:col-span-2">
+                          <div className="text-sm font-bold text-zinc-200 mb-2">
+                            침투율 상한(0~1) <span className="text-zinc-500 text-xs">(필수, 예: 0.001 ~ 0.01)</span>
+                          </div>
+                          <div className="grid grid-cols-3 gap-2">
+                            <input
+                              value={mPenMin}
+                              onChange={(e) => setMPenMin(e.target.value)}
+                              placeholder="min (0~1)"
+                              className="p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                            />
+                            <input
+                              value={mPenMode}
+                              onChange={(e) => setMPenMode(e.target.value)}
+                              placeholder="mode (0~1)"
+                              className="p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                            />
+                            <input
+                              value={mPenMax}
+                              onChange={(e) => setMPenMax(e.target.value)}
+                              placeholder="max (0~1)"
+                              className="p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="text-xs text-zinc-500">
+                        {lang === "ko"
+                          ? "※ min/mode/max는 3점 추정(보수/가장 그럴듯/낙관)입니다. 숫자만 입력하세요."
+                          : "min/mode/max is a 3-point estimate (low/most likely/high). Numbers only."}
+                      </div>
+                    </div>
+                  )}
+
+                  {marketMode === "auto" && (
+                    <div className="mt-4 text-sm text-zinc-400">
+                      {lang === "ko"
+                        ? "자동 모드는 Tavily로 시장규모/가격/구매빈도 관련 정보를 검색하고, AI가 숫자(근거 포함)를 추출해 점유율을 계산합니다."
+                        : "Auto mode uses Tavily + AI to extract numbers (with sources) and estimate market share."}
+                    </div>
+                  )}
                 </div>
 
                 {/* 창업자 특성 */}
@@ -771,7 +1377,7 @@ export default function Home() {
         )}
 
         {/* =======================
-            STEP 3) RESULT (새 화면)
+            STEP 3) RESULT
         ======================= */}
         {step === "result" && result && (
           <div className="space-y-8">
@@ -828,12 +1434,13 @@ export default function Home() {
 
             {/* 탭 */}
             <div className="w-full">
-              <div className="grid w-full grid-cols-4 bg-zinc-800/50 p-1 rounded-lg mb-6">
+              <div className="grid w-full grid-cols-5 bg-zinc-800/50 p-1 rounded-lg mb-6">
                 {(
                   [
                     ["summary", t.tabSummary],
                     ["autopsy", t.tabAutopsy],
                     ["voc", t.tabVoc],
+                    ["market", t.tabMarket],
                     ["links", t.tabLinks],
                   ] as const
                 ).map(([k, label]) => (
@@ -856,44 +1463,89 @@ export default function Home() {
                     <div className="bg-zinc-900/50 border border-zinc-800 h-full rounded-xl p-6">
                       <h3 className="flex items-center gap-2 text-lg font-bold text-white mb-6">
                         <IconTrendingUp className="w-5 h-5 text-blue-400" />
-                        5 Stats
+                        10 Stats
                       </h3>
-                      <div className="space-y-6">
-                        <StatBar
-                          label={t.statProduct}
-                          value={result.stats.product}
-                          icon={IconShoppingCart}
-                          colorClass="text-blue-400"
-                          tooltip={statTooltips.product}
-                        />
-                        <StatBar
-                          label={t.statTeam}
-                          value={result.stats.team}
-                          icon={IconUsers}
-                          colorClass="text-green-400"
-                          tooltip={statTooltips.team}
-                        />
-                        <StatBar
-                          label={t.statStrategy}
-                          value={result.stats.strategy}
-                          icon={IconTarget}
-                          colorClass="text-purple-400"
-                          tooltip={statTooltips.strategy}
-                        />
-                        <StatBar
-                          label={t.statMarketing}
-                          value={result.stats.marketing}
-                          icon={IconTrendingUp}
-                          colorClass="text-yellow-400"
-                          tooltip={statTooltips.marketing}
-                        />
-                        <StatBar
-                          label={t.statNeeds}
-                          value={result.stats.consumer_needs}
-                          icon={IconHeart}
-                          colorClass="text-red-400"
-                          tooltip={statTooltips.consumer_needs}
-                        />
+
+                      <div className="grid grid-cols-1 gap-6">
+                        {/* core 5 */}
+                        <div className="space-y-6">
+                          <StatBar
+                            label={t.statProduct}
+                            value={result.stats.product}
+                            icon={IconShoppingCart}
+                            colorClass="text-blue-400"
+                            tooltip={statTooltips.product}
+                          />
+                          <StatBar
+                            label={t.statFounder}
+                            value={getFounderScore(result)}
+                            icon={IconUsers}
+                            colorClass="text-green-400"
+                            tooltip={statTooltips.founder}
+                          />
+                          <StatBar
+                            label={t.statStrategy}
+                            value={result.stats.strategy}
+                            icon={IconTarget}
+                            colorClass="text-purple-400"
+                            tooltip={statTooltips.strategy}
+                          />
+                          <StatBar
+                            label={t.statMarketing}
+                            value={result.stats.marketing}
+                            icon={IconTrendingUp}
+                            colorClass="text-yellow-400"
+                            tooltip={statTooltips.marketing}
+                          />
+                          <StatBar
+                            label={t.statNeeds}
+                            value={result.stats.consumer_needs}
+                            icon={IconHeart}
+                            colorClass="text-red-400"
+                            tooltip={statTooltips.consumer_needs}
+                          />
+                        </div>
+
+                        <div className="h-px bg-zinc-800" />
+
+                        {/* biz 5 */}
+                        <div className="space-y-6">
+                          <StatBar
+                            label={t.statConcept}
+                            value={result.stats.concept_fit}
+                            icon={IconTarget}
+                            colorClass="text-blue-300"
+                            tooltip={statTooltips.concept_fit}
+                          />
+                          <StatBar
+                            label={t.statMonetization}
+                            value={result.stats.monetization}
+                            icon={IconDollar}
+                            colorClass="text-emerald-400"
+                            tooltip={statTooltips.monetization}
+                          />
+                          <StatBar
+                            label={t.statDistribution}
+                            value={result.stats.distribution}
+                            icon={IconTruck}
+                            colorClass="text-orange-400"
+                            tooltip={statTooltips.distribution}
+                          />
+                          <StatBar
+                            label={t.statScope}
+                            value={result.stats.market_scope}
+                            icon={IconGlobe}
+                            colorClass="text-purple-300"
+                            tooltip={statTooltips.market_scope}
+                          />
+                          <StatBar
+                            label={t.statPotential}
+                            value={result.stats.potential_customers}
+                            icon={IconPie}
+                            colorClass="text-rose-300"
+                            tooltip={statTooltips.potential_customers}
+                          />
+                        </div>
                       </div>
                     </div>
 
@@ -947,6 +1599,96 @@ export default function Home() {
                   <div className="bg-zinc-950/50 p-6 rounded-xl border border-zinc-800/50 text-zinc-300 leading-relaxed whitespace-pre-wrap font-mono text-sm">
                     {cleanText(result.debate)}
                   </div>
+                </div>
+              )}
+
+              {/* Market */}
+              {activeTab === "market" && (
+                <div className="space-y-6">
+                  <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6">
+                    <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
+                      <IconPie className="w-6 h-6 text-red-400" />
+                      {t.marketTabTitle}
+                    </h3>
+                    <div className="text-sm text-zinc-400">{t.marketShareNote}</div>
+
+                    {marketNeeded && (
+                      <div className="mt-4 p-4 rounded-xl border border-red-900/40 bg-red-950/20 text-red-200 text-sm font-bold">
+                        {t.marketNeededMsg}
+                      </div>
+                    )}
+
+                    {!marketNeeded && (
+                      <>
+                        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div className="p-4 rounded-xl bg-zinc-950/40 border border-zinc-800">
+                            <div className="text-zinc-400 text-xs font-bold">{t.marketShareTitle}</div>
+                            <div className="text-3xl font-extrabold text-red-300 mt-2">
+                              {(shareP50 * 100).toFixed(2)}%
+                            </div>
+                            <div className="text-xs text-zinc-500 mt-2">
+                              p10 {(shareP10 * 100).toFixed(2)}% · p90 {(shareP90 * 100).toFixed(2)}%
+                            </div>
+                          </div>
+
+                          <div className="p-4 rounded-xl bg-zinc-950/40 border border-zinc-800">
+                            <div className="text-zinc-400 text-xs font-bold">Band</div>
+                            <div className="text-2xl font-extrabold text-white mt-2">{shareBand || "-"}</div>
+                            <div className="text-xs text-zinc-500 mt-2">
+                              {result.report.market_takeaway ? cleanText(result.report.market_takeaway) : ""}
+                            </div>
+                          </div>
+
+                          <div className="p-4 rounded-xl bg-zinc-950/40 border border-zinc-800">
+                            <div className="text-zinc-400 text-xs font-bold">{t.marketAssumptionsTitle}</div>
+                            <pre className="mt-2 text-xs text-zinc-300 whitespace-pre-wrap font-mono">
+{JSON.stringify(result.marketAssumptionsUsed ?? null, null, 2)}
+                            </pre>
+                          </div>
+                        </div>
+
+                        <div className="mt-6">
+                          <h4 className="text-lg font-extrabold text-white mb-3">{t.marketGraphTitle}</h4>
+                          <MarketAreaBar total={revLayers.total} sam={revLayers.sam} som={revLayers.som} you={revLayers.you} />
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Auto sources */}
+                  {(result.marketSizingSources?.length ?? 0) > 0 && (
+                    <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6">
+                      <h3 className="text-lg font-bold text-white mb-4">{t.marketSourcesTitle}</h3>
+                      <div className="space-y-3">
+                        {result.marketSizingSources!.slice(0, 6).map((c, i) => (
+                          <a
+                            key={i}
+                            href={c.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="block p-4 rounded-xl border border-zinc-800 bg-zinc-950/40 hover:bg-zinc-900 transition"
+                          >
+                            <div className="text-zinc-100 font-bold">{c.title}</div>
+                            <div className="text-zinc-400 text-sm mt-2 line-clamp-3">{String(c.content ?? "").slice(0, 240)}...</div>
+                            <div className="text-xs text-zinc-500 mt-2">링크 열기</div>
+                          </a>
+                        ))}
+                      </div>
+
+                      {result.marketAutoMeta && (
+                        <div className="mt-6 p-4 rounded-xl border border-zinc-800 bg-zinc-950/30">
+                          <h4 className="text-sm font-extrabold text-white mb-2">{t.marketMetaTitle}</h4>
+                          <div className="text-xs text-zinc-400">
+                            <div className="mb-2">
+                              <span className="font-bold text-zinc-300">assumed_fields:</span>{" "}
+                              {(result.marketAutoMeta.assumed_fields ?? []).join(", ") || "-"}
+                            </div>
+                            <div className="whitespace-pre-wrap">{cleanText(result.marketAutoMeta.rationale ?? "")}</div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 
