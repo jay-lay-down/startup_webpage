@@ -233,9 +233,9 @@ const translations = {
     // market section
     marketSectionTitle: "🥧 시장점유율 시뮬레이션",
     marketModeLabel: "시장정보 입력 방식",
-    marketModeNone: "안 할래요(점유율 계산 X)",
-    marketModeAuto: "모름 → 자동 시장조사(Tavily + AI)",
-    marketModeManual: "알아요 → 직접 입력(3점 추정: min/mode/max)",
+    marketModeNone: "필요없음",
+    marketModeAuto: "AI 자동 시장조사",
+    marketModeManual: "직접 입력",
     marketManualHint:
       "가능한 '연간' 기준으로 넣으세요. 예: 시장매출(연간), 평균가격(1회 결제), 구매빈도(연/인), 침투율 상한(0~1).",
     marketTabTitle: "시장점유율/파이 먹기",
