@@ -1,17 +1,13 @@
-/* app/globals.css */
-
-/* 1. 프리텐다드 폰트 불러오기 (CDN) */
 @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
 
-/* 2. Tailwind 필수 설정 */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* 3. 전역 스타일 설정 */
-/* 아래 코드가 있어야 배경이 검은색으로 고정되고, 기본 폰트가 Pretendard로 먹힙니다 */
-@layer base {
-  body {
-    @apply bg-[#050505] text-gray-200 font-sans;
-  }
+/* @layer base { ... } 부분을 지우고 기본 스타일만 남깁니다. */
+/* 배경색은 layout.tsx나 page.tsx의 className으로 제어하는 게 더 안전합니다. */
+
+body {
+  background-color: #050505; /* 지옥불 배경색 */
+  color: #e5e7eb; /* text-gray-200 */
 }
