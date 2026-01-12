@@ -1,307 +1,401 @@
+// app/page.tsx
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { Terminal, AlertTriangle, ExternalLink, PlayCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2, AlertTriangle, Terminal, TrendingUp, Users, Target, ShoppingCart, Heart } from "lucide-react";
+import ReactWordcloud from 'react-wordcloud';
+
+// --- 타입 정의 ---
+type AnalysisResult = {
+  success: boolean;
+  stats: {
+    product: number;
+    team: number;
+    strategy: number;
+    marketing: number;
+    consumer_needs: number;
+  };
+  simulation: {
+    survival_rate: number;
+    death_counts: Record<string, number>;
+    bottleneck_stage: string;
+  };
+  report: {
+    death_cause: string;
+    autopsy_report: string;
+    action_plan: string;
+    needs_analysis: string;
+  };
+  debate: string;
+  pastCases: Array<{ title: string; url: string; content: string }>;
+  error?: string;
+};
+
+// ✅ 창업자 특성 타입 정의
+type FounderTraits = {
+  obsession: number; // 집착
+  speed: number; // 속도
+  ambiguity: number; // 불확실성 내성
+  feedback: number; // 피드백 수용력
+  resource: number; // 리소스 감각
+  persuasion: number; // 설득력
+  ethics: number; // 윤리/신뢰
+  stamina: number; // 체력/지속가능성
+};
 
 export default function Home() {
-  // ✅ 인트로 페이지 표시 여부 상태 (초기값 true)
-  const [showStartPage, setShowStartPage] = useState(true);
-  
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [showResults, setShowResults] = useState(false); // 결과 화면 표시 여부
+  const [result, setResult] = useState<AnalysisResult | null>(null);
 
-  const [formData, setFormData] = useState({
-    sellerAge: "30대",
-    sellerStyle: "",
-    buyerAge: "20대",
-    buyerTraits: "",
-    productName: "",
-    productDesc: "",
-    productPrice: "",
+  // 입력 폼 상태
+  const [sellerInfo, setSellerInfo] = useState("");
+  const [buyerInfo, setBuyerInfo] = useState("");
+  const [productName, setProductName] = useState("");
+  const [productDesc, setProductDesc] = useState("");
+
+  // ✅ 창업자 특성 초기값 (5점 기준)
+  const [founderTraits, setFounderTraits] = useState<FounderTraits>({
+    obsession: 5, speed: 5, ambiguity: 5, feedback: 5,
+    resource: 5, persuasion: 5, ethics: 5, stamina: 5
   });
 
-  const handleRun = async () => {
-    if (!formData.productName || !formData.productDesc) {
-      alert("아이템 이름과 설명은 필수입니다!");
+  const handleTraitChange = (trait: keyof FounderTraits, value: number) => {
+    setFounderTraits(prev => ({ ...prev, [trait]: value }));
+  };
+
+  const runAnalysis = async () => {
+    if (!productName || !productDesc) {
+      alert("아이템 이름과 설명을 입력해주세요.");
       return;
     }
 
     setLoading(true);
-    setResult(null);
-
+    setShowResults(false);
     try {
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          sellerInfo: `${formData.sellerAge}, ${formData.sellerStyle}`,
-          buyerInfo: `${formData.buyerAge}, ${formData.buyerTraits}`,
-          productInfo: {
-            name: formData.productName,
-            desc: formData.productDesc,
-            price: formData.productPrice,
-          },
+          sellerInfo,
+          buyerInfo,
+          productInfo: { name: productName, desc: productDesc },
+          founderTraits, // ✅ 신규 입력 데이터 전송
         }),
       });
 
       const data = await res.json();
       if (data.success) {
         setResult(data);
+        setShowResults(true); // 결과 화면으로 전환
       } else {
         alert("분석 실패: " + data.error);
       }
     } catch (e) {
-      alert("서버 연결 에러");
+      alert("서버 통신 오류가 발생했습니다.");
     } finally {
       setLoading(false);
     }
   };
 
-  const funnelData = result ? Object.keys(result.simulation.deathCounts).map(key => ({
-    name: key,
-    value: result.simulation.deathCounts[key]
-  })) : [];
+  // --- 헬퍼 함수 및 컴포넌트 ---
+  const StatBar = ({ label, value, icon: Icon, colorClass }: any) => (
+    <div className="space-y-2">
+      <div className="flex justify-between text-sm font-bold items-center">
+        <div className="flex items-center gap-2">
+          <Icon className={`w-4 h-4 ${colorClass}`} /> {label}
+        </div>
+        <span className={colorClass}>{value}점</span>
+      </div>
+      <Progress value={value} className={`h-3 ${colorClass.replace('text', 'bg')}/20`} indicatorColor={colorClass.replace('text-','')} />
+    </div>
+  );
 
-  // ✅ 인트로 화면 (START 버튼 누르기 전)
-  if (showStartPage) {
+  const getFunnelChart = (simulation: any) => {
+    const stages = ["Seed", "MVP", "PMF", "Scale-up", "Unicorn"];
+    const maxDeaths = Math.max(...Object.values(simulation.death_counts) as number[]);
+
     return (
-      <main className="min-h-screen bg-[#050505] text-gray-200 font-sans flex flex-col justify-center items-center p-4">
-        <div className="text-center space-y-8 animate-in fade-in duration-1000 max-w-2xl w-full">
-          <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight leading-tight">
-            당신의 아이디어가<br/>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-600">쓰레기통</span>에 들어가는 시간은?
-          </h1>
-          
-          {/* ✅ 밈 이미지 영역 (jjal.jpeg) */}
-          <div className="relative w-full mx-auto aspect-[4/3] rounded-2xl overflow-hidden border-2 border-white/10 shadow-2xl shadow-red-900/30 rotate-[-2deg] hover:rotate-0 transition-transform duration-300">
-            <Image
-              src="/images/jjal.jpeg" 
-              alt="양심을 버리십니까? 아뇨 전 쓰레기를 버리는데요"
-              fill
-              className="object-cover"
-              priority
-            />
-          </div>
+      <div className="space-y-3 mt-4">
+        {stages.map((stage) => {
+          const deaths = simulation.death_counts[stage] || 0;
+          const isBottleneck = stage === simulation.bottleneck_stage;
+          const width = maxDeaths === 0 ? 0 : (deaths / maxDeaths) * 100;
 
-          {/* ✅ START 버튼 */}
-          <div>
-            <button
-              onClick={() => setShowStartPage(false)}
-              className="px-10 py-5 bg-gradient-to-r from-red-600 to-rose-600 rounded-full font-black text-2xl text-white shadow-lg shadow-red-900/40 hover:scale-105 active:scale-95 transition-all animate-bounce"
-            >
-              START 🔥
-            </button>
-            <p className="text-gray-500 text-sm mt-4">⚠️ 마음의 준비를 하고 누르세요.</p>
-          </div>
-        </div>
-      </main>
+          return (
+            <div key={stage} className="flex items-center gap-2 text-sm">
+               <span className={`w-20 text-right font-bold ${isBottleneck ? 'text-red-500' : 'text-zinc-400'}`}>
+                {stage}
+              </span>
+              <div className="flex-1 h-6 bg-zinc-800 rounded-sm overflow-hidden relative">
+                <div
+                  className={`h-full ${isBottleneck ? "bg-red-600" : "bg-zinc-600"
+                    } transition-all duration-500`}
+                  style={{ width: `${width}%` }}
+                />
+                <span className="absolute inset-0 flex items-center justify-end px-2 text-xs font-bold text-white/80">
+                   {deaths > 0 ? `${deaths}명 사망` : ""}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+         <p className="text-center text-xs text-zinc-500 mt-2">단계별 사망자 수 (높을수록 위험)</p>
+      </div>
     );
-  }
+  };
 
-  // ✅ 메인 평가 화면 (START 버튼 누른 후)
+  // 워드클라우드 데이터 추출
+  const getWordCloudWords = (debateText: string) => {
+      const keywordLine = debateText.split('\n').find(line => line.includes("키워드:"));
+      if (!keywordLine) return [];
+      const keywords = keywordLine.replace("키워드:", "").split(",").map(k => k.trim());
+      // 간단하게 랜덤 가중치 부여
+      return keywords.map(text => ({ text, value: Math.floor(Math.random() * 50) + 20 }));
+  };
+
+
+  // =========================================
+  // 메인 UI 렌더링
+  // =========================================
   return (
-    <main className="min-h-screen bg-[#050505] text-gray-200 font-sans selection:bg-red-500/30">
-      <div className="max-w-4xl mx-auto p-4 md:p-8">
+    <main className="min-h-screen bg-[#0A0A0A] text-zinc-100 p-4 md:p-8 font-pretendard">
+      <div className="max-w-5xl mx-auto space-y-8">
         
-        {/* Header */}
-        <header className="mb-10 text-center space-y-4 animate-in slide-in-from-top duration-700">
-          <div className="inline-block px-3 py-1 rounded-full bg-red-900/30 text-red-400 text-xs font-bold border border-red-900/50 mb-2">
-            WARNING: BRUTAL REALITY
-          </div>
-          <h1 className="text-4xl md:text-6xl font-black text-white tracking-tight">
-            💀 스타트업 <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-600">지옥 시뮬레이터</span>
+        {/* 헤더 */}
+        <div className="text-center space-y-2">
+          <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500 tracking-tight">
+            ☠️ 스타트업 지옥 시뮬레이터
           </h1>
-          <p className="text-gray-400 text-lg">
-            입력하신 데이터를 바탕으로 냉혹한 생존 확률을 계산합니다.
+          <p className="text-zinc-400 text-lg">
+            당신의 아이디어가 얼마나 빨리 망할지 팩트로 두들겨 드립니다.
           </p>
-        </header>
-
-        {/* Input Section */}
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10 animate-in slide-in-from-bottom duration-700 delay-100">
-          <Card title="🙋‍♂️ 판매자">
-            <Select label="연령대" value={formData.sellerAge} onChange={(e: any) => setFormData({...formData, sellerAge: e.target.value})} options={["10대", "20대", "30대", "40대", "50대 이상"]} />
-            <Input label="성향/약점" placeholder="예: 귀찮음이 많음, 실행력 부족" value={formData.sellerStyle} onChange={(e: any) => setFormData({...formData, sellerStyle: e.target.value})} />
-          </Card>
-
-          <Card title="🎯 타겟">
-            <Select label="연령대" value={formData.buyerAge} onChange={(e: any) => setFormData({...formData, buyerAge: e.target.value})} options={["10대", "20대", "30대", "40대", "50대 이상"]} />
-            <Input label="특징" placeholder="예: 가성비충, 인스타 중독" value={formData.buyerTraits} onChange={(e: any) => setFormData({...formData, buyerTraits: e.target.value})} />
-          </Card>
-
-          <Card title="📦 아이템 (그것)" className="md:col-span-2">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-3">
-              <div className="md:col-span-3">
-                <Input label="아이템명" placeholder="예: AI기반 자동 칫솔" value={formData.productName} onChange={(e: any) => setFormData({...formData, productName: e.target.value})} />
-              </div>
-              <Input label="가격" placeholder="예: 35,000원" value={formData.productPrice} onChange={(e: any) => setFormData({...formData, productPrice: e.target.value})} />
-            </div>
-            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">상세 설명</label>
-            <textarea 
-              className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-sm focus:border-red-500 focus:outline-none transition-colors h-24 resize-none"
-              placeholder="구체적으로 적을수록 더 아프게 맞습니다."
-              value={formData.productDesc}
-              onChange={(e) => setFormData({...formData, productDesc: e.target.value})}
-            />
-          </Card>
-        </section>
-
-        {/* Action Button */}
-        <div className="mb-16 animate-in slide-in-from-bottom duration-700 delay-200">
-          <button 
-            onClick={handleRun}
-            disabled={loading}
-            className="w-full py-5 bg-gradient-to-r from-red-600 to-rose-600 rounded-xl font-black text-xl text-white shadow-lg shadow-red-900/20 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
-          >
-            {loading ? (
-              <>
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"/>
-                지옥불 계산 중...
-              </>
-            ) : (
-              <>
-                <Terminal className="w-6 h-6" />
-                시뮬레이션 돌리기 (Enter Hell)
-              </>
-            )}
-          </button>
         </div>
 
-        {/* Result Section */}
-        {result && (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-10 duration-700">
-            
-            {/* Top Summary */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <StatBox label="생존 확률" value={`${result.simulation.survivalRate.toFixed(1)}%`} highlight />
-              <StatBox label="Needs 점수" value={`${result.stats.consumer_needs}점`} />
-              <StatBox label="최다 사망 구간" value={result.simulation.bottleneck} color="text-red-500" />
-              <StatBox label="사망 원인" value={result.report.death_cause} textSm />
-            </div>
-
-            {/* 5 Stats Bars */}
-            <Card title="📊 5대 스탯 분석">
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                {Object.entries(result.stats).map(([key, val]: any) => (
-                  <div key={key} className="text-center">
-                    <div className="text-xs text-gray-500 uppercase mb-1">{key}</div>
-                    <div className="h-2 w-full bg-gray-800 rounded-full overflow-hidden">
-                      <div className="h-full bg-blue-500 transition-all duration-1000" style={{ width: `${val}%` }} />
-                    </div>
-                    <div className="text-sm font-bold mt-1">{val}</div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-
-            {/* Report & Debate */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card title="🧪 부검 리포트">
-                <p className="text-gray-300 leading-relaxed text-sm whitespace-pre-wrap">{result.report.autopsy_report}</p>
-                <div className="mt-4 p-3 bg-red-900/10 border border-red-500/20 rounded-lg">
-                  <div className="text-xs text-red-400 font-bold mb-1 flex items-center gap-2"><AlertTriangle className="w-3 h-3"/> 최후의 발악 (Action Plan)</div>
-                  <p className="text-sm text-gray-400">{result.report.action_plan}</p>
-                </div>
-              </Card>
-              <Card title="☠️ 죽음의 깔때기 (Death Funnel)">
-                 <div className="h-64 w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={funnelData} layout="vertical" margin={{ left: 20 }}>
-                        <XAxis type="number" hide />
-                        <YAxis dataKey="name" type="category" width={60} tick={{fill: '#9ca3af', fontSize: 12}} />
-                        <Tooltip contentStyle={{backgroundColor: '#111', border: '1px solid #333'}} />
-                        <Bar dataKey="value" fill="#ef4444" radius={[0, 4, 4, 0]}>
-                            {funnelData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.name === result.simulation.bottleneck ? '#ef4444' : '#374151'} />
-                            ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                 </div>
-                 <p className="text-center text-xs text-gray-500 mt-2">단계별 사망자 수 (높을수록 위험)</p>
-              </Card>
-            </div>
-
-            {/* Debate Panel */}
-            <Card title="💬 지옥의 독설 좌담회">
-              <div className="bg-black/30 p-4 rounded-lg text-sm leading-7 text-gray-300 whitespace-pre-wrap border border-white/5">
-                {result.debate}
-              </div>
-            </Card>
-
-            {/* Failure Cases */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card title="🔗 유사한 망한 사례">
-                <ul className="space-y-3">
-                  {result.pastCases.slice(0, 4).map((c: any, i: number) => (
-                    <li key={i} className="group">
-                      <a href={c.url} target="_blank" rel="noreferrer" className="flex items-start gap-2 hover:bg-white/5 p-2 rounded transition-colors">
-                        <ExternalLink className="w-4 h-4 text-gray-500 mt-1 flex-shrink-0 group-hover:text-blue-400" />
-                        <div>
-                          <div className="text-sm font-bold text-gray-300 group-hover:text-blue-400 underline-offset-2 group-hover:underline truncate">{c.title}</div>
-                          <div className="text-xs text-gray-500 line-clamp-1">{c.content}</div>
-                        </div>
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </Card>
-              <Card title="📺 추천 영상 (Youtube)">
+        {/* ✅ 입력 화면 (결과 화면이 아닐 때만 표시) */}
+        {!showResults && (
+          <Card className="bg-zinc-900/50 border-zinc-800 shadow-2xl backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle className="text-2xl font-bold flex items-center gap-2">
+                <Terminal className="w-6 h-6 text-red-500" /> 지옥문 입장 신청서
+              </CardTitle>
+              <CardDescription className="text-zinc-400">
+                최대한 솔직하게 적으세요. 어차피 AI가 다 알아챕니다.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-8">
+              {/* 기본 정보 입력 (2열 그리드) */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                    {result.report.youtube_queries.map((q: string, i: number) => (
-                        <div key={i} className="flex items-center gap-3 p-3 bg-white/5 rounded-lg border border-white/5">
-                            <PlayCircle className="text-red-500 w-5 h-5" />
-                            <span className="text-sm text-gray-300">{q}</span>
-                        </div>
-                    ))}
-                    <p className="text-xs text-gray-500 mt-2">* 검색어를 유튜브에 입력해보세요.</p>
+                  <label className="text-sm font-bold text-zinc-300">🧑‍💻 판매자(나) 정보</label>
+                  <Input placeholder="예: 30대 개발자, 영업 경험 없음, 멘탈 약함" value={sellerInfo} onChange={(e) => setSellerInfo(e.target.value)} className="bg-zinc-800 border-zinc-700 focus:ring-red-500/50 focus:border-red-500" />
                 </div>
-              </Card>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-zinc-300">🎯 타겟 고객 정보</label>
+                  <Input placeholder="예: 20대 대학생, 가성비 중시, 유행에 민감" value={buyerInfo} onChange={(e) => setBuyerInfo(e.target.value)} className="bg-zinc-800 border-zinc-700 focus:ring-red-500/50 focus:border-red-500" />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <label className="text-sm font-bold text-red-400">📦 아이템 이름 (필수)</label>
+                  <Input placeholder="예: AI 기반 자동 칫솔" value={productName} onChange={(e) => setProductName(e.target.value)} className="bg-zinc-800 border-zinc-700 focus:ring-red-500/50 focus:border-red-500 font-bold" />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <label className="text-sm font-bold text-red-400">📝 아이템 설명 (구체적으로)</label>
+                  <Textarea placeholder="예: 10초 만에 양치 완료, 충치 자동 탐지 기능 포함. 예상 가격 19만원." value={productDesc} onChange={(e) => setProductDesc(e.target.value)} className="bg-zinc-800 border-zinc-700 focus:ring-red-500/50 focus:border-red-500 min-h-[100px]" />
+                </div>
+              </div>
+
+              {/* ✅ 새로운 창업자 특성 입력 (슬라이더) */}
+              <div>
+                <h3 className="text-lg font-bold text-zinc-200 mb-4 flex items-center gap-2">
+                    🧠 창업자 DNA 자가진단 (1점: 낮음 ~ 10점: 매우 높음)
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 p-6 bg-zinc-800/30 rounded-xl border border-zinc-700/50">
+                    {Object.entries(founderTraits).map(([key, value]) => {
+                        const labels: Record<string, string> = {
+                            obsession: "고객/문제 집착 (Obsession)",
+                            speed: "실행 속도 (Speed)",
+                            ambiguity: "불확실성 내성 (Ambiguity Tolerance)",
+                            feedback: "피드백 수용력 (Ego Control)",
+                            resource: "리소스 감각 (Resourcefulness)",
+                            persuasion: "설득력 (Persuasion)",
+                            ethics: "윤리/신뢰 (Ethics/Trust)",
+                            stamina: "체력/멘탈 (Stamina/Grit)"
+                        };
+                        return (
+                            <div key={key} className="space-y-2">
+                                <div className="flex justify-between text-sm">
+                                    <label className="font-bold text-zinc-300">{labels[key]}</label>
+                                    <span className="text-red-400 font-bold">{value}점</span>
+                                </div>
+                                <input
+                                    type="range" min="1" max="10" step="1" value={value}
+                                    onChange={(e) => handleTraitChange(key as keyof FounderTraits, parseInt(e.target.value))}
+                                    className="w-full accent-red-500 h-2 bg-zinc-700 rounded-lg appearance-none cursor-pointer"
+                                />
+                            </div>
+                        );
+                    })}
+                </div>
+              </div>
+
+              <Button onClick={runAnalysis} disabled={loading} className="w-full bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white font-extrabold py-6 text-lg shadow-lg transition-all hover:scale-[1.01] active:scale-[0.99]">
+                {loading ? <><Loader2 className="mr-2 h-6 w-6 animate-spin" /> 지옥불 시뮬레이션 돌리는 중...</> : "🔥 입장 버튼 누르기 (무료)"}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* ✅ 결과 화면 (showResults가 true일 때만 표시) */}
+        {showResults && result && (
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            
+            {/* 상단 생존율 요약 카드 */}
+            <Card className="bg-zinc-900/80 border-red-900/30 shadow-2xl overflow-hidden relative">
+                 <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-transparent pointer-events-none" />
+                 <CardHeader className="pb-2 relative z-10">
+                     <CardTitle className="flex items-center gap-2 text-red-400">
+                         <AlertTriangle className="h-6 w-6 text-red-500" /> 시뮬레이션 최종 결과
+                     </CardTitle>
+                 </CardHeader>
+                <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center relative z-10">
+                    <div>
+                        <p className="text-zinc-400 text-sm font-bold mb-1">💀 생존 확률</p>
+                        <p className="text-4xl font-extrabold text-red-500">{result.simulation.survival_rate.toFixed(1)}%</p>
+                    </div>
+                    <div>
+                        <p className="text-zinc-400 text-sm font-bold mb-1">⚰️ 주 사망 원인</p>
+                        <Badge variant="destructive" className="text-sm px-3 py-1">{result.report.death_cause}</Badge>
+                    </div>
+                    <div>
+                        <p className="text-zinc-400 text-sm font-bold mb-1">🧗 최대 병목 구간</p>
+                        <p className="text-xl font-bold text-white">{result.simulation.bottleneck_stage}</p>
+                    </div>
+                    <div>
+                        <p className="text-zinc-400 text-sm font-bold mb-1">🎯 니즈 일치도</p>
+                        <p className="text-2xl font-bold text-orange-400">{result.stats.consumer_needs}점</p>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* ✅ 탭 네비게이션으로 결과 구성 변경 */}
+            <Tabs defaultValue="summary" className="w-full">
+                <TabsList className="grid w-full grid-cols-3 bg-zinc-800/50 p-1">
+                    <TabsTrigger value="summary" className="data-[state=active]:bg-red-600 text-zinc-300 data-[state=active]:text-white font-bold">📊 종합 요약</TabsTrigger>
+                    <TabsTrigger value="autopsy" className="data-[state=active]:bg-red-600 text-zinc-300 data-[state=active]:text-white font-bold">🧾 부검 리포트</TabsTrigger>
+                    <TabsTrigger value="voc" className="data-[state=active]:bg-red-600 text-zinc-300 data-[state=active]:text-white font-bold">🗣️ 독설 좌담회(VoC)</TabsTrigger>
+                </TabsList>
+
+                {/* 탭 1: 종합 요약 (스탯, 깔때기, 워드클라우드) */}
+                <TabsContent value="summary" className="space-y-6 mt-6 animate-in fade-in">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* 5대 스탯 */}
+                         <Card className="bg-zinc-900/50 border-zinc-800 h-full">
+                            <CardHeader><CardTitle className="flex items-center gap-2"><TrendingUp className="w-5 h-5 text-blue-400"/> 5대 핵심 스탯 분석</CardTitle></CardHeader>
+                            <CardContent className="space-y-6">
+                                <StatBar label="Product (경쟁력)" value={result.stats.product} icon={ShoppingCart} colorClass="text-blue-400" />
+                                <StatBar label="Team (실행력)" value={result.stats.team} icon={Users} colorClass="text-green-400" />
+                                <StatBar label="Strategy (시장성)" value={result.stats.strategy} icon={Target} colorClass="text-purple-400" />
+                                <StatBar label="Marketing (전달력)" value={result.stats.marketing} icon={TrendingUp} colorClass="text-yellow-400" />
+                                <StatBar label="Consumer Needs (필요성)" value={result.stats.consumer_needs} icon={Heart} colorClass="text-red-400" />
+                            </CardContent>
+                        </Card>
+                        
+                        {/* 죽음의 깔때기 */}
+                        <Card className="bg-zinc-900/50 border-zinc-800 h-full">
+                             <CardHeader><CardTitle className="flex items-center gap-2"><AlertTriangle className="w-5 h-5 text-red-500"/> 죽음의 깔때기 (Death Funnel)</CardTitle></CardHeader>
+                             <CardContent>{getFunnelChart(result.simulation)}</CardContent>
+                        </Card>
+                    </div>
+
+                    {/* 워드 클라우드 (좌담회 키워드 기반) */}
+                    <Card className="bg-zinc-900/50 border-zinc-800">
+                        <CardHeader>
+                            <CardTitle className="text-lg font-bold flex items-center gap-2">
+                                ☁️ 아이템 핵심 키워드 (AI 인식)
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="h-[250px] flex items-center justify-center bg-zinc-950/30 rounded-lg p-2">
+                             {/* react-wordcloud 컴포넌트 사용 */}
+                             <ReactWordcloud
+                                words={getWordCloudWords(result.debate)}
+                                options={{
+                                    rotations: 2, rotationAngles: [0, 90], fontSizes: [20, 50],
+                                    colors: ['#ef4444', '#f97316', '#eab308', '#3b82f6', '#a855f7', '#ffffff'],
+                                    enableTooltip: false, fontFamily: 'Pretendard'
+                                }}
+                             />
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                {/* 탭 2: 부검 리포트 (넓은 레이아웃 적용) */}
+                <TabsContent value="autopsy" className="space-y-6 mt-6 animate-in fade-in">
+                     {/* 상단: 부검 결과 & 니즈 분석 병렬 배치 */}
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <Card className="bg-zinc-900/50 border-red-900/50 shadow-sm">
+                            <CardHeader><CardTitle className="text-lg font-bold text-red-400 flex items-center gap-2">🧾 상세 부검 결과</CardTitle></CardHeader>
+                            <CardContent className="text-zinc-300 space-y-2 whitespace-pre-wrap leading-relaxed text-sm">
+                                {result.report.autopsy_report}
+                            </CardContent>
+                        </Card>
+                         <Card className="bg-zinc-900/50 border-zinc-800 shadow-sm">
+                            <CardHeader><CardTitle className="text-lg font-bold text-orange-400 flex items-center gap-2">🎯 소비자 니즈 팩폭</CardTitle></CardHeader>
+                             <CardContent className="text-zinc-300 space-y-2 whitespace-pre-wrap leading-relaxed text-sm font-medium">
+                                "{result.report.needs_analysis}"
+                            </CardContent>
+                        </Card>
+                     </div>
+
+                    {/* 하단: 최후의 발악 (전체 폭 사용 - col-span-full) */}
+                    <Card className="bg-red-950/30 border-red-900/50 shadow-lg col-span-full">
+                        <CardHeader>
+                            <CardTitle className="text-xl font-bold text-red-200 flex items-center gap-2">
+                                🩸 최후의 발악 (Action Plan)
+                            </CardTitle>
+                            <CardDescription className="text-red-300/70">지금 당장 실행하지 않으면 정말 죽습니다.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="text-red-100 leading-relaxed whitespace-pre-wrap p-6 bg-red-950/20 rounded-b-xl text-base font-medium">
+                            {result.report.action_plan}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                {/* 탭 3: 좌담회 전문 */}
+                <TabsContent value="voc" className="mt-6 animate-in fade-in">
+                     <Card className="bg-zinc-900/50 border-zinc-800 shadow-xl">
+                        <CardHeader>
+                             <CardTitle className="text-xl font-bold flex items-center gap-2">
+                                🗣️ 좌담회 결과 (VoC)
+                             </CardTitle>
+                             <CardDescription className="text-zinc-400">전문가 3인의 가감 없는 평가를 확인하세요.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="bg-zinc-950/50 p-6 rounded-xl border border-zinc-800/50 text-zinc-300 leading-relaxed whitespace-pre-wrap font-mono text-sm">
+                                 {result.debate.split("키워드:")[0]} {/* 키워드 뒷부분은 자르고 본문만 표시 */}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+            </Tabs>
+            
+            {/* 다시하기 버튼 */}
+            <div className="text-center pt-8">
+              <Button variant="outline" onClick={() => setShowResults(false)} className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white px-8 py-4">
+                 🔄 다른 아이템으로 다시 검증하기
+              </Button>
             </div>
 
           </div>
         )}
+
       </div>
     </main>
-  );
-}
-
-// UI Components
-function Card({ title, children, className = "" }: any) {
-  return (
-    <div className={`bg-[#0f0f0f] border border-white/10 rounded-2xl p-5 ${className}`}>
-      <h3 className="font-bold text-gray-100 mb-4 flex items-center gap-2">{title}</h3>
-      {children}
-    </div>
-  );
-}
-
-function Input({ label, ...props }: any) {
-  return (
-    <div className="mb-3">
-      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">{label}</label>
-      <input className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm focus:border-red-500 focus:outline-none transition-colors" {...props} />
-    </div>
-  );
-}
-
-function Select({ label, options, ...props }: any) {
-  return (
-    <div className="mb-3">
-      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">{label}</label>
-      <select className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm focus:border-red-500 focus:outline-none transition-colors appearance-none" {...props}>
-        {options.map((o: string) => <option key={o} value={o}>{o}</option>)}
-      </select>
-    </div>
-  );
-}
-
-function StatBox({ label, value, highlight, color, textSm }: any) {
-  return (
-    <div className={`bg-[#0f0f0f] border border-white/10 rounded-xl p-4 text-center ${highlight ? "bg-red-900/10 border-red-500/30" : ""}`}>
-      <div className="text-xs text-gray-500 mb-1">{label}</div>
-      <div className={`font-black ${textSm ? "text-lg leading-tight" : "text-2xl md:text-3xl"} ${color || "text-white"}`}>{value}</div>
-    </div>
   );
 }
