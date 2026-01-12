@@ -689,7 +689,7 @@ export default function Home() {
       potential_customers: "지갑 있는 잠재고객 + 도달가능성.",
 
       funnel: "단계별로 어디서 제일 많이 망하는지. 막대 높을수록 그 구간이 지옥.",
-      market: "시장점유율은 '시장가정 + 생존한 런' 기반으로 추정됩니다.",
+      market: "시장점유율은 '시장가정 + 생존 경우' 기반으로 추정됩니다.",
     };
   }, [lang]);
 
