@@ -515,7 +515,7 @@ export async function POST(req: Request) {
         : marketData;
 
     // ------------------------------
-    // ✅ Stats JSON (10개 스탯)
+    // ✅ Stats JSON (11개 스탯)
     // ------------------------------
     const statsParser = new JsonOutputParser<Stats>();
 
@@ -539,7 +539,8 @@ export async function POST(req: Request) {
 
 추가 스탯 정의(0~100):
 - concept_fit: 컨셉 명확도/차별성/포지셔닝 적합
-- monetization: BM 타당성 + 가격/마진/단위경제성 가능성
+- price_fit: 가격의 합리성/지불의사/가격-가치 정합성
+- business_model_fit: BM(수익모델/마진/단위경제) 타당성
 - distribution: 판매채널 적합도 + 실행 난이도(운영/물류/파트너) + 고객획득 현실성
 - market_scope: 국가/카테고리의 규제/경쟁/확장성(멀티국가/멀티세그로 갈 수 있는지)
 - potential_customers: 잠재고객 규모(지갑 있는 사람) + 도달가능성(채널/국가/가격 기준)
@@ -561,7 +562,7 @@ export async function POST(req: Request) {
 
 JSON 키(정확히 이 키들로):
 product, founder, strategy, marketing, consumer_needs,
-concept_fit, monetization, distribution, market_scope, potential_customers`
+concept_fit, price_fit, business_model_fit, distribution, market_scope, potential_customers`
     );
 
     const rawStats = await generateJsonWithFallback<Stats>(
@@ -594,7 +595,8 @@ concept_fit, monetization, distribution, market_scope, potential_customers`
       consumer_needs: toInt0to100((rawStats as any).consumer_needs, 50),
 
       concept_fit: toInt0to100((rawStats as any).concept_fit, 50),
-      monetization: toInt0to100((rawStats as any).monetization, 50),
+      price_fit: toInt0to100((rawStats as any).price_fit, 50),
+      business_model_fit: toInt0to100((rawStats as any).business_model_fit, 50),
       distribution: toInt0to100((rawStats as any).distribution, 50),
       market_scope: toInt0to100((rawStats as any).market_scope, 50),
       potential_customers: toInt0to100((rawStats as any).potential_customers, 50),
@@ -712,7 +714,7 @@ ${debateLangInstr}
     return NextResponse.json({
       success: true,
 
-      stats: safeStats, // ✅ 10개 스탯
+      stats: safeStats, // ✅ 11개 스탯
       simulation,       // ✅ survival + (market_needed/market_share/market_layers 포함)
       report,
       debate,
