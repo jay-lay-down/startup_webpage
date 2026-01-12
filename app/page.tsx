@@ -141,7 +141,7 @@ function InfoTip({ text }: { text: string }) {
 // --- 언어팩 ---
 const translations = {
   ko: {
-    title: "☠️ 스타트업 지옥 시뮬레이터",
+    title: "스타트업 지옥 시뮬레이터",
     subtitle: "안녕하세요. 쓰레기를 버려주세요.",
     startBtn: "🔥 START",
     startSub: "버튼 누르면 체크리스트가 열립니다.",
@@ -253,7 +253,7 @@ const translations = {
     marketYou: "당신(추정 매출)",
   },
   en: {
-    title: "☠️ Startup Hell Simulator",
+    title: "Startup Hell Simulator",
     subtitle: "We brutally simulate how fast your idea will fail.",
     startBtn: "🔥 Start",
     startSub: "Click to open the survey.",
@@ -1154,8 +1154,13 @@ export default function Home() {
 
         {/* 공통 헤더 */}
         <div className="text-center space-y-2 pt-8">
-          <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500 tracking-tight">
-            {t.title}
+          <h1 className="flex flex-wrap items-center justify-center gap-3 text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500 tracking-tight">
+            <img
+              src="/images/OIP.webp"
+              alt="Skull"
+              className="h-10 w-10 md:h-12 md:w-12 object-contain"
+            />
+            <span>{t.title}</span>
           </h1>
           <p className="text-zinc-400 text-lg">{t.subtitle}</p>
         </div>
