@@ -71,7 +71,7 @@ const IconHeart = ({ className }: IconProps) => (
   </svg>
 );
 
-// extra icons for 10 stats / market
+// extra icons for 11 stats / market
 const IconDollar = ({ className }: IconProps) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
     <path d="M12 2v20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -81,6 +81,14 @@ const IconDollar = ({ className }: IconProps) => (
       strokeWidth="2"
       strokeLinecap="round"
     />
+  </svg>
+);
+
+const IconCash = ({ className }: IconProps) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <rect x="3" y="6" width="18" height="12" rx="2" stroke="currentColor" strokeWidth="2" />
+    <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" />
+    <path d="M7 10h.01M17 14h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
   </svg>
 );
 
@@ -204,7 +212,8 @@ const translations = {
     statNeeds: "시장 니즈",
 
     statConcept: "컨셉 적합",
-    statMonetization: "수익화/단위경제",
+    statPriceFit: "가격 적합",
+    statBusinessModel: "BM 타당성",
     statDistribution: "유통/채널 실행",
     statScope: "시장 확장성",
     statPotential: "잠재고객(지갑)",
@@ -314,7 +323,8 @@ const translations = {
     statNeeds: "Market Needs",
 
     statConcept: "Concept fit",
-    statMonetization: "Monetization",
+    statPriceFit: "Price fit",
+    statBusinessModel: "Business model fit",
     statDistribution: "Distribution",
     statScope: "Market scope",
     statPotential: "Potential buyers",
@@ -377,7 +387,8 @@ type AnalysisResult = {
     consumer_needs: number;
 
     concept_fit: number;
-    monetization: number;
+    price_fit: number;
+    business_model_fit: number;
     distribution: number;
     market_scope: number;
     potential_customers: number;
@@ -473,6 +484,27 @@ function TextBlock({ text }: { text: string }) {
   );
 }
 
+function ActionList({ text }: { text: string }) {
+  const cleaned = cleanText(text);
+  const numbered = cleaned.split(/\s*\d+\.\s+/).map((l) => l.trim()).filter(Boolean);
+  let items = numbered.length > 1 ? numbered : cleaned.split("\n").map((l) => l.trim()).filter(Boolean);
+  if (items.length <= 1 && cleaned.includes(",")) {
+    items = cleaned.split(",").map((l) => l.trim()).filter(Boolean);
+  }
+  return (
+    <ul className="space-y-3 text-zinc-200 text-sm leading-relaxed">
+      {items.map((it, i) => (
+        <li key={i} className="flex items-start gap-3">
+          <span className="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded border border-red-500/60 bg-red-950/30">
+            <span className="h-2 w-2 rounded-sm bg-red-400/70" />
+          </span>
+          <span>{it.replace(/^[\-\u2022•]\s*/, "").trim()}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function extractKeywordsFromDebate(debate: string): string[] {
   const txt = debate || "";
   const line = txt
@@ -516,6 +548,11 @@ function fmtMoney(v: number | null | undefined) {
   if (abs >= 1_000_000) return `${(v / 1_000_000).toFixed(2)}M`;
   if (abs >= 1_000) return `${(v / 1_000).toFixed(2)}K`;
   return String(Math.round(v));
+}
+
+function fmtInt(v: number | null | undefined) {
+  if (v == null || !Number.isFinite(v)) return "-";
+  return Math.round(v).toLocaleString();
 }
 
 export default function Home() {
@@ -606,7 +643,8 @@ export default function Home() {
         consumer_needs: "Pain intensity + urgency + willingness to pay.",
 
         concept_fit: "Clarity/uniqueness/positioning fit.",
-        monetization: "Unit economics, pricing, margin, monetization logic.",
+        price_fit: "Pricing rationality, willingness to pay, value alignment.",
+        business_model_fit: "Revenue model, margin, unit economics viability.",
         distribution: "Channel fit + ops/logistics/partner feasibility.",
         market_scope: "Regulation/competition/expandability across segments/regions.",
         potential_customers: "Size of buyers who can actually pay + reachable.",
@@ -623,7 +661,8 @@ export default function Home() {
       consumer_needs: "고객이 실제로 돈을 낼지(강도/긴급성/지불의사).",
 
       concept_fit: "컨셉 명확도/차별성/포지셔닝 적합.",
-      monetization: "단위경제/마진/가격/수익 구조 타당성.",
+      price_fit: "가격의 합리성/지불의사/가격-가치 정합성.",
+      business_model_fit: "BM/마진/단위경제 타당성.",
       distribution: "유통/채널 실행 난이도(운영·물류·파트너).",
       market_scope: "규제/경쟁/확장성(국가·세그·제품 확장 가능).",
       potential_customers: "지갑 있는 잠재고객 + 도달가능성.",
@@ -727,7 +766,7 @@ export default function Home() {
   };
 
   // --- UI helpers ---
-  const StatBar = ({ label, value, icon: Icon, colorClass, tooltip }: any) => (
+  const StatBar = ({ label, value, icon: Icon, colorClass, barClass, tooltip }: any) => (
     <div className="space-y-2">
       <div className="flex justify-between text-sm font-bold items-center text-zinc-300">
         <div className="flex items-center gap-2">
@@ -741,7 +780,7 @@ export default function Home() {
       </div>
       <div className="h-3 w-full bg-zinc-800 rounded-full overflow-hidden">
         <div
-          className={`h-full ${colorClass.replace("text", "bg")} transition-all duration-1000`}
+          className={`h-full ${barClass} transition-all duration-1000`}
           style={{ width: `${Math.max(0, Math.min(100, value))}%` }}
         />
       </div>
@@ -751,30 +790,42 @@ export default function Home() {
   const FunnelChart = ({ simulation }: { simulation: any }) => {
     const stages = ["Seed", "MVP", "PMF", "Scale-up", "Unicorn"];
     const deathCounts: Record<string, number> = simulation?.death_counts ?? simulation?.deathCounts ?? {};
+    const deathRates: Record<string, number> = simulation?.death_rates ?? simulation?.deathRates ?? {};
+    const stageSurvivalRates: Record<string, number> =
+      simulation?.stage_survival_rates ?? simulation?.stageSurvivalRates ?? {};
+    const stageEntries: Record<string, number> = simulation?.stage_entries ?? simulation?.stageEntries ?? {};
     const bottleneckStage: string =
       simulation?.bottleneck_stage ?? simulation?.bottleneckStage ?? simulation?.bottleneck ?? "";
-
-    const maxDeaths = Math.max(...(Object.values(deathCounts) as number[]), 0) || 1;
+    const survivalLabel = lang === "en" ? "survive" : "생존";
 
     return (
       <div className="space-y-3 mt-4">
         {stages.map((stage) => {
           const deaths = deathCounts[stage] || 0;
+          const entries = stageEntries[stage] || 0;
           const isBottleneck = stage === bottleneckStage;
-          const width = (deaths / maxDeaths) * 100;
+          const dropRate = Math.round(((deathRates[stage] ?? 0) * 100) * 10) / 10;
+          const survivalRate = Math.round(((stageSurvivalRates[stage] ?? 0) * 100) * 10) / 10;
+          const width = survivalRate;
 
           return (
-            <div key={stage} className="flex items-center gap-2 text-sm text-zinc-300">
-              <span className={`w-20 text-right font-bold ${isBottleneck ? "text-red-500" : "text-zinc-500"}`}>
-                {stage}
-              </span>
-              <div className="flex-1 h-6 bg-zinc-800 rounded-sm overflow-hidden relative">
-                <div
-                  className={`h-full ${isBottleneck ? "bg-red-600" : "bg-zinc-600"} transition-all duration-1000`}
-                  style={{ width: `${Math.max(width, deaths > 0 ? 2 : 0)}%` }}
-                />
-                <span className="absolute inset-0 flex items-center justify-end px-2 text-xs font-bold text-white/80">
-                  {deaths > 0 ? `☠️ ${deaths}` : ""}
+            <div key={stage} className="space-y-2 text-sm text-zinc-300">
+              <div className="flex items-center justify-between text-xs text-zinc-500">
+                <span className="font-bold">{stage}</span>
+                <span>N={fmtInt(entries)}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 h-6 bg-zinc-800 rounded-sm overflow-hidden relative">
+                  <div
+                    className={`h-full ${isBottleneck ? "bg-red-600" : "bg-zinc-600"} transition-all duration-1000`}
+                    style={{ width: `${Math.max(width, deaths > 0 ? 2 : 0)}%` }}
+                  />
+                  <span className="absolute inset-0 flex items-center justify-end px-2 text-xs font-bold text-white/80">
+                    {deaths > 0 ? `☠️ ${fmtInt(deaths)} · ${dropRate}%` : ""}
+                  </span>
+                </div>
+                <span className={`w-20 text-right font-bold ${isBottleneck ? "text-red-500" : "text-zinc-400"}`}>
+                  {survivalRate}% {survivalLabel}
                 </span>
               </div>
             </div>
@@ -1463,7 +1514,7 @@ export default function Home() {
                     <div className="bg-zinc-900/50 border border-zinc-800 h-full rounded-xl p-6">
                       <h3 className="flex items-center gap-2 text-lg font-bold text-white mb-6">
                         <IconTrendingUp className="w-5 h-5 text-blue-400" />
-                        10 Stats
+                        11 Stats
                       </h3>
 
                       <div className="grid grid-cols-1 gap-6">
@@ -1474,6 +1525,7 @@ export default function Home() {
                             value={result.stats.product}
                             icon={IconShoppingCart}
                             colorClass="text-blue-400"
+                            barClass="bg-blue-400"
                             tooltip={statTooltips.product}
                           />
                           <StatBar
@@ -1481,6 +1533,7 @@ export default function Home() {
                             value={getFounderScore(result)}
                             icon={IconUsers}
                             colorClass="text-green-400"
+                            barClass="bg-green-400"
                             tooltip={statTooltips.founder}
                           />
                           <StatBar
@@ -1488,6 +1541,7 @@ export default function Home() {
                             value={result.stats.strategy}
                             icon={IconTarget}
                             colorClass="text-purple-400"
+                            barClass="bg-purple-400"
                             tooltip={statTooltips.strategy}
                           />
                           <StatBar
@@ -1495,6 +1549,7 @@ export default function Home() {
                             value={result.stats.marketing}
                             icon={IconTrendingUp}
                             colorClass="text-yellow-400"
+                            barClass="bg-yellow-400"
                             tooltip={statTooltips.marketing}
                           />
                           <StatBar
@@ -1502,6 +1557,7 @@ export default function Home() {
                             value={result.stats.consumer_needs}
                             icon={IconHeart}
                             colorClass="text-red-400"
+                            barClass="bg-red-400"
                             tooltip={statTooltips.consumer_needs}
                           />
                         </div>
@@ -1515,20 +1571,31 @@ export default function Home() {
                             value={result.stats.concept_fit}
                             icon={IconTarget}
                             colorClass="text-blue-300"
+                            barClass="bg-blue-300"
                             tooltip={statTooltips.concept_fit}
                           />
                           <StatBar
-                            label={t.statMonetization}
-                            value={result.stats.monetization}
+                            label={t.statPriceFit}
+                            value={result.stats.price_fit}
                             icon={IconDollar}
                             colorClass="text-emerald-400"
-                            tooltip={statTooltips.monetization}
+                            barClass="bg-emerald-400"
+                            tooltip={statTooltips.price_fit}
+                          />
+                          <StatBar
+                            label={t.statBusinessModel}
+                            value={result.stats.business_model_fit}
+                            icon={IconCash}
+                            colorClass="text-lime-400"
+                            barClass="bg-lime-400"
+                            tooltip={statTooltips.business_model_fit}
                           />
                           <StatBar
                             label={t.statDistribution}
                             value={result.stats.distribution}
                             icon={IconTruck}
                             colorClass="text-orange-400"
+                            barClass="bg-orange-400"
                             tooltip={statTooltips.distribution}
                           />
                           <StatBar
@@ -1536,6 +1603,7 @@ export default function Home() {
                             value={result.stats.market_scope}
                             icon={IconGlobe}
                             colorClass="text-purple-300"
+                            barClass="bg-purple-300"
                             tooltip={statTooltips.market_scope}
                           />
                           <StatBar
@@ -1543,6 +1611,7 @@ export default function Home() {
                             value={result.stats.potential_customers}
                             icon={IconPie}
                             colorClass="text-rose-300"
+                            barClass="bg-rose-300"
                             tooltip={statTooltips.potential_customers}
                           />
                         </div>
@@ -1586,7 +1655,7 @@ export default function Home() {
                       <h3 className="text-xl font-bold text-red-200">{t.actionTitle}</h3>
                     </div>
                     <div className="p-6 bg-red-950/20">
-                      <TextBlock text={result.report.action_plan} />
+                      <ActionList text={result.report.action_plan} />
                     </div>
                   </div>
                 </div>
