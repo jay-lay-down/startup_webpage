@@ -4,9 +4,8 @@
 @tailwind components;
 @tailwind utilities;
 
-/* @apply 구문을 제거하고 표준 CSS로 변경하여 빌드 에러 원천 차단 */
 body {
   background-color: #050505;
-  color: #e5e7eb; /* text-gray-200의 HEX 값 */
+  color: #e5e7eb;
   font-family: "Pretendard", sans-serif;
 }
