@@ -5,29 +5,31 @@ import { StartupMCTS, type Stats } from "@/lib/mcts";
 import { JsonOutputParser } from "@langchain/core/output_parsers";
 import { PromptTemplate } from "@langchain/core/prompts";
 
+// ✅ 1. API 키 강제 로딩 (캐시 끄기) - 이거 필수!
+export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
-// ✅ [핵심] 실패하면 다음 모델을 부르는 '무한 도전' 함수
+// ✅ 2. [핵심] 모델을 2.0 -> 1.5 -> 1.0 순서로 다 뒤지는 함수
 async function generateWithFallback(
   apiKey: string,
-  preferredModel: string, // 유저가 원했던 모델 (혹은 기본값)
-  promptTemplate: PromptTemplate,
+  prompt: PromptTemplate,
   inputVariables: any,
   parser?: JsonOutputParser
 ) {
-  // 후보 명단: 1순위(선택) -> 2순위(gemini-pro/국밥) -> 3순위(1.5-flash/빠름)
-  const candidates = Array.from(new Set([
-    preferredModel, 
-    "gemini-pro", 
-    "gemini-1.5-flash",
-    "gemini-1.5-pro"
-  ])).filter(Boolean); // 빈 값 제거
+  // 🔥 형이 원한 대로 리스트 대폭 추가 (총 5개 모델 순차 시도)
+  const models = [
+    "gemini-2.0-flash-exp", // 1순위: 최신 2.0 (빠르고 똑똑함)
+    "gemini-1.5-flash",     // 2순위: 1.5 플래시 (가성비 갑)
+    "gemini-1.5-pro",       // 3순위: 1.5 프로 (고성능)
+    "gemini-1.0-pro",       // 4순위: 1.0 프로 (구형)
+    "gemini-pro"            // 5순위: 가장 기본 (최후의 보루, 웬만하면 됨)
+  ];
 
   let lastError: any = null;
 
-  for (const modelName of candidates) {
+  for (const modelName of models) {
     try {
-      // console.log(`🤖 모델 시도: ${modelName}`); // 디버깅용 로그
+      // console.log(`🤖 시도 중인 모델: ${modelName}`); 
       
       const llm = new ChatGoogleGenerativeAI({
         model: modelName,
@@ -35,41 +37,46 @@ async function generateWithFallback(
         temperature: 0.3,
       });
 
-      // 파서가 있으면 파서까지 연결, 없으면(좌담회 등) 그냥 텍스트 출력
+      // 파서가 있으면 JSON 변환, 없으면 그냥 텍스트
       const chain = parser 
-        ? promptTemplate.pipe(llm).pipe(parser)
-        : promptTemplate.pipe(llm);
+        ? prompt.pipe(llm).pipe(parser)
+        : prompt.pipe(llm);
 
+      // 실행 성공하면 바로 결과 반환하고 함수 종료!
       const result = await chain.invoke(inputVariables);
-      return result; // 성공하면 바로 리턴!
+      return result;
 
     } catch (e) {
-      console.warn(`⚠️ 모델 에러 (${modelName}): 넘어갑니다.`);
+      console.warn(`⚠️ ${modelName} 실패... 다음 모델로 넘어갑니다.`);
       lastError = e;
-      continue; // 에러 나면 다음 모델로
+      // 실패하면 루프가 돌면서 다음 모델(배열의 다음 요소)을 시도함
     }
   }
 
-  // 다 해봤는데 안 되면 에러 던짐
-  throw lastError;
+  // 5개 다 실패하면 그때 포기 선언
+  throw new Error(`모든 모델(2.0~Pro)이 실패했습니다. Vercel 환경변수나 구글 API 설정을 확인해주세요. 마지막 에러: ${lastError?.message}`);
 }
-
 
 export async function POST(req: Request) {
   try {
-    // 0. 도구 준비 (함수 내부에서 초기화 -> 빌드 에러 방지)
-    const tvly = tavily({ apiKey: process.env.TAVILY_API_KEY });
-    
-    // API 키 가져오기 (환경변수)
-    const googleApiKey = process.env.GOOGLE_API_KEY || "";
-    if (!googleApiKey) throw new Error("GOOGLE_API_KEY가 없습니다.");
+    // 3. 환경변수 로딩 체크
+    const tavilyKey = process.env.TAVILY_API_KEY;
+    const googleKey = process.env.GOOGLE_API_KEY;
 
+    if (!tavilyKey || !googleKey) {
+      return NextResponse.json({ 
+        success: false, 
+        error: "API 키가 없습니다. Vercel 환경변수(Settings)를 확인해주세요." 
+      }, { status: 500 });
+    }
+
+    // 4. Tavily (에러 나도 죽지 않게 처리)
+    const tvly = tavily({ apiKey: tavilyKey });
     const body = await req.json();
     const { sellerInfo, buyerInfo, productInfo } = body;
 
     console.log("🔥 분석 시작:", productInfo.name);
 
-    // 1. Tavily 시장 조사
     let marketData = "시장 데이터 없음";
     let pastCases: any[] = [];
     
@@ -81,10 +88,10 @@ export async function POST(req: Request) {
       marketData = searchResult.results.map((r) => `- ${r.title}: ${r.content}`).join("\n");
       pastCases = searchResult.results.map(r => ({ title: r.title, url: r.url, content: r.content }));
     } catch (e) {
-      console.error("Tavily Error:", e);
+      console.error("Tavily 검색 실패 (무시하고 진행):", e);
     }
 
-    // 2. Gemini 스탯 분석 (Fallback 적용)
+    // 5. 스탯 분석 (Fallback 사용)
     const statsParser = new JsonOutputParser();
     const statsPrompt = PromptTemplate.fromTemplate(
       `너는 냉소적인 스타트업 검증관이다. 다음 정보를 바탕으로 5대 스탯(0~100 정수)을 JSON으로 출력하라.
@@ -94,10 +101,9 @@ export async function POST(req: Request) {
        {format_instructions}`
     );
     
-    // ✅ 안전한 실행기로 호출
+    // ✅ 2.0 -> 1.5 -> 1.0 순으로 시도
     const rawStats: any = await generateWithFallback(
-      googleApiKey,
-      "gemini-1.5-flash", // 1순위 시도
+      googleKey,
       statsPrompt,
       {
         info: `판매자:${sellerInfo}, 타겟:${buyerInfo}, 아이템:${JSON.stringify(productInfo)}`,
@@ -107,7 +113,7 @@ export async function POST(req: Request) {
       statsParser
     );
 
-    // 안전한 숫자 변환 (방탄 코드)
+    // 안전한 숫자 변환
     const safeStats: Stats = {
       product: Number(rawStats.product) || 0,
       team: Number(rawStats.team) || 0,
@@ -116,11 +122,11 @@ export async function POST(req: Request) {
       consumer_needs: Number(rawStats.consumer_needs) || 0,
     };
 
-    // 3. MCTS 시뮬레이션
+    // 6. MCTS 시뮬레이션
     const mcts = new StartupMCTS(1200);
     const simulation = mcts.run(safeStats);
 
-    // 4. 부검 리포트 & 좌담회 (Fallback 적용)
+    // 7. 리포트 & 좌담회 (Fallback 사용)
     const reportParser = new JsonOutputParser();
     const reportPrompt = PromptTemplate.fromTemplate(
       `냉소적인 VC로서 부검 리포트를 JSON으로 작성해라.
@@ -141,10 +147,8 @@ export async function POST(req: Request) {
 
     // 병렬 실행
     const [report, debateRes] = await Promise.all([
-      // 리포트 생성 (JSON 파서 사용)
       generateWithFallback(
-        googleApiKey,
-        "gemini-1.5-flash",
+        googleKey,
         reportPrompt,
         {
           stats: JSON.stringify(safeStats),
@@ -154,20 +158,17 @@ export async function POST(req: Request) {
         },
         reportParser
       ),
-      // 좌담회 생성 (파서 없음 -> 텍스트 반환)
       generateWithFallback(
-        googleApiKey,
-        "gemini-1.5-flash",
+        googleKey,
         debatePrompt,
         {
           item: JSON.stringify(productInfo),
           stats: JSON.stringify(safeStats)
         }
-        // parser 없음
+        // parser 없음 (텍스트 반환)
       )
     ]);
 
-    // LangChain 결과가 객체(.content)로 올 수도 있고 string으로 올 수도 있어서 처리
     const debateContent = typeof debateRes === 'string' ? debateRes : (debateRes as any).content;
 
     return NextResponse.json({
