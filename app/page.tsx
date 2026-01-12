@@ -71,7 +71,7 @@ const IconHeart = ({ className }: IconProps) => (
   </svg>
 );
 
-// extra icons for 10 stats / market
+// extra icons for 11 stats / market
 const IconDollar = ({ className }: IconProps) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
     <path d="M12 2v20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -81,6 +81,14 @@ const IconDollar = ({ className }: IconProps) => (
       strokeWidth="2"
       strokeLinecap="round"
     />
+  </svg>
+);
+
+const IconCash = ({ className }: IconProps) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <rect x="3" y="6" width="18" height="12" rx="2" stroke="currentColor" strokeWidth="2" />
+    <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" />
+    <path d="M7 10h.01M17 14h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
   </svg>
 );
 
@@ -204,7 +212,8 @@ const translations = {
     statNeeds: "시장 니즈",
 
     statConcept: "컨셉 적합",
-    statMonetization: "수익화/단위경제",
+    statPriceFit: "가격 적합",
+    statBusinessModel: "BM 타당성",
     statDistribution: "유통/채널 실행",
     statScope: "시장 확장성",
     statPotential: "잠재고객(지갑)",
@@ -314,7 +323,8 @@ const translations = {
     statNeeds: "Market Needs",
 
     statConcept: "Concept fit",
-    statMonetization: "Monetization",
+    statPriceFit: "Price fit",
+    statBusinessModel: "Business model fit",
     statDistribution: "Distribution",
     statScope: "Market scope",
     statPotential: "Potential buyers",
@@ -377,7 +387,8 @@ type AnalysisResult = {
     consumer_needs: number;
 
     concept_fit: number;
-    monetization: number;
+    price_fit: number;
+    business_model_fit: number;
     distribution: number;
     market_scope: number;
     potential_customers: number;
@@ -401,6 +412,13 @@ type AnalysisResult = {
   marketAssumptionsUsed?: any;
   marketSizingSources?: Array<{ title: string; url: string; content: string }>;
   marketAutoMeta?: { assumed_fields: string[]; rationale: string } | null;
+  priceReference?: {
+    min?: number;
+    max?: number;
+    currency_or_unit_note?: string;
+    source?: string;
+    user_price?: number | null;
+  } | null;
   error?: string;
 };
 
@@ -473,6 +491,27 @@ function TextBlock({ text }: { text: string }) {
   );
 }
 
+function ActionList({ text }: { text: string }) {
+  const cleaned = cleanText(text);
+  const numbered = cleaned.split(/\s*\d+\.\s+/).map((l) => l.trim()).filter(Boolean);
+  let items = numbered.length > 1 ? numbered : cleaned.split("\n").map((l) => l.trim()).filter(Boolean);
+  if (items.length <= 1 && cleaned.includes(",")) {
+    items = cleaned.split(",").map((l) => l.trim()).filter(Boolean);
+  }
+  return (
+    <ul className="space-y-3 text-zinc-200 text-sm leading-relaxed">
+      {items.map((it, i) => (
+        <li key={i} className="flex items-start gap-3">
+          <span className="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded border border-red-500/60 bg-red-950/30">
+            <span className="h-2 w-2 rounded-sm bg-red-400/70" />
+          </span>
+          <span>{it.replace(/^[\-\u2022•]\s*/, "").trim()}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function extractKeywordsFromDebate(debate: string): string[] {
   const txt = debate || "";
   const line = txt
@@ -516,6 +555,11 @@ function fmtMoney(v: number | null | undefined) {
   if (abs >= 1_000_000) return `${(v / 1_000_000).toFixed(2)}M`;
   if (abs >= 1_000) return `${(v / 1_000).toFixed(2)}K`;
   return String(Math.round(v));
+}
+
+function fmtInt(v: number | null | undefined) {
+  if (v == null || !Number.isFinite(v)) return "-";
+  return Math.round(v).toLocaleString();
 }
 
 export default function Home() {
@@ -606,7 +650,8 @@ export default function Home() {
         consumer_needs: "Pain intensity + urgency + willingness to pay.",
 
         concept_fit: "Clarity/uniqueness/positioning fit.",
-        monetization: "Unit economics, pricing, margin, monetization logic.",
+        price_fit: "Pricing rationality, willingness to pay, value alignment.",
+        business_model_fit: "Revenue model, margin, unit economics viability.",
         distribution: "Channel fit + ops/logistics/partner feasibility.",
         market_scope: "Regulation/competition/expandability across segments/regions.",
         potential_customers: "Size of buyers who can actually pay + reachable.",
@@ -623,7 +668,8 @@ export default function Home() {
       consumer_needs: "고객이 실제로 돈을 낼지(강도/긴급성/지불의사).",
 
       concept_fit: "컨셉 명확도/차별성/포지셔닝 적합.",
-      monetization: "단위경제/마진/가격/수익 구조 타당성.",
+      price_fit: "가격의 합리성/지불의사/가격-가치 정합성.",
+      business_model_fit: "BM/마진/단위경제 타당성.",
       distribution: "유통/채널 실행 난이도(운영·물류·파트너).",
       market_scope: "규제/경쟁/확장성(국가·세그·제품 확장 가능).",
       potential_customers: "지갑 있는 잠재고객 + 도달가능성.",
@@ -727,7 +773,7 @@ export default function Home() {
   };
 
   // --- UI helpers ---
-  const StatBar = ({ label, value, icon: Icon, colorClass, tooltip }: any) => (
+  const StatBar = ({ label, value, icon: Icon, colorClass, barColor, tooltip }: any) => (
     <div className="space-y-2">
       <div className="flex justify-between text-sm font-bold items-center text-zinc-300">
         <div className="flex items-center gap-2">
@@ -741,8 +787,8 @@ export default function Home() {
       </div>
       <div className="h-3 w-full bg-zinc-800 rounded-full overflow-hidden">
         <div
-          className={`h-full ${colorClass.replace("text", "bg")} transition-all duration-1000`}
-          style={{ width: `${Math.max(0, Math.min(100, value))}%` }}
+          className="h-full transition-all duration-1000"
+          style={{ width: `${Math.max(0, Math.min(100, value))}%`, backgroundColor: barColor }}
         />
       </div>
     </div>
@@ -751,35 +797,70 @@ export default function Home() {
   const FunnelChart = ({ simulation }: { simulation: any }) => {
     const stages = ["Seed", "MVP", "PMF", "Scale-up", "Unicorn"];
     const deathCounts: Record<string, number> = simulation?.death_counts ?? simulation?.deathCounts ?? {};
+    const deathRates: Record<string, number> = simulation?.death_rates ?? simulation?.deathRates ?? {};
+    const stageSurvivalRates: Record<string, number> =
+      simulation?.stage_survival_rates ?? simulation?.stageSurvivalRates ?? {};
+    const stageEntries: Record<string, number> = simulation?.stage_entries ?? simulation?.stageEntries ?? {};
     const bottleneckStage: string =
       simulation?.bottleneck_stage ?? simulation?.bottleneckStage ?? simulation?.bottleneck ?? "";
-
-    const maxDeaths = Math.max(...(Object.values(deathCounts) as number[]), 0) || 1;
+    const survivalLabel = lang === "en" ? "survive" : "생존";
+    const heatmapLabel = lang === "en" ? "Death heatmap (N)" : "사망자 히트맵(N)";
+    const maxDeaths = Math.max(...(Object.values(deathCounts) as number[]), 1);
 
     return (
       <div className="space-y-3 mt-4">
         {stages.map((stage) => {
           const deaths = deathCounts[stage] || 0;
+          const entries = stageEntries[stage] || 0;
           const isBottleneck = stage === bottleneckStage;
-          const width = (deaths / maxDeaths) * 100;
+          const dropRate = Math.round(((deathRates[stage] ?? 0) * 100) * 10) / 10;
+          const survivalRate = Math.round(((stageSurvivalRates[stage] ?? 0) * 100) * 10) / 10;
+          const width = survivalRate;
 
           return (
-            <div key={stage} className="flex items-center gap-2 text-sm text-zinc-300">
-              <span className={`w-20 text-right font-bold ${isBottleneck ? "text-red-500" : "text-zinc-500"}`}>
-                {stage}
-              </span>
-              <div className="flex-1 h-6 bg-zinc-800 rounded-sm overflow-hidden relative">
-                <div
-                  className={`h-full ${isBottleneck ? "bg-red-600" : "bg-zinc-600"} transition-all duration-1000`}
-                  style={{ width: `${Math.max(width, deaths > 0 ? 2 : 0)}%` }}
-                />
-                <span className="absolute inset-0 flex items-center justify-end px-2 text-xs font-bold text-white/80">
-                  {deaths > 0 ? `☠️ ${deaths}` : ""}
+            <div key={stage} className="space-y-2 text-sm text-zinc-300">
+              <div className="flex items-center justify-between text-xs text-zinc-500">
+                <span className="font-bold">{stage}</span>
+                <span>N={fmtInt(entries)}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 h-6 bg-zinc-800 rounded-sm overflow-hidden relative">
+                  <div
+                    className={`h-full ${isBottleneck ? "bg-red-600" : "bg-zinc-600"} transition-all duration-1000`}
+                    style={{ width: `${Math.max(width, deaths > 0 ? 2 : 0)}%` }}
+                  />
+                  <span className="absolute inset-0 flex items-center justify-end px-2 text-xs font-bold text-white/80">
+                    {deaths > 0 ? `☠️ ${fmtInt(deaths)} · ${dropRate}%` : ""}
+                  </span>
+                </div>
+                <span className={`w-20 text-right font-bold ${isBottleneck ? "text-red-500" : "text-zinc-400"}`}>
+                  {survivalRate}% {survivalLabel}
                 </span>
               </div>
             </div>
           );
         })}
+        <div className="mt-4 space-y-2">
+          <div className="text-xs text-zinc-500">{heatmapLabel}</div>
+          <div className="grid grid-cols-5 gap-2">
+            {stages.map((stage) => {
+              const deaths = deathCounts[stage] || 0;
+              const intensity = Math.min(1, Math.max(0, deaths / maxDeaths));
+              const bg = `rgba(239, 68, 68, ${0.15 + 0.75 * intensity})`;
+              return (
+                <div
+                  key={`heat-${stage}`}
+                  className="rounded-md border border-zinc-800 px-2 py-2 text-center text-xs font-bold text-white"
+                  style={{ backgroundColor: bg }}
+                  title={`${stage}: ${fmtInt(deaths)}`}
+                >
+                  <div className="text-[11px] text-white/80">{stage}</div>
+                  <div className="text-sm">{fmtInt(deaths)}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
         <p className="text-center text-xs text-zinc-500 mt-2">
           {t.funnelDesc}
           <span className="ml-2 inline-block align-middle">
@@ -804,6 +885,63 @@ export default function Home() {
             {w}
           </span>
         ))}
+      </div>
+    );
+  };
+
+  const PriceReferenceCard = ({ priceReference }: { priceReference?: AnalysisResult["priceReference"] | null }) => {
+    if (!priceReference) {
+      return <div className="text-xs text-zinc-500">{lang === "en" ? "No price reference data." : "가격 비교 데이터 없음"}</div>;
+    }
+    const min = Number(priceReference.min);
+    const max = Number(priceReference.max);
+    const userPrice = Number(priceReference.user_price);
+    const hasRange = Number.isFinite(min) && Number.isFinite(max) && min > 0 && max > 0 && min <= max;
+    const hasUser = Number.isFinite(userPrice);
+
+    if (!hasRange && !hasUser) {
+      return <div className="text-xs text-zinc-500">{lang === "en" ? "No price reference data." : "가격 비교 데이터 없음"}</div>;
+    }
+
+    const range = hasRange ? max - min : 0;
+    const position = hasRange && hasUser && range > 0 ? Math.max(0, Math.min(100, ((userPrice - min) / range) * 100)) : 0;
+    const note = priceReference.currency_or_unit_note ? ` (${priceReference.currency_or_unit_note})` : "";
+    const title = lang === "en" ? `Price reference range${note}` : `가격 적합도 참고 범위${note}`;
+    const rangeLabel = lang === "en" ? "Comparable price range" : "유사 제품 가격 범위";
+    const myPriceLabel = lang === "en" ? "Your price" : "내 가격";
+
+    return (
+      <div className="mt-4 rounded-xl border border-zinc-800 bg-zinc-950/40 p-4">
+        <div className="text-sm font-bold text-zinc-200">{title}</div>
+        {hasRange ? (
+          <div className="mt-2 text-xs text-zinc-400">
+            {rangeLabel}: {fmtInt(min)} ~ {fmtInt(max)}
+          </div>
+        ) : (
+          <div className="mt-2 text-xs text-zinc-400">{rangeLabel}: -</div>
+        )}
+        <div className="mt-3">
+          <div className="relative h-2 rounded-full bg-zinc-800">
+            {hasRange && (
+              <div
+                className="absolute inset-0 rounded-full bg-gradient-to-r from-emerald-500/40 via-yellow-400/40 to-red-500/40"
+              />
+            )}
+            {hasUser && hasRange && (
+              <div
+                className="absolute -top-1 h-4 w-0.5 bg-white"
+                style={{ left: `calc(${position}% - 1px)` }}
+              />
+            )}
+          </div>
+          {hasUser ? (
+            <div className="mt-2 text-xs text-zinc-300">
+              {myPriceLabel}: <span className="font-bold text-white">{fmtInt(userPrice)}</span>
+            </div>
+          ) : (
+            <div className="mt-2 text-xs text-zinc-500">{myPriceLabel}: -</div>
+          )}
+        </div>
       </div>
     );
   };
@@ -1463,7 +1601,7 @@ export default function Home() {
                     <div className="bg-zinc-900/50 border border-zinc-800 h-full rounded-xl p-6">
                       <h3 className="flex items-center gap-2 text-lg font-bold text-white mb-6">
                         <IconTrendingUp className="w-5 h-5 text-blue-400" />
-                        10 Stats
+                        11 Stats
                       </h3>
 
                       <div className="grid grid-cols-1 gap-6">
@@ -1474,6 +1612,7 @@ export default function Home() {
                             value={result.stats.product}
                             icon={IconShoppingCart}
                             colorClass="text-blue-400"
+                            barColor="#60A5FA"
                             tooltip={statTooltips.product}
                           />
                           <StatBar
@@ -1481,6 +1620,7 @@ export default function Home() {
                             value={getFounderScore(result)}
                             icon={IconUsers}
                             colorClass="text-green-400"
+                            barColor="#4ADE80"
                             tooltip={statTooltips.founder}
                           />
                           <StatBar
@@ -1488,6 +1628,7 @@ export default function Home() {
                             value={result.stats.strategy}
                             icon={IconTarget}
                             colorClass="text-purple-400"
+                            barColor="#C084FC"
                             tooltip={statTooltips.strategy}
                           />
                           <StatBar
@@ -1495,6 +1636,7 @@ export default function Home() {
                             value={result.stats.marketing}
                             icon={IconTrendingUp}
                             colorClass="text-yellow-400"
+                            barColor="#FACC15"
                             tooltip={statTooltips.marketing}
                           />
                           <StatBar
@@ -1502,6 +1644,7 @@ export default function Home() {
                             value={result.stats.consumer_needs}
                             icon={IconHeart}
                             colorClass="text-red-400"
+                            barColor="#F87171"
                             tooltip={statTooltips.consumer_needs}
                           />
                         </div>
@@ -1515,20 +1658,31 @@ export default function Home() {
                             value={result.stats.concept_fit}
                             icon={IconTarget}
                             colorClass="text-blue-300"
+                            barColor="#93C5FD"
                             tooltip={statTooltips.concept_fit}
                           />
                           <StatBar
-                            label={t.statMonetization}
-                            value={result.stats.monetization}
+                            label={t.statPriceFit}
+                            value={result.stats.price_fit}
                             icon={IconDollar}
                             colorClass="text-emerald-400"
-                            tooltip={statTooltips.monetization}
+                            barColor="#34D399"
+                            tooltip={statTooltips.price_fit}
+                          />
+                          <StatBar
+                            label={t.statBusinessModel}
+                            value={result.stats.business_model_fit}
+                            icon={IconCash}
+                            colorClass="text-lime-400"
+                            barColor="#A3E635"
+                            tooltip={statTooltips.business_model_fit}
                           />
                           <StatBar
                             label={t.statDistribution}
                             value={result.stats.distribution}
                             icon={IconTruck}
                             colorClass="text-orange-400"
+                            barColor="#FB923C"
                             tooltip={statTooltips.distribution}
                           />
                           <StatBar
@@ -1536,6 +1690,7 @@ export default function Home() {
                             value={result.stats.market_scope}
                             icon={IconGlobe}
                             colorClass="text-purple-300"
+                            barColor="#D8B4FE"
                             tooltip={statTooltips.market_scope}
                           />
                           <StatBar
@@ -1543,6 +1698,7 @@ export default function Home() {
                             value={result.stats.potential_customers}
                             icon={IconPie}
                             colorClass="text-rose-300"
+                            barColor="#FDA4AF"
                             tooltip={statTooltips.potential_customers}
                           />
                         </div>
@@ -1562,6 +1718,7 @@ export default function Home() {
                   <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6">
                     <h3 className="text-lg font-bold text-white mb-4">{t.cloudTitle}</h3>
                     <TagCloud words={keywords} />
+                    <PriceReferenceCard priceReference={result?.priceReference} />
                   </div>
                 </div>
               )}
@@ -1586,7 +1743,7 @@ export default function Home() {
                       <h3 className="text-xl font-bold text-red-200">{t.actionTitle}</h3>
                     </div>
                     <div className="p-6 bg-red-950/20">
-                      <TextBlock text={result.report.action_plan} />
+                      <ActionList text={result.report.action_plan} />
                     </div>
                   </div>
                 </div>
