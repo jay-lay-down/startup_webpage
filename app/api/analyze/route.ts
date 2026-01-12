@@ -65,6 +65,7 @@ export async function POST(req: Request) {
 
     // 3. MCTS 시뮬레이션 (안전한 safeStats를 넣습니다)
     const mcts = new StartupMCTS(1200);
+    // ✅ 여기가 중요! safeStats가 들어가야 함
     const simulation = mcts.run(safeStats);
 
     // 4. 부검 리포트 & 좌담회
