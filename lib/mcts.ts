@@ -23,7 +23,7 @@ type WeightMap = Partial<Record<keyof Stats, number>>;
 // ✅ 이전 버전 호환: route/front가 team으로 보내도 founder로 취급
 export type StatsInput = Partial<Stats> & { team?: number };
 
-function clamp0to100(v: any, fallback = 50): number {
+function clamp0to100(v: any, fallback = 35): number {
   const n = Number(v);
   if (!Number.isFinite(n)) return fallback;
   return Math.max(0, Math.min(100, Math.round(n)));
@@ -243,7 +243,8 @@ function resolveMarketAssumptions(
 export class StartupMCTS {
   private iterations: number;
   private stageWeights: Record<Stage, WeightMap>;
-  private stageDifficulty: Record<Stage, number>;
+  private stageHurdle: Record<Stage, number>;
+  private stageScale: Record<Stage, number>;
 
   constructor(iterations: number = 1000) {
     this.iterations = iterations;
@@ -316,12 +317,20 @@ export class StartupMCTS {
       },
     };
 
-    this.stageDifficulty = {
-      Seed: 0.70,
-      MVP: 0.60,
-      PMF: 0.50,
-      "Scale-up": 0.42,
-      Unicorn: 0.34,
+    this.stageHurdle = {
+      Seed: 55,
+      MVP: 60,
+      PMF: 65,
+      "Scale-up": 70,
+      Unicorn: 75,
+    };
+
+    this.stageScale = {
+      Seed: 10,
+      MVP: 10,
+      PMF: 11,
+      "Scale-up": 12,
+      Unicorn: 12,
     };
   }
 
@@ -341,8 +350,9 @@ export class StartupMCTS {
     }
 
     const normalized = weightSum > 0 ? score / weightSum : 0; // 0~100
-    const base = normalized / 100.0; // 0~1
-    const p = base * this.stageDifficulty[stage];
+    const hurdle = this.stageHurdle[stage];
+    const scale = this.stageScale[stage];
+    const p = scoreToFrac(normalized, hurdle, scale);
 
     return Math.max(0.0, Math.min(1.0, p));
   }
@@ -380,6 +390,14 @@ export class StartupMCTS {
       else survivors++;
     }
 
+    const stagePassProbabilities = (Object.keys(stageEntries) as Stage[]).reduce(
+      (acc, stage) => {
+        acc[stage] = this.getSurvivalProb(stats, stage);
+        return acc;
+      },
+      {} as Record<Stage, number>
+    );
+
     const deathRates = (Object.keys(stageEntries) as Stage[]).reduce(
       (acc, stage) => {
         acc[stage] = stageEntries[stage] > 0 ? deathCounts[stage] / stageEntries[stage] : 0;
@@ -391,6 +409,14 @@ export class StartupMCTS {
     const stageSurvivalRates = (Object.keys(stageEntries) as Stage[]).reduce(
       (acc, stage) => {
         acc[stage] = stageEntries[stage] > 0 ? 1 - deathRates[stage] : 0;
+        return acc;
+      },
+      {} as Record<Stage, number>
+    );
+
+    const stageReachRates = (Object.keys(stageEntries) as Stage[]).reduce(
+      (acc, stage) => {
+        acc[stage] = stageEntries[stage] / this.iterations;
         return acc;
       },
       {} as Record<Stage, number>
@@ -409,8 +435,10 @@ export class StartupMCTS {
       survival_rate: survivalRate,
       death_counts: deathCounts,
       stage_entries: stageEntries,
+      stage_pass_probabilities: stagePassProbabilities,
       death_rates: deathRates,
       stage_survival_rates: stageSurvivalRates,
+      stage_reach_rates: stageReachRates,
       bottleneck_stage: bottleneckStage,
 
       potential_customers_score: audienceScore,
@@ -420,8 +448,10 @@ export class StartupMCTS {
       survivalRate,
       deathCounts,
       stageEntries,
+      stagePassProbabilities,
       deathRates,
       stageSurvivalRates,
+      stageReachRates,
       bottleneck: bottleneckStage,
       potentialCustomersScore: audienceScore,
       potentialCustomersBand: band,

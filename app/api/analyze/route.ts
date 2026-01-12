@@ -161,7 +161,7 @@ async function generateTextWithFallback(
   throw new Error(`모든 Gemini 모델(TEXT) 호출 실패. last=${extractErrMsg(lastError)}`);
 }
 
-function toInt0to100(v: any, fallback = 50): number {
+function toInt0to100(v: any, fallback = 35): number {
   const n = Number(v);
   if (!Number.isFinite(n)) return fallback;
   return Math.max(0, Math.min(100, Math.round(n)));
@@ -529,6 +529,14 @@ export async function POST(req: Request) {
 - founder 점수는 아래 '창업자 특성(1~10)'을 강하게 반영하라.
 - strategy 점수에도 창업자 특성(실행력/불확실성 내성/설득력/리소스 감각)을 반영하라.
 
+[채점 규칙(중요)]
+- 대부분의 아이디어는 40~55가 정상 범위다. 근거 없이 70+를 주지 마라.
+- 70+는 구체적 근거(명확한 타겟, 대체재 대비 큰 개선, 현실적 채널/CAC 추정 등)가 있을 때만 가능.
+- 85+는 트랙션/실적 등 강한 증거 없으면 금지.
+- business_model_fit < 40 또는 distribution < 40이면 consumer_needs는 최대 65로 캡.
+- consumer_needs가 70+면 needs_analysis에서 지불의사/긴급성/대체재 대비 우위를 반드시 긍정적으로 설명해야 한다.
+- needs_analysis가 부정적이면 consumer_needs를 55 이하로 내린다.
+
 추가 설문 항목(반드시 반영):
 - 컨셉: {concept}
 - 가격: {price}
@@ -588,18 +596,18 @@ concept_fit, price_fit, business_model_fit, distribution, market_scope, potentia
 
     // ✅ 안전 보정
     const safeStats: Stats = {
-      product: toInt0to100((rawStats as any).product, 50),
-      founder: toInt0to100((rawStats as any).founder, 50),
-      strategy: toInt0to100((rawStats as any).strategy, 50),
-      marketing: toInt0to100((rawStats as any).marketing, 50),
-      consumer_needs: toInt0to100((rawStats as any).consumer_needs, 50),
+      product: toInt0to100((rawStats as any).product, 35),
+      founder: toInt0to100((rawStats as any).founder, 35),
+      strategy: toInt0to100((rawStats as any).strategy, 35),
+      marketing: toInt0to100((rawStats as any).marketing, 35),
+      consumer_needs: toInt0to100((rawStats as any).consumer_needs, 35),
 
-      concept_fit: toInt0to100((rawStats as any).concept_fit, 50),
-      price_fit: toInt0to100((rawStats as any).price_fit, 50),
-      business_model_fit: toInt0to100((rawStats as any).business_model_fit, 50),
-      distribution: toInt0to100((rawStats as any).distribution, 50),
-      market_scope: toInt0to100((rawStats as any).market_scope, 50),
-      potential_customers: toInt0to100((rawStats as any).potential_customers, 50),
+      concept_fit: toInt0to100((rawStats as any).concept_fit, 35),
+      price_fit: toInt0to100((rawStats as any).price_fit, 35),
+      business_model_fit: toInt0to100((rawStats as any).business_model_fit, 35),
+      distribution: toInt0to100((rawStats as any).distribution, 35),
+      market_scope: toInt0to100((rawStats as any).market_scope, 35),
+      potential_customers: toInt0to100((rawStats as any).potential_customers, 35),
     };
 
     // --- MCTS (시장점유율 포함) ---
@@ -700,6 +708,54 @@ concept_fit, price_fit, business_model_fit, distribution, market_scope, potentia
       market_takeaway: String((reportRaw as any).market_takeaway ?? ""),
     };
 
+    // --- Consistency Validator (stats vs. narrative) ---
+    type ValidateShape = {
+      needs_analysis: string;
+      death_cause: string;
+    };
+
+    const validateParser = new JsonOutputParser<ValidateShape>();
+    const validatePrompt = PromptTemplate.fromTemplate(
+      `너는 일관성 검증관이다. 아래 stats와 needs_analysis가 모순되면 반드시 수정하라.
+
+규칙:
+- needs_analysis가 부정적/회의적이면 consumer_needs는 55 이하가 자연스럽다. 문장을 그에 맞게 정리하라.
+- consumer_needs가 70 이상이면 지불의사/긴급성/대체재 대비 우위가 명확히 긍정적으로 드러나야 한다.
+- business_model_fit < 40 또는 distribution < 40이면 지나친 낙관을 제거하라.
+- death_cause는 점수 약점 TOP3를 근거로 짧게 요약하라.
+
+입력 stats: {stats}
+입력 needs_analysis: {needs}
+점수 약점 TOP3: {weaknessFactors}
+
+JSON만 출력.
+{format_instructions}`
+    );
+
+    const validated = await generateJsonWithFallback<ValidateShape>(
+      googleKey,
+      validatePrompt,
+      {
+        stats: JSON.stringify(safeStats),
+        needs: report.needs_analysis,
+        weaknessFactors: JSON.stringify(weaknessFactors),
+        format_instructions: validateParser.getFormatInstructions(),
+      },
+      validateParser,
+      0.2
+    );
+
+    report.needs_analysis = stripMarkdownArtifacts(validated.needs_analysis ?? report.needs_analysis);
+    report.death_cause = stripMarkdownArtifacts(validated.death_cause ?? report.death_cause);
+
+    const launchReadiness = Math.round(
+      0.5 * safeStats.consumer_needs + 0.25 * safeStats.distribution + 0.25 * safeStats.business_model_fit
+    );
+    const pmfProbability =
+      Math.round(((simulation as any)?.stage_reach_rates?.PMF ?? (simulation as any)?.stageReachRates?.PMF ?? 0) * 1000) /
+      10;
+    const unicornProbability = Math.round((Number((simulation as any)?.survival_rate ?? (simulation as any)?.survivalRate ?? 0)) * 10) / 10;
+
     // --- Debate TEXT ---
     const debateLangInstr = language === "en" ? "Write the conversation in natural English." : "한국어 대화체로 작성.";
 
@@ -736,6 +792,11 @@ ${debateLangInstr}
 
       stats: safeStats, // ✅ 11개 스탯
       simulation,       // ✅ survival + (market_needed/market_share/market_layers 포함)
+      rollups: {
+        launch_readiness: launchReadiness,
+        pmf_probability: pmfProbability,
+        unicorn_probability: unicornProbability,
+      },
       report,
       debate,
 
