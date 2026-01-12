@@ -412,6 +412,13 @@ type AnalysisResult = {
   marketAssumptionsUsed?: any;
   marketSizingSources?: Array<{ title: string; url: string; content: string }>;
   marketAutoMeta?: { assumed_fields: string[]; rationale: string } | null;
+  priceReference?: {
+    min?: number;
+    max?: number;
+    currency_or_unit_note?: string;
+    source?: string;
+    user_price?: number | null;
+  } | null;
   error?: string;
 };
 
@@ -878,6 +885,63 @@ export default function Home() {
             {w}
           </span>
         ))}
+      </div>
+    );
+  };
+
+  const PriceReferenceCard = ({ priceReference }: { priceReference?: AnalysisResult["priceReference"] | null }) => {
+    if (!priceReference) {
+      return <div className="text-xs text-zinc-500">{lang === "en" ? "No price reference data." : "가격 비교 데이터 없음"}</div>;
+    }
+    const min = Number(priceReference.min);
+    const max = Number(priceReference.max);
+    const userPrice = Number(priceReference.user_price);
+    const hasRange = Number.isFinite(min) && Number.isFinite(max) && min > 0 && max > 0 && min <= max;
+    const hasUser = Number.isFinite(userPrice);
+
+    if (!hasRange && !hasUser) {
+      return <div className="text-xs text-zinc-500">{lang === "en" ? "No price reference data." : "가격 비교 데이터 없음"}</div>;
+    }
+
+    const range = hasRange ? max - min : 0;
+    const position = hasRange && hasUser && range > 0 ? Math.max(0, Math.min(100, ((userPrice - min) / range) * 100)) : 0;
+    const note = priceReference.currency_or_unit_note ? ` (${priceReference.currency_or_unit_note})` : "";
+    const title = lang === "en" ? `Price reference range${note}` : `가격 적합도 참고 범위${note}`;
+    const rangeLabel = lang === "en" ? "Comparable price range" : "유사 제품 가격 범위";
+    const myPriceLabel = lang === "en" ? "Your price" : "내 가격";
+
+    return (
+      <div className="mt-4 rounded-xl border border-zinc-800 bg-zinc-950/40 p-4">
+        <div className="text-sm font-bold text-zinc-200">{title}</div>
+        {hasRange ? (
+          <div className="mt-2 text-xs text-zinc-400">
+            {rangeLabel}: {fmtInt(min)} ~ {fmtInt(max)}
+          </div>
+        ) : (
+          <div className="mt-2 text-xs text-zinc-400">{rangeLabel}: -</div>
+        )}
+        <div className="mt-3">
+          <div className="relative h-2 rounded-full bg-zinc-800">
+            {hasRange && (
+              <div
+                className="absolute inset-0 rounded-full bg-gradient-to-r from-emerald-500/40 via-yellow-400/40 to-red-500/40"
+              />
+            )}
+            {hasUser && hasRange && (
+              <div
+                className="absolute -top-1 h-4 w-0.5 bg-white"
+                style={{ left: `calc(${position}% - 1px)` }}
+              />
+            )}
+          </div>
+          {hasUser ? (
+            <div className="mt-2 text-xs text-zinc-300">
+              {myPriceLabel}: <span className="font-bold text-white">{fmtInt(userPrice)}</span>
+            </div>
+          ) : (
+            <div className="mt-2 text-xs text-zinc-500">{myPriceLabel}: -</div>
+          )}
+        </div>
       </div>
     );
   };
@@ -1654,6 +1718,7 @@ export default function Home() {
                   <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6">
                     <h3 className="text-lg font-bold text-white mb-4">{t.cloudTitle}</h3>
                     <TagCloud words={keywords} />
+                    <PriceReferenceCard priceReference={result?.priceReference} />
                   </div>
                 </div>
               )}
