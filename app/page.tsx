@@ -135,8 +135,8 @@ const translations = {
   ko: {
     title: "☠️ 스타트업 지옥 시뮬레이터",
     subtitle: "안녕하세요. 쓰레기를 버려주세요.",
-    startBtn: "🔥 스타트하기",
-    startSub: "버튼 누르면 설문지가 열립니다.",
+    startBtn: "🔥 START",
+    startSub: "버튼 누르면 체크리스트가 열립니다.",
     analyzing: "💀 쓰레기통으로 아이디어를 버리는 중...",
     homeHint: "양심을 버리시나요?",
 
@@ -219,7 +219,7 @@ const translations = {
     youtubeTitle: "▶️ 유튜브 추천 검색어",
     casesTitle: "🧩 유사 아이템/실패 사례(검색 결과)",
     retryBtn: "🔄 다시하기",
-    editBtn: "✍️ 설문 수정",
+    editBtn: "✍️ 설문 응답 수정",
 
     // market section
     marketSectionTitle: "🥧 시장점유율 시뮬레이션",
