@@ -233,9 +233,9 @@ const translations = {
     // market section
     marketSectionTitle: "🥧 시장점유율 시뮬레이션",
     marketModeLabel: "시장정보 입력 방식",
-    marketModeNone: "안 할래요(점유율 계산 X)",
-    marketModeAuto: "모름 → 자동 시장조사(Tavily + AI)",
-    marketModeManual: "알아요 → 직접 입력(3점 추정: min/mode/max)",
+    marketModeNone: "필요없음",
+    marketModeAuto: "AI 자동 시장조사",
+    marketModeManual: "직접 입력",
     marketManualHint:
       "가능한 '연간' 기준으로 넣으세요. 예: 시장매출(연간), 평균가격(1회 결제), 구매빈도(연/인), 침투율 상한(0~1).",
     marketTabTitle: "시장점유율/파이 먹기",
@@ -585,6 +585,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [activeTab, setActiveTab] = useState<"summary" | "autopsy" | "voc" | "market" | "links">("summary");
+  const [skullImgError, setSkullImgError] = useState(false);
 
   // form state
   const [categoryPreset, setCategoryPreset] = useState<string>("가전");
@@ -1154,8 +1155,20 @@ export default function Home() {
 
         {/* 공통 헤더 */}
         <div className="text-center space-y-2 pt-8">
-          <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500 tracking-tight">
-            {t.title}
+          <h1 className="flex flex-wrap items-center justify-center gap-3 text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500 tracking-tight">
+            {!skullImgError ? (
+              <img
+                src="/images/OIP.webp"
+                alt="Skull"
+                className="h-10 w-10 md:h-12 md:w-12 object-contain"
+                onError={() => setSkullImgError(true)}
+              />
+            ) : (
+              <span aria-hidden="true" className="text-3xl md:text-4xl">
+                ☠️
+              </span>
+            )}
+            <span>{t.title}</span>
           </h1>
           <p className="text-zinc-400 text-lg">{t.subtitle}</p>
         </div>
