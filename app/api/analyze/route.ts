@@ -2,7 +2,12 @@
 import { NextResponse } from "next/server";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { tavily } from "@tavily/core";
-import { StartupMCTS, type Stats } from "@/lib/mcts";
+import {
+  StartupMCTS,
+  type Stats,
+  type MarketAssumptionsInput,
+  type Tri,
+} from "@/lib/mcts";
 import { JsonOutputParser } from "@langchain/core/output_parsers";
 import { PromptTemplate } from "@langchain/core/prompts";
 
@@ -104,7 +109,7 @@ async function getModelCandidates(apiKey: string): Promise<string[]> {
   }
 }
 
-// ✅ JsonOutputParser가 보통 Record<string, any> 제약을 걸고 있어서 여기서도 동일 제약 유지(빌드 에러 방지)
+// ✅ JsonOutputParser 제약 회피
 async function generateJsonWithFallback<T extends Record<string, any>>(
   apiKey: string,
   prompt: PromptTemplate,
@@ -162,15 +167,215 @@ function toInt0to100(v: any, fallback = 50): number {
   return Math.max(0, Math.min(100, Math.round(n)));
 }
 
-// ✅ 마크다운 찌꺼기 제거(특히 ** 때문에 짜증나는 케이스 방지)
+// ✅ 마크다운 찌꺼기 제거
 function stripMarkdownArtifacts(s: any): string {
   const text = String(s ?? "");
   return text
-    .replace(/\*\*/g, "") // ** 제거
-    .replace(/`+/g, "") // 백틱 제거
-    .replace(/^\s*[-*]\s+/gm, "") // - bullet 제거
-    .replace(/^#+\s*/gm, "") // # heading 제거
+    .replace(/\*\*/g, "")
+    .replace(/`+/g, "")
+    .replace(/^\s*[-*]\s+/gm, "")
+    .replace(/^#+\s*/gm, "")
     .trim();
+}
+
+// ------------------------------
+// 2.5) 시장조사(AUTO) 유틸
+// ------------------------------
+type AutoMarketShape = {
+  market_customers?: Tri;
+  market_revenue?: Tri;
+  price?: Tri;
+  purchase_freq_per_year?: Tri;
+  max_penetration?: Tri;
+  assumed_fields?: string[];
+  rationale?: string;
+  currency_or_unit_note?: string;
+};
+
+function safeTri(v: any): Tri | undefined {
+  if (!v || typeof v !== "object") return undefined;
+  const min = Number(v.min);
+  const mode = Number(v.mode);
+  const max = Number(v.max);
+  if (![min, mode, max].every(Number.isFinite)) return undefined;
+  if (!(min <= mode && mode <= max)) return undefined;
+  return { min, mode, max };
+}
+
+function compactSources(results: any[], maxLen = 600) {
+  return (results ?? []).map((r: any) => ({
+    title: String(r?.title ?? "").slice(0, 160),
+    url: String(r?.url ?? ""),
+    content: String(r?.content ?? "").slice(0, maxLen),
+  }));
+}
+
+function buildMarketSizingQuery(params: {
+  productName: string;
+  category?: string;
+  salesCountry?: string;
+  salesChannel?: string;
+  businessModel?: string;
+  price?: string;
+}) {
+  const { productName, category, salesCountry, salesChannel, businessModel, price } = params;
+
+  // 한국어 + 영어 키워드 같이 넣어서 히트율 올림
+  return [
+    category || productName,
+    salesCountry || "",
+    salesChannel || "",
+    businessModel || "",
+    price || "",
+    "시장 규모 TAM SAM 시장 매출 시장 크기",
+    "market size TAM SAM market revenue",
+    "average selling price 가격",
+    "purchase frequency 구매 빈도 ARPU",
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+async function autoBuildMarketAssumptions({
+  googleKey,
+  tvly,
+  context,
+}: {
+  googleKey: string;
+  tvly: ReturnType<typeof tavily>;
+  context: {
+    productName: string;
+    productDesc: string;
+    category?: string;
+    salesCountry?: string;
+    salesChannel?: string;
+    businessModel?: string;
+    price?: string;
+  };
+}): Promise<{
+  assumptions: MarketAssumptionsInput | null;
+  sizingDataText: string;
+  sizingSources: Array<{ title: string; url: string; content: string }>;
+  meta: { assumed_fields: string[]; rationale: string };
+}> {
+  let sizingSources: Array<{ title: string; url: string; content: string }> = [];
+  let sizingDataText = "시장규모 데이터 없음";
+  let meta = { assumed_fields: [] as string[], rationale: "" };
+
+  try {
+    const q = buildMarketSizingQuery({
+      productName: context.productName,
+      category: context.category,
+      salesCountry: context.salesCountry,
+      salesChannel: context.salesChannel,
+      businessModel: context.businessModel,
+      price: context.price,
+    });
+
+    const sr = await tvly.search(q, {
+      searchDepth: "advanced",
+      maxResults: 6,
+    });
+
+    sizingSources = compactSources(sr.results ?? [], 650);
+    sizingDataText =
+      sizingSources.length > 0
+        ? sizingSources
+            .map((r) => `- ${r.title}\n  url: ${r.url}\n  snippet: ${r.content}`)
+            .join("\n")
+        : "시장규모 데이터 없음";
+
+    // Gemini로 Tri 추출
+    const parser = new JsonOutputParser<AutoMarketShape>();
+
+    const prompt = PromptTemplate.fromTemplate(
+      `너는 "시장 데이터 추출기"다.
+아래 Tavily 검색 결과(출처 포함)에서 가능한 한 숫자를 뽑아, 시장 시뮬레이션 입력(JSON)으로 정리하라.
+
+목표:
+- 가능하면 "연간" 기준으로 맞춰라. 불가하면 rationale에 기준을 적어라.
+- 값은 가능하면 Tri(min/mode/max)로 제시하라.
+- 출처에서 명시된 숫자가 없으면, "보수적 추정"으로 채우되 assumed_fields에 해당 키를 반드시 넣어라.
+- max_penetration(0~1)은 "신규 브랜드/신규 제품이 12~24개월 내 현실적으로 달성 가능한 침투율 상한"으로 보수적으로 추정하라.
+- 통화/단위(원/달러/명/가구 등)는 currency_or_unit_note에 명시하라.
+
+반드시 출력할 JSON 키(없으면 null로 둬도 됨):
+- market_customers: 전체 시장 고객수(연간 구매자 수 등)
+- market_revenue: 전체 시장 매출(연간)
+- price: 평균 판매가(1회 결제 기준)
+- purchase_freq_per_year: 고객 1명당 연간 구매 횟수
+- max_penetration: 침투율 상한(0~1)
+- assumed_fields: 추정으로 채운 키 목록
+- rationale: 짧은 근거(2~4문장)
+- currency_or_unit_note: 단위/통화/기준기간 메모
+
+아이템 컨텍스트:
+- name: {name}
+- desc: {desc}
+- category: {category}
+- country: {country}
+- channel: {channel}
+- businessModel: {bm}
+- listedPriceHint: {priceHint}
+
+Tavily 결과:
+{sources}
+
+주의:
+- JSON만 출력
+- Tri는 반드시 min<=mode<=max, 숫자만
+- max_penetration은 0~1
+
+{format_instructions}`
+    );
+
+    const raw = await generateJsonWithFallback<AutoMarketShape>(
+      googleKey,
+      prompt,
+      {
+        name: context.productName,
+        desc: context.productDesc,
+        category: String(context.category ?? ""),
+        country: String(context.salesCountry ?? ""),
+        channel: String(context.salesChannel ?? ""),
+        bm: String(context.businessModel ?? ""),
+        priceHint: String(context.price ?? ""),
+        sources: sizingDataText,
+        format_instructions: parser.getFormatInstructions(),
+      },
+      parser,
+      0.25
+    );
+
+    const assumptions: MarketAssumptionsInput = {
+      market_customers: safeTri(raw.market_customers),
+      market_revenue: safeTri(raw.market_revenue),
+      price: safeTri(raw.price),
+      purchase_freq_per_year: safeTri(raw.purchase_freq_per_year),
+      max_penetration: safeTri(raw.max_penetration),
+      source: "tavily",
+    };
+
+    meta = {
+      assumed_fields: Array.isArray(raw.assumed_fields) ? raw.assumed_fields.map(String) : [],
+      rationale: String(raw.rationale ?? ""),
+    };
+
+    return {
+      assumptions,
+      sizingDataText,
+      sizingSources,
+      meta,
+    };
+  } catch (e: any) {
+    console.error("Tavily/시장규모 추출 실패(무시하고 계속):", extractErrMsg(e));
+    return {
+      assumptions: null,
+      sizingDataText,
+      sizingSources,
+      meta,
+    };
+  }
 }
 
 // ------------------------------
@@ -203,7 +408,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ 새 설문 항목(프론트가 아직 안 보내도 깨지지 않게 안전하게 읽음)
+    // ✅ 새 설문 항목
     const concept = body?.concept ?? productInfo?.concept ?? "";
     const price = body?.price ?? productInfo?.price ?? "";
     const businessModel = body?.businessModel ?? productInfo?.businessModel ?? productInfo?.bm ?? "";
@@ -221,15 +426,27 @@ export async function POST(req: Request) {
       category,
     };
 
-    console.log("🔥 분석 시작:", productInfo.name);
+    // ✅ 시장 모드(프론트에서 체크박스로 보낼 값)
+    // - "none": 시장점유율 계산 안 함(필요하다고만 알려줌)
+    // - "manual": 사용자가 marketAssumptions를 직접 입력
+    // - "auto": Tavily+Gemini로 자동조사
+    const marketMode: "none" | "manual" | "auto" =
+      body?.marketMode ??
+      body?.market_mode ??
+      (body?.autoMarket ? "auto" : body?.marketAssumptions ? "manual" : "none");
+
+    const manualMarketAssumptions: MarketAssumptionsInput | null =
+      (body?.marketAssumptions as any) ?? (body?.market_assumptions as any) ?? null;
+
+    console.log("🔥 분석 시작:", productInfo.name, "| marketMode:", marketMode);
+
+    const tvly = tavily({ apiKey: tavilyKey });
 
     // --- Tavily 검색 (유사아이템/실패사례/리뷰 불만 등) ---
-    const tvly = tavily({ apiKey: tavilyKey });
     let marketData = "시장 데이터 없음";
     let pastCases: Array<{ title: string; url: string; content: string }> = [];
 
     try {
-      // ✅ 새 설문 항목을 검색 쿼리에 같이 태워서 “유사/망한 사례” 정확도 올림
       const q = [
         productInfo.name,
         category,
@@ -259,9 +476,46 @@ export async function POST(req: Request) {
       console.error("Tavily 검색 실패(무시하고 진행):", extractErrMsg(e));
     }
 
+    // --- AUTO 시장규모/가격/빈도 수집 ---
+    let marketSizingData = "시장규모 데이터 없음";
+    let marketSizingSources: Array<{ title: string; url: string; content: string }> = [];
+    let marketAutoMeta: { assumed_fields: string[]; rationale: string } = { assumed_fields: [], rationale: "" };
+
+    let marketAssumptionsForMcts: MarketAssumptionsInput | undefined = undefined;
+
+    if (marketMode === "manual" && manualMarketAssumptions) {
+      marketAssumptionsForMcts = { ...(manualMarketAssumptions as any), source: "user" };
+    }
+
+    if (marketMode === "auto") {
+      const auto = await autoBuildMarketAssumptions({
+        googleKey,
+        tvly,
+        context: {
+          productName: String(productInfo.name),
+          productDesc: String(productInfo.desc ?? ""),
+          category: String(category ?? ""),
+          salesCountry: String(salesCountry ?? ""),
+          salesChannel: String(salesChannel ?? ""),
+          businessModel: String(businessModel ?? ""),
+          price: typeof price === "string" ? price : String(price ?? ""),
+        },
+      });
+
+      marketAssumptionsForMcts = auto.assumptions ?? undefined;
+      marketSizingData = auto.sizingDataText;
+      marketSizingSources = auto.sizingSources;
+      marketAutoMeta = auto.meta;
+    }
+
+    // ✅ LLM에 들어갈 시장데이터는 합쳐서(실패사례 + 규모)
+    const combinedMarketData =
+      marketMode === "auto"
+        ? `${marketData}\n\n[시장규모/가격/빈도]\n${marketSizingData}`
+        : marketData;
+
     // ------------------------------
-    // ✅ Stats JSON (이제 10개 스탯)
-    // - 기존 5개 + (concept_fit/monetization/distribution/market_scope/potential_customers)
+    // ✅ Stats JSON (10개 스탯)
     // ------------------------------
     const statsParser = new JsonOutputParser<Stats>();
 
@@ -318,7 +572,7 @@ concept_fit, monetization, distribution, market_scope, potential_customers`
         buyerInfo,
         productInfo: JSON.stringify(enrichedProductInfo),
         founderTraits: JSON.stringify(founderTraits ?? {}),
-        marketData,
+        marketData: combinedMarketData,
         concept: String(concept ?? ""),
         price: typeof price === "string" ? price : String(price ?? ""),
         businessModel: String(businessModel ?? ""),
@@ -331,7 +585,7 @@ concept_fit, monetization, distribution, market_scope, potential_customers`
       0.3
     );
 
-    // ✅ 안전 보정(없는 키는 50으로)
+    // ✅ 안전 보정
     const safeStats: Stats = {
       product: toInt0to100((rawStats as any).product, 50),
       founder: toInt0to100((rawStats as any).founder, 50),
@@ -346,12 +600,19 @@ concept_fit, monetization, distribution, market_scope, potential_customers`
       potential_customers: toInt0to100((rawStats as any).potential_customers, 50),
     };
 
-    // --- MCTS ---
+    // --- MCTS (시장점유율 포함) ---
     const mcts = new StartupMCTS(1500);
-    const simulation = mcts.run(safeStats);
+
+    // ✅ "임의 말고" => synthetic fallback 금지
+    // - auto 모드에서도 Gemini가 max_penetration을 "보수적 추정"으로 채우도록 이미 유도했음
+    const simulation = mcts.runWithMarket(
+      safeStats,
+      marketAssumptionsForMcts,
+      { allow_synthetic_fallback: false }
+    );
 
     // ------------------------------
-    // --- Report JSON (유튜브 추천 쿼리 + 키워드 포함) ---
+    // --- Report JSON ---
     // ------------------------------
     type ReportShape = {
       death_cause: string;
@@ -360,6 +621,7 @@ concept_fit, monetization, distribution, market_scope, potential_customers`
       needs_analysis: string;
       youtube_queries: string[];
       keywords: string[];
+      market_takeaway?: string;
     };
 
     const reportParser = new JsonOutputParser<ReportShape>();
@@ -373,11 +635,12 @@ concept_fit, monetization, distribution, market_scope, potential_customers`
 - action_plan (번호 리스트를 "1. ...\\n2. ..." 형태로. 마크다운 금지. **, *, # 같은 기호 쓰지 마.)
 - youtube_queries (배열, string 3개: "아이템/시장/실패사례"로 유튜브 검색할 문장)
 - keywords (배열, string 10개: 워드클라우드용 핵심 키워드)
+- market_takeaway (선택): 시장점유율/시장규모 기반으로 한 줄 코멘트
 
 입력:
 - 아이템/설문: {item}
 - 스탯: {stats}
-- 시뮬레이션 요약: {sim}
+- 시뮬레이션: {sim}
 - 가장 많이 죽은 구간: {bottleneck}
 - 시장데이터: {marketData}
 
@@ -397,14 +660,13 @@ concept_fit, monetization, distribution, market_scope, potential_customers`
         stats: JSON.stringify(safeStats),
         sim: JSON.stringify(simulation),
         bottleneck: (simulation as any).bottleneck_stage ?? (simulation as any).bottleneck ?? "",
-        marketData,
+        marketData: combinedMarketData,
         format_instructions: reportParser.getFormatInstructions(),
       },
       reportParser,
       0.35
     );
 
-    // ✅ action_plan에서 마크다운 찌꺼기 2차 제거
     const report: ReportShape = {
       ...reportRaw,
       action_plan: stripMarkdownArtifacts(reportRaw.action_plan),
@@ -413,13 +675,11 @@ concept_fit, monetization, distribution, market_scope, potential_customers`
       death_cause: String(reportRaw.death_cause ?? ""),
       youtube_queries: Array.isArray(reportRaw.youtube_queries) ? reportRaw.youtube_queries.slice(0, 3) : [],
       keywords: Array.isArray(reportRaw.keywords) ? reportRaw.keywords.slice(0, 10) : [],
+      market_takeaway: String((reportRaw as any).market_takeaway ?? ""),
     };
 
     // --- Debate TEXT ---
-    const debateLangInstr =
-      language === "en"
-        ? "Write the conversation in natural English."
-        : "한국어 대화체로 작성.";
+    const debateLangInstr = language === "en" ? "Write the conversation in natural English." : "한국어 대화체로 작성.";
 
     const debatePrompt = PromptTemplate.fromTemplate(
       `아래 정보를 보고 3명의 전문가가 독설 좌담회를 열어라.
@@ -430,6 +690,7 @@ ${debateLangInstr}
 아이템/설문: {item}
 스탯: {stats}
 시장데이터 요약: {marketData}
+시장점유율/레이어(있으면): {marketShare}
 
 형식:
 - 대화체로 줄바꿈
@@ -442,18 +703,27 @@ ${debateLangInstr}
       {
         item: JSON.stringify(enrichedProductInfo),
         stats: JSON.stringify(safeStats),
-        marketData,
+        marketData: combinedMarketData,
+        marketShare: JSON.stringify((simulation as any).market_share ?? null),
       },
       0.45
     );
 
     return NextResponse.json({
       success: true,
-      stats: safeStats, // ✅ 10개 스탯 포함
-      simulation, // ✅ survival_rate / death_counts / bottleneck_stage + 잠재고객 밴드 포함(MCTS에서)
-      report, // ✅ youtube_queries + keywords 유지
+
+      stats: safeStats, // ✅ 10개 스탯
+      simulation,       // ✅ survival + (market_needed/market_share/market_layers 포함)
+      report,
       debate,
-      pastCases, // ✅ Tavily 유사/실패사례 링크 유지
+
+      pastCases, // ✅ 기존 유지
+
+      // ✅ AUTO 시장조사 결과(프론트에서 "근거 보기"에 쓰기 좋음)
+      marketMode,
+      marketAssumptionsUsed: marketAssumptionsForMcts ?? null,
+      marketSizingSources: marketMode === "auto" ? marketSizingSources : [],
+      marketAutoMeta: marketMode === "auto" ? marketAutoMeta : null,
     });
   } catch (error: any) {
     console.error("Server Error:", extractErrMsg(error));
