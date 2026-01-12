@@ -4,10 +4,9 @@
 @tailwind components;
 @tailwind utilities;
 
-/* @layer base { ... } 부분을 지우고 기본 스타일만 남깁니다. */
-/* 배경색은 layout.tsx나 page.tsx의 className으로 제어하는 게 더 안전합니다. */
-
+/* @apply 구문을 제거하고 표준 CSS로 변경하여 빌드 에러 원천 차단 */
 body {
-  background-color: #050505; /* 지옥불 배경색 */
-  color: #e5e7eb; /* text-gray-200 */
+  background-color: #050505;
+  color: #e5e7eb; /* text-gray-200의 HEX 값 */
+  font-family: "Pretendard", sans-serif;
 }
