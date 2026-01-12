@@ -141,12 +141,12 @@ function InfoTip({ text }: { text: string }) {
 // --- 언어팩 ---
 const translations = {
   ko: {
-    title: "☠️ 스타트업 지옥 시뮬레이터",
+    title: "☠️ Trash Archive",
     subtitle: "안녕하세요. 쓰레기를 버려주세요.",
     startBtn: "🔥 START",
     startSub: "버튼 누르면 체크리스트가 열립니다.",
     analyzing: "💀 쓰레기통으로 아이디어를 버리는 중...",
-    homeHint: "양심을 버리시나요?",
+    homeHint: "당신의 빛나는 아이디어가 언제 쓰레기통으로 들어갈 지 시뮬레이션 해 드립니다.",
 
     formTitle: "쓰레기통 입장 신청서",
     formDesc: "최대한 솔직하게 적으세요. 어차피 AI가 다 알아챕니다.",
