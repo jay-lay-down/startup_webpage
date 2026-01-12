@@ -161,7 +161,7 @@ async function generateTextWithFallback(
   throw new Error(`모든 Gemini 모델(TEXT) 호출 실패. last=${extractErrMsg(lastError)}`);
 }
 
-function toInt0to100(v: any, fallback = 50): number {
+function toInt0to100(v: any, fallback = 35): number {
   const n = Number(v);
   if (!Number.isFinite(n)) return fallback;
   return Math.max(0, Math.min(100, Math.round(n)));
@@ -515,7 +515,7 @@ export async function POST(req: Request) {
         : marketData;
 
     // ------------------------------
-    // ✅ Stats JSON (10개 스탯)
+    // ✅ Stats JSON (11개 스탯)
     // ------------------------------
     const statsParser = new JsonOutputParser<Stats>();
 
@@ -528,6 +528,17 @@ export async function POST(req: Request) {
 - 대신 창업자 개인 역량을 'founder' 점수로 평가한다.
 - founder 점수는 아래 '창업자 특성(1~10)'을 강하게 반영하라.
 - strategy 점수에도 창업자 특성(실행력/불확실성 내성/설득력/리소스 감각)을 반영하라.
+- sellerInfo에서 드러나는 도메인 지식/경험/연령대를 고려해 founder/strategy를 조정하라.
+- buyerInfo에서 드러나는 연령대/세그먼트를 고려해 consumer_needs와 marketing을 조정하라.
+- 컨셉이 고객 니즈/타겟과 불일치하면 concept_fit과 consumer_needs를 보수적으로 낮춰라.
+
+[채점 규칙(중요)]
+- 대부분의 아이디어는 40~55가 정상 범위다. 근거 없이 70+를 주지 마라.
+- 70+는 구체적 근거(명확한 타겟, 대체재 대비 큰 개선, 현실적 채널/CAC 추정 등)가 있을 때만 가능.
+- 85+는 트랙션/실적 등 강한 증거 없으면 금지.
+- business_model_fit < 40 또는 distribution < 40이면 consumer_needs는 최대 65로 캡.
+- consumer_needs가 70+면 needs_analysis에서 지불의사/긴급성/대체재 대비 우위를 반드시 긍정적으로 설명해야 한다.
+- needs_analysis가 부정적이면 consumer_needs를 55 이하로 내린다.
 
 추가 설문 항목(반드시 반영):
 - 컨셉: {concept}
@@ -539,7 +550,8 @@ export async function POST(req: Request) {
 
 추가 스탯 정의(0~100):
 - concept_fit: 컨셉 명확도/차별성/포지셔닝 적합
-- monetization: BM 타당성 + 가격/마진/단위경제성 가능성
+- price_fit: 가격의 합리성/지불의사/가격-가치 정합성
+- business_model_fit: BM(수익모델/마진/단위경제) 타당성
 - distribution: 판매채널 적합도 + 실행 난이도(운영/물류/파트너) + 고객획득 현실성
 - market_scope: 국가/카테고리의 규제/경쟁/확장성(멀티국가/멀티세그로 갈 수 있는지)
 - potential_customers: 잠재고객 규모(지갑 있는 사람) + 도달가능성(채널/국가/가격 기준)
@@ -561,7 +573,7 @@ export async function POST(req: Request) {
 
 JSON 키(정확히 이 키들로):
 product, founder, strategy, marketing, consumer_needs,
-concept_fit, monetization, distribution, market_scope, potential_customers`
+concept_fit, price_fit, business_model_fit, distribution, market_scope, potential_customers`
     );
 
     const rawStats = await generateJsonWithFallback<Stats>(
@@ -587,28 +599,29 @@ concept_fit, monetization, distribution, market_scope, potential_customers`
 
     // ✅ 안전 보정
     const safeStats: Stats = {
-      product: toInt0to100((rawStats as any).product, 50),
-      founder: toInt0to100((rawStats as any).founder, 50),
-      strategy: toInt0to100((rawStats as any).strategy, 50),
-      marketing: toInt0to100((rawStats as any).marketing, 50),
-      consumer_needs: toInt0to100((rawStats as any).consumer_needs, 50),
+      product: toInt0to100((rawStats as any).product, 35),
+      founder: toInt0to100((rawStats as any).founder, 35),
+      strategy: toInt0to100((rawStats as any).strategy, 35),
+      marketing: toInt0to100((rawStats as any).marketing, 35),
+      consumer_needs: toInt0to100((rawStats as any).consumer_needs, 35),
 
-      concept_fit: toInt0to100((rawStats as any).concept_fit, 50),
-      monetization: toInt0to100((rawStats as any).monetization, 50),
-      distribution: toInt0to100((rawStats as any).distribution, 50),
-      market_scope: toInt0to100((rawStats as any).market_scope, 50),
-      potential_customers: toInt0to100((rawStats as any).potential_customers, 50),
+      concept_fit: toInt0to100((rawStats as any).concept_fit, 35),
+      price_fit: toInt0to100((rawStats as any).price_fit, 35),
+      business_model_fit: toInt0to100((rawStats as any).business_model_fit, 35),
+      distribution: toInt0to100((rawStats as any).distribution, 35),
+      market_scope: toInt0to100((rawStats as any).market_scope, 35),
+      potential_customers: toInt0to100((rawStats as any).potential_customers, 35),
     };
 
     // --- MCTS (시장점유율 포함) ---
     const mcts = new StartupMCTS(1500);
 
-    // ✅ "임의 말고" => synthetic fallback 금지
-    // - auto 모드에서도 Gemini가 max_penetration을 "보수적 추정"으로 채우도록 이미 유도했음
+    // ✅ 기본: manual/none은 synthetic fallback 금지
+    // - auto 모드에서는 부족한 값이 있어도 prior로 채워서 시장규모 계산은 진행
     const simulation = mcts.runWithMarket(
       safeStats,
       marketAssumptionsForMcts,
-      { allow_synthetic_fallback: false }
+      { allow_synthetic_fallback: marketMode === "auto" }
     );
 
     // ------------------------------
@@ -623,6 +636,23 @@ concept_fit, monetization, distribution, market_scope, potential_customers`
       keywords: string[];
       market_takeaway?: string;
     };
+
+    const weaknessFactors = (() => {
+      const pairs: Array<{ key: string; label: string; score: number }> = [
+        { key: "concept_fit", label: "컨셉", score: safeStats.concept_fit },
+        { key: "price_fit", label: "가격", score: safeStats.price_fit },
+        { key: "business_model_fit", label: "BM", score: safeStats.business_model_fit },
+        { key: "distribution", label: "채널/유통", score: safeStats.distribution },
+        { key: "market_scope", label: "시장 확장성", score: safeStats.market_scope },
+        { key: "potential_customers", label: "잠재고객", score: safeStats.potential_customers },
+        { key: "product", label: "제품력", score: safeStats.product },
+        { key: "strategy", label: "전략", score: safeStats.strategy },
+        { key: "marketing", label: "마케팅", score: safeStats.marketing },
+        { key: "consumer_needs", label: "니즈", score: safeStats.consumer_needs },
+        { key: "founder", label: "창업자", score: safeStats.founder },
+      ];
+      return pairs.sort((a, b) => a.score - b.score).slice(0, 3);
+    })();
 
     const reportParser = new JsonOutputParser<ReportShape>();
     const reportPrompt = PromptTemplate.fromTemplate(
@@ -641,13 +671,15 @@ concept_fit, monetization, distribution, market_scope, potential_customers`
 - 아이템/설문: {item}
 - 스탯: {stats}
 - 시뮬레이션: {sim}
-- 가장 많이 죽은 구간: {bottleneck}
+- 드랍률 기준 병목: {bottleneck}
+- 점수 약점 TOP3: {weaknessFactors}
 - 시장데이터: {marketData}
 
 주의:
 - JSON만 출력
 - action_plan에 마크다운 금지(특히 ** 사용 금지)
 - keywords는 "단어/짧은 구" 중심
+- death_cause는 bottleneck 단계가 아니라 점수 약점 TOP3를 근거로 짧게 요약
 
 {format_instructions}`
     );
@@ -660,6 +692,7 @@ concept_fit, monetization, distribution, market_scope, potential_customers`
         stats: JSON.stringify(safeStats),
         sim: JSON.stringify(simulation),
         bottleneck: (simulation as any).bottleneck_stage ?? (simulation as any).bottleneck ?? "",
+        weaknessFactors: JSON.stringify(weaknessFactors),
         marketData: combinedMarketData,
         format_instructions: reportParser.getFormatInstructions(),
       },
@@ -677,6 +710,55 @@ concept_fit, monetization, distribution, market_scope, potential_customers`
       keywords: Array.isArray(reportRaw.keywords) ? reportRaw.keywords.slice(0, 10) : [],
       market_takeaway: String((reportRaw as any).market_takeaway ?? ""),
     };
+
+    // --- Consistency Validator (stats vs. narrative) ---
+    type ValidateShape = {
+      needs_analysis: string;
+      death_cause: string;
+    };
+
+    const validateParser = new JsonOutputParser<ValidateShape>();
+    const validatePrompt = PromptTemplate.fromTemplate(
+      `너는 일관성 검증관이다. 아래 stats와 needs_analysis가 모순되면 반드시 수정하라.
+
+규칙:
+- needs_analysis가 부정적/회의적이면 consumer_needs는 55 이하가 자연스럽다. 문장을 그에 맞게 정리하라.
+- consumer_needs가 70 이상이면 지불의사/긴급성/대체재 대비 우위가 명확히 긍정적으로 드러나야 한다.
+- business_model_fit < 40 또는 distribution < 40이면 지나친 낙관을 제거하라.
+- concept_fit이 낮으면 니즈와 컨셉의 불일치를 간결히 언급하라.
+- death_cause는 점수 약점 TOP3를 근거로 짧게 요약하라.
+
+입력 stats: {stats}
+입력 needs_analysis: {needs}
+점수 약점 TOP3: {weaknessFactors}
+
+JSON만 출력.
+{format_instructions}`
+    );
+
+    const validated = await generateJsonWithFallback<ValidateShape>(
+      googleKey,
+      validatePrompt,
+      {
+        stats: JSON.stringify(safeStats),
+        needs: report.needs_analysis,
+        weaknessFactors: JSON.stringify(weaknessFactors),
+        format_instructions: validateParser.getFormatInstructions(),
+      },
+      validateParser,
+      0.2
+    );
+
+    report.needs_analysis = stripMarkdownArtifacts(validated.needs_analysis ?? report.needs_analysis);
+    report.death_cause = stripMarkdownArtifacts(validated.death_cause ?? report.death_cause);
+
+    const launchReadiness = Math.round(
+      0.5 * safeStats.consumer_needs + 0.25 * safeStats.distribution + 0.25 * safeStats.business_model_fit
+    );
+    const pmfProbability =
+      Math.round(((simulation as any)?.stage_reach_rates?.PMF ?? (simulation as any)?.stageReachRates?.PMF ?? 0) * 1000) /
+      10;
+    const unicornProbability = Math.round((Number((simulation as any)?.survival_rate ?? (simulation as any)?.survivalRate ?? 0)) * 10) / 10;
 
     // --- Debate TEXT ---
     const debateLangInstr = language === "en" ? "Write the conversation in natural English." : "한국어 대화체로 작성.";
@@ -712,8 +794,13 @@ ${debateLangInstr}
     return NextResponse.json({
       success: true,
 
-      stats: safeStats, // ✅ 10개 스탯
+      stats: safeStats, // ✅ 11개 스탯
       simulation,       // ✅ survival + (market_needed/market_share/market_layers 포함)
+      rollups: {
+        launch_readiness: launchReadiness,
+        pmf_probability: pmfProbability,
+        unicorn_probability: unicornProbability,
+      },
       report,
       debate,
 
@@ -721,7 +808,8 @@ ${debateLangInstr}
 
       // ✅ AUTO 시장조사 결과(프론트에서 "근거 보기"에 쓰기 좋음)
       marketMode,
-      marketAssumptionsUsed: marketAssumptionsForMcts ?? null,
+      marketAssumptionsUsed:
+        (simulation as any)?.market_assumptions ?? (simulation as any)?.marketAssumptions ?? marketAssumptionsForMcts ?? null,
       marketSizingSources: marketMode === "auto" ? marketSizingSources : [],
       marketAutoMeta: marketMode === "auto" ? marketAutoMeta : null,
     });
