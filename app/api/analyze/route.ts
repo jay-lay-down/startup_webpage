@@ -528,6 +528,17 @@ export async function POST(req: Request) {
 - 대신 창업자 개인 역량을 'founder' 점수로 평가한다.
 - founder 점수는 아래 '창업자 특성(1~10)'을 강하게 반영하라.
 - strategy 점수에도 창업자 특성(실행력/불확실성 내성/설득력/리소스 감각)을 반영하라.
+- sellerInfo에서 드러나는 도메인 지식/경험/연령대를 고려해 founder/strategy를 조정하라.
+- buyerInfo에서 드러나는 연령대/세그먼트를 고려해 consumer_needs와 marketing을 조정하라.
+- 컨셉이 고객 니즈/타겟과 불일치하면 concept_fit과 consumer_needs를 보수적으로 낮춰라.
+
+[채점 규칙(중요)]
+- 대부분의 아이디어는 40~55가 정상 범위다. 근거 없이 70+를 주지 마라.
+- 70+는 구체적 근거(명확한 타겟, 대체재 대비 큰 개선, 현실적 채널/CAC 추정 등)가 있을 때만 가능.
+- 85+는 트랙션/실적 등 강한 증거 없으면 금지.
+- business_model_fit < 40 또는 distribution < 40이면 consumer_needs는 최대 65로 캡.
+- consumer_needs가 70+면 needs_analysis에서 지불의사/긴급성/대체재 대비 우위를 반드시 긍정적으로 설명해야 한다.
+- needs_analysis가 부정적이면 consumer_needs를 55 이하로 내린다.
 
 [채점 규칙(중요)]
 - 대부분의 아이디어는 40~55가 정상 범위다. 근거 없이 70+를 주지 마라.
@@ -722,6 +733,7 @@ concept_fit, price_fit, business_model_fit, distribution, market_scope, potentia
 - needs_analysis가 부정적/회의적이면 consumer_needs는 55 이하가 자연스럽다. 문장을 그에 맞게 정리하라.
 - consumer_needs가 70 이상이면 지불의사/긴급성/대체재 대비 우위가 명확히 긍정적으로 드러나야 한다.
 - business_model_fit < 40 또는 distribution < 40이면 지나친 낙관을 제거하라.
+- concept_fit이 낮으면 니즈와 컨셉의 불일치를 간결히 언급하라.
 - death_cause는 점수 약점 TOP3를 근거로 짧게 요약하라.
 
 입력 stats: {stats}
@@ -804,7 +816,8 @@ ${debateLangInstr}
 
       // ✅ AUTO 시장조사 결과(프론트에서 "근거 보기"에 쓰기 좋음)
       marketMode,
-      marketAssumptionsUsed: marketAssumptionsForMcts ?? null,
+      marketAssumptionsUsed:
+        (simulation as any)?.market_assumptions ?? (simulation as any)?.marketAssumptions ?? marketAssumptionsForMcts ?? null,
       marketSizingSources: marketMode === "auto" ? marketSizingSources : [],
       marketAutoMeta: marketMode === "auto" ? marketAutoMeta : null,
     });

@@ -484,6 +484,27 @@ function TextBlock({ text }: { text: string }) {
   );
 }
 
+function ActionList({ text }: { text: string }) {
+  const cleaned = cleanText(text);
+  const numbered = cleaned.split(/\s*\d+\.\s+/).map((l) => l.trim()).filter(Boolean);
+  let items = numbered.length > 1 ? numbered : cleaned.split("\n").map((l) => l.trim()).filter(Boolean);
+  if (items.length <= 1 && cleaned.includes(",")) {
+    items = cleaned.split(",").map((l) => l.trim()).filter(Boolean);
+  }
+  return (
+    <ul className="space-y-3 text-zinc-200 text-sm leading-relaxed">
+      {items.map((it, i) => (
+        <li key={i} className="flex items-start gap-3">
+          <span className="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded border border-red-500/60 bg-red-950/30">
+            <span className="h-2 w-2 rounded-sm bg-red-400/70" />
+          </span>
+          <span>{it.replace(/^[\-\u2022•]\s*/, "").trim()}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function extractKeywordsFromDebate(debate: string): string[] {
   const txt = debate || "";
   const line = txt
@@ -527,6 +548,11 @@ function fmtMoney(v: number | null | undefined) {
   if (abs >= 1_000_000) return `${(v / 1_000_000).toFixed(2)}M`;
   if (abs >= 1_000) return `${(v / 1_000).toFixed(2)}K`;
   return String(Math.round(v));
+}
+
+function fmtInt(v: number | null | undefined) {
+  if (v == null || !Number.isFinite(v)) return "-";
+  return Math.round(v).toLocaleString();
 }
 
 export default function Home() {
@@ -767,32 +793,39 @@ export default function Home() {
     const deathRates: Record<string, number> = simulation?.death_rates ?? simulation?.deathRates ?? {};
     const stageSurvivalRates: Record<string, number> =
       simulation?.stage_survival_rates ?? simulation?.stageSurvivalRates ?? {};
+    const stageEntries: Record<string, number> = simulation?.stage_entries ?? simulation?.stageEntries ?? {};
     const bottleneckStage: string =
       simulation?.bottleneck_stage ?? simulation?.bottleneckStage ?? simulation?.bottleneck ?? "";
     const survivalLabel = lang === "en" ? "survive" : "생존";
-
-    const maxDeaths = Math.max(...(Object.values(deathCounts) as number[]), 0) || 1;
 
     return (
       <div className="space-y-3 mt-4">
         {stages.map((stage) => {
           const deaths = deathCounts[stage] || 0;
+          const entries = stageEntries[stage] || 0;
           const isBottleneck = stage === bottleneckStage;
-          const width = (deaths / maxDeaths) * 100;
           const dropRate = Math.round(((deathRates[stage] ?? 0) * 100) * 10) / 10;
+          const survivalRate = Math.round(((stageSurvivalRates[stage] ?? 0) * 100) * 10) / 10;
+          const width = survivalRate;
 
           return (
-            <div key={stage} className="flex items-center gap-2 text-sm text-zinc-300">
-              <span className={`w-20 text-right font-bold ${isBottleneck ? "text-red-500" : "text-zinc-500"}`}>
-                {stage}
-              </span>
-              <div className="flex-1 h-6 bg-zinc-800 rounded-sm overflow-hidden relative">
-                <div
-                  className={`h-full ${isBottleneck ? "bg-red-600" : "bg-zinc-600"} transition-all duration-1000`}
-                  style={{ width: `${Math.max(width, deaths > 0 ? 2 : 0)}%` }}
-                />
-                <span className="absolute inset-0 flex items-center justify-end px-2 text-xs font-bold text-white/80">
-                  {deaths > 0 ? `☠️ ${deaths} · ${dropRate}%` : ""}
+            <div key={stage} className="space-y-2 text-sm text-zinc-300">
+              <div className="flex items-center justify-between text-xs text-zinc-500">
+                <span className="font-bold">{stage}</span>
+                <span>N={fmtInt(entries)}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 h-6 bg-zinc-800 rounded-sm overflow-hidden relative">
+                  <div
+                    className={`h-full ${isBottleneck ? "bg-red-600" : "bg-zinc-600"} transition-all duration-1000`}
+                    style={{ width: `${Math.max(width, deaths > 0 ? 2 : 0)}%` }}
+                  />
+                  <span className="absolute inset-0 flex items-center justify-end px-2 text-xs font-bold text-white/80">
+                    {deaths > 0 ? `☠️ ${fmtInt(deaths)} · ${dropRate}%` : ""}
+                  </span>
+                </div>
+                <span className={`w-20 text-right font-bold ${isBottleneck ? "text-red-500" : "text-zinc-400"}`}>
+                  {survivalRate}% {survivalLabel}
                 </span>
               </div>
             </div>
@@ -1624,7 +1657,7 @@ export default function Home() {
                       <h3 className="text-xl font-bold text-red-200">{t.actionTitle}</h3>
                     </div>
                     <div className="p-6 bg-red-950/20">
-                      <TextBlock text={result.report.action_plan} />
+                      <ActionList text={result.report.action_plan} />
                     </div>
                   </div>
                 </div>
