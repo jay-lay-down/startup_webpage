@@ -71,18 +71,48 @@ const IconHeart = ({ className }: IconProps) => (
   </svg>
 );
 
+/** ✅ 간단 툴팁 (외부 패키지 없이) */
+function InfoTip({ text }: { text: string }) {
+  if (!text) return null;
+  return (
+    <span className="relative inline-flex items-center group align-middle">
+      <span
+        className="ml-2 inline-flex items-center justify-center w-5 h-5 rounded-full border border-zinc-700 text-zinc-300 text-xs font-black bg-zinc-900/60 cursor-help select-none"
+        aria-label="info"
+        title={text} // ✅ 기본 브라우저 툴팁(백업)
+      >
+        i
+      </span>
+      {/* custom tooltip */}
+      <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-2 w-[260px] opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">
+        <span className="block text-xs leading-relaxed text-zinc-100 bg-zinc-950 border border-zinc-800 rounded-xl p-3 shadow-2xl">
+          {text}
+        </span>
+      </span>
+    </span>
+  );
+}
+
 // --- 언어팩 ---
 const translations = {
   ko: {
     title: "☠️ 스타트업 지옥 시뮬레이터",
-    subtitle: "당신의 아이디어가 얼마나 빨리 망할지 팩트로 두들겨 드립니다.",
+    subtitle: "안녕하세요. 쓰레기를 버려주세요.",
     startBtn: "🔥 스타트하기",
     startSub: "버튼 누르면 설문지가 열립니다.",
-    analyzing: "💀 뼈 때리는 중...",
-    homeHint: "양심을 버리실 땐 → 우측 하단 참고",
+    analyzing: "💀 쓰레기통으로 아이디어를 버리는 중...",
+    homeHint: "양심을 버리시나요?",
 
-    formTitle: "지옥문 입장 신청서",
+    formTitle: "쓰레기통 입장 신청서",
     formDesc: "최대한 솔직하게 적으세요. 어차피 AI가 다 알아챕니다.",
+
+    // ✅ 품목/카테고리(맨 앞)
+    itemCategory: "🏷️ 품목/카테고리 (필수)",
+    itemCategoryPlace: "예: 가전 / 뷰티 / 식품 / SaaS / 교육 / 헬스케어 ...",
+    itemCategoryPreset: "품목 선택",
+    itemCategoryDirect: "직접 입력",
+    itemCategoryDirectPlace: "예: 가전(냉장고), 생활가전, 뷰티(스킨케어) 등",
+
     sellerInfo: "🧑‍💻 판매자(나) 정보",
     sellerPlace: "예: 30대 개발자, 영업 경험 없음",
     buyerInfo: "🎯 타겟 고객 정보",
@@ -119,13 +149,13 @@ const translations = {
     statStrategy: "시장 전략",
     statMarketing: "마케팅",
     statNeeds: "시장 니즈",
-    funnelTitle: "죽음의 깔때기 (Death Funnel)",
-    funnelDesc: "단계별 사망자 수 (높을수록 위험)",
+    funnelTitle: "Death Funnel",
+    funnelDesc: "단계별 ㅈ망 가능성",
     cloudTitle: "☁️ 핵심 키워드",
     autopsyTitle: "🧾 상세 부검 결과",
-    needsTitle: "🎯 소비자 니즈 팩폭",
-    actionTitle: "🩸 최후의 발악 (Action Plan)",
-    vocTitle: "🗣️ 지옥의 독설 좌담회 전문",
+    needsTitle: "🎯 소비자 니즈",
+    actionTitle: "🩸 최후의 발악",
+    vocTitle: "🗣️ 지옥에서 온 좌담회",
     youtubeTitle: "▶️ 유튜브 추천 검색어",
     casesTitle: "🧩 유사 아이템/실패 사례(검색 결과)",
     retryBtn: "🔄 다시하기",
@@ -141,6 +171,14 @@ const translations = {
 
     formTitle: "Hell Gate Application",
     formDesc: "Be honest. AI knows everything anyway.",
+
+    // ✅ Category (top)
+    itemCategory: "🏷️ Category (Required)",
+    itemCategoryPlace: "e.g. Home appliance / Beauty / Food / SaaS / Education / Healthcare ...",
+    itemCategoryPreset: "Select category",
+    itemCategoryDirect: "Custom input",
+    itemCategoryDirectPlace: "e.g. Home appliance (fridge), Beauty (skincare) ...",
+
     sellerInfo: "🧑‍💻 Seller (You)",
     sellerPlace: "e.g. 30yo Dev, No sales exp",
     buyerInfo: "🎯 Target Audience",
@@ -193,6 +231,7 @@ const translations = {
 
 type Lang = keyof typeof translations;
 
+// ✅ 스탯은 뒤에서 10개로 늘릴 거지만, 지금은 기존 5개 구조 유지(프론트 먼저)
 type AnalysisResult = {
   success: boolean;
   stats: {
@@ -321,6 +360,15 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<"summary" | "autopsy" | "voc" | "links">("summary");
 
   // form state
+  // ✅ 품목/카테고리(맨 앞)
+  const [categoryPreset, setCategoryPreset] = useState<string>("가전");
+  const [categoryCustom, setCategoryCustom] = useState<string>("");
+
+  const itemCategory = useMemo(() => {
+    if (categoryPreset === "__custom__") return (categoryCustom || "").trim();
+    return (categoryPreset || "").trim();
+  }, [categoryPreset, categoryCustom]);
+
   const [sellerInfo, setSellerInfo] = useState("");
   const [buyerInfo, setBuyerInfo] = useState("");
   const [productName, setProductName] = useState("");
@@ -348,7 +396,33 @@ export default function Home() {
     setFounderTraits((prev) => ({ ...prev, [key]: val }));
   };
 
+  // ✅ 툴팁 텍스트(용어 정의)
+  const statTooltips = useMemo(() => {
+    if (lang === "en") {
+      return {
+        product: "How strong the product itself is: differentiation, quality, feasibility, and defensibility.",
+        team: "Execution capacity as a team: speed, collaboration, and ability to deliver consistently.",
+        strategy: "Go-to-market & positioning: target clarity, competition angle, and realistic plan.",
+        marketing: "Ability to acquire customers: channels, messaging, CAC realism, and growth levers.",
+        consumer_needs: "Whether you solve a real pain point people will pay for (intensity + urgency + willingness).",
+        funnel: "Deaths by stage. Higher bars mean the idea tends to die at that stage in simulation.",
+      };
+    }
+    return {
+      product: "제품 자체의 힘: 차별성/품질/기술·운영 실현가능성/모방 방어력.",
+      team: "팀으로 실행할 수 있는 체력: 속도/협업/꾸준한 딜리버리 능력.",
+      strategy: "시장/포지셔닝/진입 전략: 타겟 명확도, 경쟁각, 현실적인 플랜.",
+      marketing: "고객 획득력: 채널 적합도, 메시지, CAC 현실성, 성장 레버.",
+      consumer_needs: "고객이 돈을 실제로 사용할지?",
+      funnel: "단계별로 어디서 제일 많이 망하는지? 막대가 높을수록 그 구간이 지옥.",
+    };
+  }, [lang]);
+
   const runAnalysis = async () => {
+    if (!itemCategory) {
+      alert(lang === "ko" ? "품목/카테고리를 입력(선택)해주세요." : "Please select/enter a category.");
+      return;
+    }
     if (!productName || !productDesc) {
       alert(lang === "ko" ? "아이템 이름과 설명을 입력해주세요." : "Please enter product name and description.");
       return;
@@ -363,7 +437,9 @@ export default function Home() {
           language: lang,
           sellerInfo,
           buyerInfo,
-          productInfo: { name: productName, desc: productDesc },
+          // ✅ category를 함께 보냄 (다음에 ROUTE/MCTS에서 점수 반영)
+          category: itemCategory,
+          productInfo: { name: productName, desc: productDesc, category: itemCategory },
           founderTraits,
         }),
       });
@@ -372,7 +448,7 @@ export default function Home() {
 
       if (data?.success) {
         setResult(data);
-        setStep("result");            // ✅ 결과 화면으로 "전환" (아래로 추가 X)
+        setStep("result"); // ✅ 결과 화면으로 "전환" (아래로 추가 X)
         setActiveTab("summary");
       } else {
         alert("Error: " + (data?.error ?? "Unknown error"));
@@ -385,12 +461,15 @@ export default function Home() {
   };
 
   // --- UI helpers ---
-  const StatBar = ({ label, value, icon: Icon, colorClass }: any) => (
+  const StatBar = ({ label, value, icon: Icon, colorClass, tooltip }: any) => (
     <div className="space-y-2">
       <div className="flex justify-between text-sm font-bold items-center text-zinc-300">
         <div className="flex items-center gap-2">
           <Icon className={`w-4 h-4 ${colorClass}`} />
-          <span>{label}</span>
+          <span className="inline-flex items-center">
+            {label}
+            <InfoTip text={tooltip} />
+          </span>
         </div>
         <span className={colorClass}>{value}/100</span>
       </div>
@@ -435,7 +514,12 @@ export default function Home() {
             </div>
           );
         })}
-        <p className="text-center text-xs text-zinc-500 mt-2">{t.funnelDesc}</p>
+        <p className="text-center text-xs text-zinc-500 mt-2">
+          {t.funnelDesc}
+          <span className="ml-2 inline-block align-middle">
+            <InfoTip text={statTooltips.funnel} />
+          </span>
+        </p>
       </div>
     );
   };
@@ -538,10 +622,7 @@ export default function Home() {
         ======================= */}
         {step === "form" && (
           <div className="space-y-4">
-            <button
-              onClick={() => setStep("home")}
-              className="text-sm font-bold text-zinc-400 hover:text-white"
-            >
+            <button onClick={() => setStep("home")} className="text-sm font-bold text-zinc-400 hover:text-white">
               {t.backBtn}
             </button>
 
@@ -556,6 +637,52 @@ export default function Home() {
 
               <div className="space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* ✅ 품목/카테고리: 맨 앞 */}
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="text-sm font-bold text-red-400 block">{t.itemCategory}</label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <select
+                        value={categoryPreset}
+                        onChange={(e) => setCategoryPreset(e.target.value)}
+                        className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+                      >
+                        <option value="가전">{lang === "ko" ? "가전" : "Home Appliance"}</option>
+                        <option value="생활용품">{lang === "ko" ? "생활용품" : "Household"}</option>
+                        <option value="뷰티/화장품">{lang === "ko" ? "뷰티/화장품" : "Beauty/Cosmetics"}</option>
+                        <option value="식품/음료">{lang === "ko" ? "식품/음료" : "Food/Beverage"}</option>
+                        <option value="패션">{lang === "ko" ? "패션" : "Fashion"}</option>
+                        <option value="SaaS/앱">{lang === "ko" ? "SaaS/앱" : "SaaS/App"}</option>
+                        <option value="교육">{lang === "ko" ? "교육" : "Education"}</option>
+                        <option value="헬스케어">{lang === "ko" ? "헬스케어" : "Healthcare"}</option>
+                        <option value="핀테크">{lang === "ko" ? "핀테크" : "Fintech"}</option>
+                        <option value="__custom__">{t.itemCategoryDirect}</option>
+                      </select>
+
+                      {categoryPreset === "__custom__" ? (
+                        <input
+                          type="text"
+                          placeholder={t.itemCategoryDirectPlace}
+                          value={categoryCustom}
+                          onChange={(e) => setCategoryCustom(e.target.value)}
+                          className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+                        />
+                      ) : (
+                        <input
+                          type="text"
+                          placeholder={t.itemCategoryPlace}
+                          value={itemCategory}
+                          readOnly
+                          className="w-full p-3 bg-zinc-900/40 border border-zinc-800 rounded-lg text-zinc-400"
+                        />
+                      )}
+                    </div>
+                    <p className="text-xs text-zinc-500 mt-1">
+                      {lang === "ko"
+                        ? "품목은 가격/채널/국가 같은 현실 제약(예: 가전 100원 불가)을 반영하기 위한 핵심 입력입니다."
+                        : "Category helps apply real-world constraints (e.g., a fridge can’t be sold for $1)."}
+                    </p>
+                  </div>
+
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-zinc-300 block">{t.sellerInfo}</label>
                     <input
@@ -607,12 +734,8 @@ export default function Home() {
                     {Object.keys(t.traits).map((key) => (
                       <div key={key} className="space-y-2">
                         <div className="flex justify-between text-sm">
-                          <label className="font-bold text-zinc-300">
-                            {t.traits[key as keyof typeof t.traits]}
-                          </label>
-                          <span className="text-red-400 font-bold">
-                            {founderTraits[key as keyof FounderTraits]}점
-                          </span>
+                          <label className="font-bold text-zinc-300">{t.traits[key as keyof typeof t.traits]}</label>
+                          <span className="text-red-400 font-bold">{founderTraits[key as keyof FounderTraits]}점</span>
                         </div>
                         <input
                           type="range"
@@ -620,9 +743,7 @@ export default function Home() {
                           max="10"
                           step="1"
                           value={founderTraits[key as keyof FounderTraits]}
-                          onChange={(e) =>
-                            handleTraitChange(key as keyof FounderTraits, parseInt(e.target.value, 10))
-                          }
+                          onChange={(e) => handleTraitChange(key as keyof FounderTraits, parseInt(e.target.value, 10))}
                           className="w-full accent-red-500 h-2 bg-zinc-700 rounded-lg appearance-none cursor-pointer"
                         />
                       </div>
@@ -738,11 +859,41 @@ export default function Home() {
                         5 Stats
                       </h3>
                       <div className="space-y-6">
-                        <StatBar label={t.statProduct} value={result.stats.product} icon={IconShoppingCart} colorClass="text-blue-400" />
-                        <StatBar label={t.statTeam} value={result.stats.team} icon={IconUsers} colorClass="text-green-400" />
-                        <StatBar label={t.statStrategy} value={result.stats.strategy} icon={IconTarget} colorClass="text-purple-400" />
-                        <StatBar label={t.statMarketing} value={result.stats.marketing} icon={IconTrendingUp} colorClass="text-yellow-400" />
-                        <StatBar label={t.statNeeds} value={result.stats.consumer_needs} icon={IconHeart} colorClass="text-red-400" />
+                        <StatBar
+                          label={t.statProduct}
+                          value={result.stats.product}
+                          icon={IconShoppingCart}
+                          colorClass="text-blue-400"
+                          tooltip={statTooltips.product}
+                        />
+                        <StatBar
+                          label={t.statTeam}
+                          value={result.stats.team}
+                          icon={IconUsers}
+                          colorClass="text-green-400"
+                          tooltip={statTooltips.team}
+                        />
+                        <StatBar
+                          label={t.statStrategy}
+                          value={result.stats.strategy}
+                          icon={IconTarget}
+                          colorClass="text-purple-400"
+                          tooltip={statTooltips.strategy}
+                        />
+                        <StatBar
+                          label={t.statMarketing}
+                          value={result.stats.marketing}
+                          icon={IconTrendingUp}
+                          colorClass="text-yellow-400"
+                          tooltip={statTooltips.marketing}
+                        />
+                        <StatBar
+                          label={t.statNeeds}
+                          value={result.stats.consumer_needs}
+                          icon={IconHeart}
+                          colorClass="text-red-400"
+                          tooltip={statTooltips.consumer_needs}
+                        />
                       </div>
                     </div>
 
@@ -750,6 +901,7 @@ export default function Home() {
                       <h3 className="flex items-center gap-2 text-lg font-bold text-white mb-6">
                         <IconAlertTriangle className="w-5 h-5 text-red-500" />
                         {t.funnelTitle}
+                        <InfoTip text={statTooltips.funnel} />
                       </h3>
                       <FunnelChart simulation={result.simulation} />
                     </div>
