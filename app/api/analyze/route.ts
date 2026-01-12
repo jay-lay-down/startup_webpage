@@ -1,22 +1,23 @@
 import { NextResponse } from "next/server";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { tavily } from "@tavily/core";
-// ✅ Stats 타입을 가져옵니다.
 import { StartupMCTS, type Stats } from "@/lib/mcts";
 import { JsonOutputParser } from "@langchain/core/output_parsers";
 import { PromptTemplate } from "@langchain/core/prompts";
 
 export const maxDuration = 60;
 
-const tvly = tavily({ apiKey: process.env.TAVILY_API_KEY });
-const llm = new ChatGoogleGenerativeAI({
-  model: "gemini-1.5-flash",
-  apiKey: process.env.GOOGLE_API_KEY,
-  temperature: 0.3,
-});
-
 export async function POST(req: Request) {
   try {
+    // ✅ [핵심 수정] 도구 초기화를 함수 '안'으로 옮겼습니다.
+    // 이제 빌드 타임에 실행되지 않아서 에러가 안 납니다.
+    const tvly = tavily({ apiKey: process.env.TAVILY_API_KEY });
+    const llm = new ChatGoogleGenerativeAI({
+      model: "gemini-1.5-flash",
+      apiKey: process.env.GOOGLE_API_KEY,
+      temperature: 0.3,
+    });
+
     const body = await req.json();
     const { sellerInfo, buyerInfo, productInfo } = body;
 
@@ -54,7 +55,7 @@ export async function POST(req: Request) {
       format_instructions: statsParser.getFormatInstructions(),
     });
 
-    // ✅ [핵심] 여기서 AI 데이터를 안전한 숫자로 변환합니다.
+    // 안전한 스탯 변환 (방탄 코드 유지)
     const safeStats: Stats = {
       product: Number(rawStats.product) || 0,
       team: Number(rawStats.team) || 0,
@@ -63,9 +64,8 @@ export async function POST(req: Request) {
       consumer_needs: Number(rawStats.consumer_needs) || 0,
     };
 
-    // 3. MCTS 시뮬레이션 (안전한 safeStats를 넣습니다)
+    // 3. MCTS 시뮬레이션
     const mcts = new StartupMCTS(1200);
-    // ✅ 여기가 중요! safeStats가 들어가야 함
     const simulation = mcts.run(safeStats);
 
     // 4. 부검 리포트 & 좌담회
