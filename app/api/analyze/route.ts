@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 // ------------------------------
-// 1) Gemini 모델 목록(ListModels) 기반 Fallback
+// 1) Gemini 모델 목록(ListModels) 기반 Fallback (✅ 수정: "아까 위에서 한 대로" 안정화 버전)
 // ------------------------------
 type ModelInfo = {
   name?: string; // "models/gemini-1.5-flash" 형태
@@ -75,13 +75,15 @@ async function fetchAvailableModels(apiKey: string): Promise<string[]> {
   if (!res.ok) {
     const text = await res.text().catch(() => "");
     throw new Error(
-      `ListModels 실패: HTTP ${res.status} ${res.statusText} - ${text}`
+      `ListModels 실패: HTTP ${res.status} ${res.statusText}${
+        text ? ` - ${text}` : ""
+      }`
     );
   }
 
   const data = (await res.json()) as { models?: ModelInfo[] };
 
-  // generateContent 지원하는 모델만 추려서 "models/" 제거
+  // ✅ generateContent 지원 모델만 필터 + "models/" 제거
   const models =
     (data.models ?? [])
       .filter((m) =>
@@ -91,12 +93,11 @@ async function fetchAvailableModels(apiKey: string): Promise<string[]> {
       .filter(Boolean) ?? [];
 
   globalThis.__GEMINI_MODEL_CACHE__ = { ts: Date.now(), models };
-
   return models;
 }
 
 function buildFallbackModels(available: string[]): string[] {
-  // ✅ "gemini-pro"는 종종 v1beta에서 404 나므로 아예 제외
+  // ✅ "gemini-pro"는 v1beta에서 404로 터지는 케이스가 많아서 제외
   const preferredPatterns = [
     "gemini-2.0-flash",
     "gemini-2.0-flash-exp",
@@ -113,7 +114,7 @@ function buildFallbackModels(available: string[]): string[] {
     // exact
     if (availSet.has(pattern)) return pattern;
 
-    // startsWith (e.g., "-latest" 붙은 케이스)
+    // startsWith (e.g. -latest 붙은 모델)
     const starts = available.find((m) => m.startsWith(pattern));
     if (starts) return starts;
 
@@ -129,7 +130,7 @@ function buildFallbackModels(available: string[]): string[] {
     if (m && !picked.includes(m)) picked.push(m);
   }
 
-  // 그래도 없으면 "gemini"로 시작하는 나머지 모델을 뒤에 조금 붙임(최대 8개)
+  // ✅ 그래도 부족하면 gemini* 모델을 더 붙임 (최대 8개)
   for (const m of available) {
     if (picked.length >= 8) break;
     if (!picked.includes(m) && m.startsWith("gemini") && m !== "gemini-pro") {
@@ -137,8 +138,17 @@ function buildFallbackModels(available: string[]): string[] {
     }
   }
 
-  // 완전 비면 available에서 앞 몇 개라도
-  return picked.length ? picked : available.slice(0, 5);
+  // ✅ ListModels가 비어있거나 이상하면 최소 하드코딩 안전망
+  if (!picked.length) {
+    const hardcoded = [
+      "gemini-1.5-flash",
+      "gemini-1.5-pro",
+      "gemini-1.0-pro",
+    ];
+    return hardcoded;
+  }
+
+  return picked;
 }
 
 async function generateWithFallback<T>(
@@ -157,7 +167,7 @@ async function generateWithFallback<T>(
       const llm = new ChatGoogleGenerativeAI({
         model: modelName,
         apiKey,
-        temperature: 0.3,
+        temperature: 0.4, // 창의성 약간 증가
       });
 
       const chain = parser ? prompt.pipe(llm).pipe(parser) : prompt.pipe(llm);
@@ -179,15 +189,11 @@ async function generateWithFallback<T>(
 function getContent(res: any): string {
   if (typeof res === "string") return res;
   if (res?.content != null) return String(res.content);
-  try {
-    return JSON.stringify(res);
-  } catch {
-    return String(res);
-  }
+  return JSON.stringify(res);
 }
 
 // ------------------------------
-// 2) API 핸들러
+// 2) API 핸들러 (기존 코드 유지)
 // ------------------------------
 export async function POST(req: Request) {
   try {
@@ -198,46 +204,38 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           success: false,
-          error:
-            "API 키가 없습니다. Vercel 환경변수(Settings)에서 TAVILY_API_KEY / GOOGLE_API_KEY 를 확인해주세요.",
+          error: "API 키가 없습니다. Vercel 환경변수를 확인해주세요.",
         },
         { status: 500 }
       );
     }
 
     const body = await req.json().catch(() => null);
-    if (!body) {
+    if (!body?.productInfo?.name) {
       return NextResponse.json(
-        { success: false, error: "요청 바디(JSON)가 비어있습니다." },
+        { success: false, error: "필수 정보가 누락되었습니다." },
         { status: 400 }
       );
     }
 
-    const { sellerInfo, buyerInfo, productInfo } = body;
-
-    if (!productInfo?.name) {
-      return NextResponse.json(
-        { success: false, error: "productInfo.name 이 필요합니다." },
-        { status: 400 }
-      );
-    }
+    // ✅ 새로운 입력 데이터 받기
+    const { sellerInfo, buyerInfo, productInfo, founderTraits } = body;
 
     console.log("🔥 분석 시작:", productInfo.name);
 
-    // --- Tavily 검색 (실패해도 진행) ---
+    // --- Tavily 검색 ---
     const tvly = tavily({ apiKey: tavilyKey });
-
     let marketData = "시장 데이터 없음";
-    let pastCases: Array<{ title: string; url: string; content: string }> = [];
+    let pastCases: any[] = [];
 
     try {
       const searchResult = await tvly.search(
-        `${productInfo.name} 시장 반응 실패 사례 경쟁사 불만`,
-        { searchDepth: "advanced", maxResults: 5 }
+        `${productInfo.name} 시장 반응 실패 사례 경쟁사 문제점`,
+        { searchDepth: "advanced", maxResults: 4 }
       );
 
       marketData = (searchResult.results ?? [])
-        .map((r: any) => `- ${r.title}: ${r.content}`)
+        .map((r: any) => `- ${r.title}: ${r.content.slice(0, 300)}...`)
         .join("\n");
 
       pastCases = (searchResult.results ?? []).map((r: any) => ({
@@ -246,26 +244,37 @@ export async function POST(req: Request) {
         content: r.content,
       }));
     } catch (e: any) {
-      console.error("Tavily 검색 실패(무시하고 진행):", extractErrMsg(e));
+      console.error("Tavily 검색 실패(무시):", e?.message ?? e);
     }
 
-    // --- Stats ---
+    // --- Stats (프롬프트 업데이트) ---
     const statsParser = new JsonOutputParser<Partial<Stats>>();
+
     const statsPrompt = PromptTemplate.fromTemplate(
-      `너는 냉소적인 스타트업 검증관이다. 다음 정보를 바탕으로 5대 스탯(0~100 정수)을 JSON으로 출력하라.
-JSON 키: product, team, strategy, marketing, consumer_needs (consumer_needs는 필수)
-정보: {info}
-시장데이터: {marketData}
-{format_instructions}`
+      `너는 냉소적인 스타트업 검증관이다. 입력된 정보와 시장 데이터를 바탕으로 5대 스탯(0~100)을 JSON으로 평가하라.
+특히 '창업자 특성'을 'Team'과 'Strategy' 점수에 강력하게 반영하라.
+
+입력 정보:
+- 판매자: {sellerInfo}
+- 타겟: {buyerInfo}
+- 아이템: {productInfo}
+- **창업자 특성(10점 만점)**: {founderTraits}
+
+시장 데이터:
+{marketData}
+
+{format_instructions}
+JSON 키: product, team, strategy, marketing, consumer_needs`
     );
 
     const rawStats = await generateWithFallback(
       googleKey,
       statsPrompt,
       {
-        info: `판매자:${sellerInfo}, 타겟:${buyerInfo}, 아이템:${JSON.stringify(
-          productInfo
-        )}`,
+        sellerInfo,
+        buyerInfo,
+        productInfo: JSON.stringify(productInfo),
+        founderTraits: JSON.stringify(founderTraits),
         marketData,
         format_instructions: statsParser.getFormatInstructions(),
       },
@@ -281,15 +290,14 @@ JSON 키: product, team, strategy, marketing, consumer_needs (consumer_needs는 
     };
 
     // --- MCTS ---
-    const mcts = new StartupMCTS(1200);
+    const mcts = new StartupMCTS(1500);
     const simulation = mcts.run(safeStats);
 
-    // --- Report + Debate ---
+    // --- Report & Debate ---
     const reportParser = new JsonOutputParser<any>();
-
     const reportPrompt = PromptTemplate.fromTemplate(
       `냉소적인 VC로서 부검 리포트를 JSON으로 작성해라.
-JSON 키: death_cause, autopsy_report, action_plan, needs_analysis, youtube_queries(배열 string 3개)
+JSON 키: death_cause, autopsy_report, action_plan, needs_analysis
 스탯: {stats}
 가장 많이 죽은 구간: {bottleneck}
 시장데이터: {marketData}
@@ -297,11 +305,13 @@ JSON 키: death_cause, autopsy_report, action_plan, needs_analysis, youtube_quer
     );
 
     const debatePrompt = PromptTemplate.fromTemplate(
-      `아래 정보를 보고 3명의 전문가가 독설 좌담회를 열어라. 한국어 대화체로 작성.
+      `아래 정보를 보고 3명의 전문가가 독설 좌담회를 열어라. (한국어 대화체)
 1) 마포구 VC (냉소적) 2) 테헤란로 창업가 (현실적) 3) 까칠한 얼리어답터 (불만 많음)
+
 아이템: {item}
 스탯: {stats}
-마지막에 "결론: 한 줄" 포함.`
+
+마지막에 "결론: 한 줄"을 포함하고, 그 아래에 이 아이템을 표현하는 **핵심 키워드 10개를 쉼표(,)로 구분하여 나열하라.** (예: 키워드: 가격, 디자인, 불필요 기능...)`
     );
 
     const [report, debateRes] = await Promise.all([
@@ -334,33 +344,6 @@ JSON 키: death_cause, autopsy_report, action_plan, needs_analysis, youtube_quer
     console.error("Server Error:", extractErrMsg(error));
     return NextResponse.json(
       { success: false, error: extractErrMsg(error) },
-      { status: 500 }
-    );
-  }
-}
-
-// ------------------------------
-// (옵션) 디버깅용: 현재 키에서 가능한 모델 목록 확인
-// 운영 배포에선 지우거나 막으세요.
-// ------------------------------
-export async function GET() {
-  try {
-    const googleKey = process.env.GOOGLE_API_KEY;
-    if (!googleKey) {
-      return NextResponse.json(
-        { success: false, error: "GOOGLE_API_KEY 없음" },
-        { status: 500 }
-      );
-    }
-    const available = await fetchAvailableModels(googleKey);
-    return NextResponse.json({
-      success: true,
-      available,
-      fallback: buildFallbackModels(available),
-    });
-  } catch (e: any) {
-    return NextResponse.json(
-      { success: false, error: extractErrMsg(e) },
       { status: 500 }
     );
   }
