@@ -9,7 +9,7 @@ import { PromptTemplate } from "@langchain/core/prompts";
 // ✅ Vercel 캐시/ISR 영향 제거
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
-// ✅ (권장) Edge 런타임 방지: 일부 환경에서 google sdk/crypto 이슈 예방
+// ✅ (권장) Edge 런타임 방지
 export const runtime = "nodejs";
 
 // ------------------------------
@@ -30,21 +30,15 @@ declare global {
 function extractErrMsg(e: any): string {
   const parts: string[] = [];
   if (e?.message) parts.push(String(e.message));
-  if (e?.cause?.message && e.cause.message !== e.message) {
-    parts.push(`cause: ${e.cause.message}`);
-  }
+  if (e?.cause?.message && e.cause.message !== e.message) parts.push(`cause: ${e.cause.message}`);
   return parts.join(" | ") || String(e);
 }
 
 async function fetchAvailableModels(apiKey: string): Promise<string[]> {
   const cache = globalThis.__GEMINI_MODEL_CACHE__;
-  if (cache && Date.now() - cache.ts < MODEL_CACHE_TTL_MS && cache.models.length) {
-    return cache.models;
-  }
+  if (cache && Date.now() - cache.ts < MODEL_CACHE_TTL_MS && cache.models.length) return cache.models;
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(
-    apiKey
-  )}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`;
 
   const res = await fetch(url, {
     method: "GET",
@@ -53,8 +47,6 @@ async function fetchAvailableModels(apiKey: string): Promise<string[]> {
   });
 
   if (!res.ok) {
-    // ListModels 실패해도 앱은 돌아가야 하므로 여기서 throw는 하고,
-    // 상위에서 catch해서 하드코딩 목록으로 fallback 하게 처리
     throw new Error(`ListModels 실패: HTTP ${res.status} ${res.statusText}`);
   }
 
@@ -71,7 +63,6 @@ async function fetchAvailableModels(apiKey: string): Promise<string[]> {
 }
 
 function buildFallbackModels(available: string[]): string[] {
-  // 선호 패턴(있는 것만 골라서 사용)
   const preferredPatterns = [
     "gemini-2.0-flash",
     "gemini-2.0-flash-exp",
@@ -98,19 +89,12 @@ function buildFallbackModels(available: string[]): string[] {
   return picked.length ? picked : available.slice(0, 3);
 }
 
-// ✅ ListModels 자체가 실패할 때를 위한 하드코딩 최후 fallback
 function hardFallbackModels(): string[] {
-  return [
-    "gemini-2.0-flash-exp",
-    "gemini-1.5-flash",
-    "gemini-1.5-pro",
-    "gemini-1.0-pro",
-    "gemini-pro",
-  ];
+  return ["gemini-2.0-flash-exp", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.0-pro", "gemini-pro"];
 }
 
 // ------------------------------
-// 2) 모델 호출 유틸 (JSON / TEXT 분리해서 TS 제네릭 에러 원천 차단)
+// 2) 모델 호출 유틸 (JSON / TEXT 분리)
 // ------------------------------
 async function getModelCandidates(apiKey: string): Promise<string[]> {
   try {
@@ -122,7 +106,8 @@ async function getModelCandidates(apiKey: string): Promise<string[]> {
   }
 }
 
-async function generateJsonWithFallback<T extends Record<string, any>>(
+// ✅ 여기 제네릭 constraint를 Record<string, any> -> object 로 완화 (TS 에러 방지)
+async function generateJsonWithFallback<T extends object>(
   apiKey: string,
   prompt: PromptTemplate,
   inputVariables: Record<string, any>,
@@ -134,12 +119,7 @@ async function generateJsonWithFallback<T extends Record<string, any>>(
 
   for (const modelName of models) {
     try {
-      const llm = new ChatGoogleGenerativeAI({
-        model: modelName,
-        apiKey,
-        temperature,
-      });
-
+      const llm = new ChatGoogleGenerativeAI({ model: modelName, apiKey, temperature });
       const chain = prompt.pipe(llm).pipe(parser);
       return (await chain.invoke(inputVariables)) as T;
     } catch (e: any) {
@@ -162,12 +142,7 @@ async function generateTextWithFallback(
 
   for (const modelName of models) {
     try {
-      const llm = new ChatGoogleGenerativeAI({
-        model: modelName,
-        apiKey,
-        temperature,
-      });
-
+      const llm = new ChatGoogleGenerativeAI({ model: modelName, apiKey, temperature });
       const chain = prompt.pipe(llm);
       const res: any = await chain.invoke(inputVariables);
 
@@ -189,6 +164,17 @@ function toInt0to100(v: any): number {
   return Math.max(0, Math.min(100, Math.round(n)));
 }
 
+// ✅ 마크다운 찌꺼기 제거(특히 ** 때문에 짜증나는 케이스 방지)
+function stripMarkdownArtifacts(s: any): string {
+  const text = String(s ?? "");
+  return text
+    .replace(/\*\*/g, "")          // ** 제거
+    .replace(/`+/g, "")            // 백틱 제거
+    .replace(/^\s*[-*]\s+/gm, "")  // - bullet 제거
+    .replace(/^#+\s*/gm, "")       // # heading 제거
+    .trim();
+}
+
 // ------------------------------
 // 3) API 핸들러
 // ------------------------------
@@ -205,6 +191,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json().catch(() => null);
+    const language = body?.language ?? "ko";
     const sellerInfo = body?.sellerInfo ?? "";
     const buyerInfo = body?.buyerInfo ?? "";
     const productInfo = body?.productInfo ?? null;
@@ -219,17 +206,14 @@ export async function POST(req: Request) {
 
     console.log("🔥 분석 시작:", productInfo.name);
 
-    // --- Tavily 검색 (유사아이템/실패사례/리뷰 불만 등) ---
+    // --- Tavily 검색 ---
     const tvly = tavily({ apiKey: tavilyKey });
     let marketData = "시장 데이터 없음";
     let pastCases: Array<{ title: string; url: string; content: string }> = [];
 
     try {
       const q = `${productInfo.name} 실패 사례 경쟁사 리뷰 불만 대체재`;
-      const searchResult = await tvly.search(q, {
-        searchDepth: "advanced",
-        maxResults: 5,
-      });
+      const searchResult = await tvly.search(q, { searchDepth: "advanced", maxResults: 5 });
 
       marketData = (searchResult.results ?? [])
         .map((r: any) => `- ${r.title}: ${String(r.content).slice(0, 400)}...`)
@@ -245,11 +229,18 @@ export async function POST(req: Request) {
     }
 
     // --- Stats JSON ---
+    // ✅ Stats 타입이 이제 { product, founder, strategy, marketing, consumer_needs } 임 (mcts.ts 기준)
     const statsParser = new JsonOutputParser<Stats>();
+
     const statsPrompt = PromptTemplate.fromTemplate(
       `너는 냉소적인 스타트업 검증관이다.
 아래 정보와 시장데이터를 기반으로 5대 스탯(0~100 정수)을 JSON으로 출력하라.
-특히 '창업자 특성'을 team, strategy 점수에 강하게 반영하라.
+
+중요:
+- 초기 스타트업은 팀이 없을 수 있다. 따라서 'team'을 평가하지 않는다.
+- 대신 창업자 개인 역량을 'founder' 점수로 평가한다.
+- founder 점수는 아래 '창업자 특성(1~10)'을 강하게 반영하라.
+- strategy 점수에도 창업자 특성(실행력/불확실성 내성/설득력/리소스 감각)을 반영하라.
 
 입력 정보:
 - 판매자: {sellerInfo}
@@ -265,7 +256,7 @@ export async function POST(req: Request) {
 - 값은 0~100 정수
 
 {format_instructions}
-JSON 키: product, team, strategy, marketing, consumer_needs`
+JSON 키: product, founder, strategy, marketing, consumer_needs`
     );
 
     const rawStats = await generateJsonWithFallback<Stats>(
@@ -285,7 +276,7 @@ JSON 키: product, team, strategy, marketing, consumer_needs`
 
     const safeStats: Stats = {
       product: toInt0to100((rawStats as any).product),
-      team: toInt0to100((rawStats as any).team),
+      founder: toInt0to100((rawStats as any).founder),
       strategy: toInt0to100((rawStats as any).strategy),
       marketing: toInt0to100((rawStats as any).marketing),
       consumer_needs: toInt0to100((rawStats as any).consumer_needs),
@@ -330,7 +321,7 @@ JSON 키: product, team, strategy, marketing, consumer_needs`
 {format_instructions}`
     );
 
-    const report = await generateJsonWithFallback<ReportShape>(
+    const reportRaw = await generateJsonWithFallback<ReportShape>(
       googleKey,
       reportPrompt,
       {
@@ -343,9 +334,27 @@ JSON 키: product, team, strategy, marketing, consumer_needs`
       0.35
     );
 
+    // ✅ action_plan에서 마크다운 찌꺼기 2차 제거
+    const report: ReportShape = {
+      ...reportRaw,
+      action_plan: stripMarkdownArtifacts(reportRaw.action_plan),
+      autopsy_report: String(reportRaw.autopsy_report ?? ""),
+      needs_analysis: String(reportRaw.needs_analysis ?? ""),
+      death_cause: String(reportRaw.death_cause ?? ""),
+      youtube_queries: Array.isArray(reportRaw.youtube_queries) ? reportRaw.youtube_queries.slice(0, 3) : [],
+      keywords: Array.isArray(reportRaw.keywords) ? reportRaw.keywords.slice(0, 10) : [],
+    };
+
     // --- Debate TEXT ---
+    const debateLangInstr =
+      language === "en"
+        ? "Write the conversation in natural English."
+        : "한국어 대화체로 작성.";
+
     const debatePrompt = PromptTemplate.fromTemplate(
-      `아래 정보를 보고 3명의 전문가가 독설 좌담회를 열어라. (한국어 대화체)
+      `아래 정보를 보고 3명의 전문가가 독설 좌담회를 열어라.
+${debateLangInstr}
+
 1) 마포구 VC (냉소적) 2) 테헤란로 창업가 (현실적) 3) 까칠한 얼리어답터 (불만 많음)
 
 아이템: {item}
@@ -370,17 +379,14 @@ JSON 키: product, team, strategy, marketing, consumer_needs`
 
     return NextResponse.json({
       success: true,
-      stats: safeStats,
-      simulation,
-      report,
+      stats: safeStats,     // ✅ founder 포함
+      simulation,           // ✅ survival_rate / death_counts / bottleneck_stage 포함
+      report,               // ✅ youtube_queries + keywords 유지
       debate,
-      pastCases, // ✅ 유사/실패사례 링크 유지
+      pastCases,            // ✅ 유사/실패사례 링크 유지
     });
   } catch (error: any) {
     console.error("Server Error:", extractErrMsg(error));
-    return NextResponse.json(
-      { success: false, error: extractErrMsg(error) },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: extractErrMsg(error) }, { status: 500 });
   }
 }
