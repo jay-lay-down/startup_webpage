@@ -355,6 +355,13 @@ export class StartupMCTS {
       "Scale-up": 0,
       Unicorn: 0,
     };
+    const stageEntries: Record<Stage, number> = {
+      Seed: 0,
+      MVP: 0,
+      PMF: 0,
+      "Scale-up": 0,
+      Unicorn: 0,
+    };
 
     let survivors = 0;
 
@@ -362,6 +369,7 @@ export class StartupMCTS {
       let diedAt: Stage | null = null;
 
       for (const stage of STAGES) {
+        stageEntries[stage]++;
         if (Math.random() > this.getSurvivalProb(stats, stage)) {
           diedAt = stage;
           break;
@@ -372,8 +380,24 @@ export class StartupMCTS {
       else survivors++;
     }
 
-    const bottleneckStage = (Object.keys(deathCounts) as Stage[]).reduce((a, b) =>
-      deathCounts[a] > deathCounts[b] ? a : b
+    const deathRates = (Object.keys(stageEntries) as Stage[]).reduce(
+      (acc, stage) => {
+        acc[stage] = stageEntries[stage] > 0 ? deathCounts[stage] / stageEntries[stage] : 0;
+        return acc;
+      },
+      {} as Record<Stage, number>
+    );
+
+    const stageSurvivalRates = (Object.keys(stageEntries) as Stage[]).reduce(
+      (acc, stage) => {
+        acc[stage] = stageEntries[stage] > 0 ? 1 - deathRates[stage] : 0;
+        return acc;
+      },
+      {} as Record<Stage, number>
+    );
+
+    const bottleneckStage = (Object.keys(deathRates) as Stage[]).reduce((a, b) =>
+      deathRates[a] > deathRates[b] ? a : b
     );
 
     const audienceScore = clamp0to100((stats as any)?.potential_customers, 50);
@@ -384,6 +408,9 @@ export class StartupMCTS {
     return {
       survival_rate: survivalRate,
       death_counts: deathCounts,
+      stage_entries: stageEntries,
+      death_rates: deathRates,
+      stage_survival_rates: stageSurvivalRates,
       bottleneck_stage: bottleneckStage,
 
       potential_customers_score: audienceScore,
@@ -392,6 +419,9 @@ export class StartupMCTS {
       // legacy
       survivalRate,
       deathCounts,
+      stageEntries,
+      deathRates,
+      stageSurvivalRates,
       bottleneck: bottleneckStage,
       potentialCustomersScore: audienceScore,
       potentialCustomersBand: band,

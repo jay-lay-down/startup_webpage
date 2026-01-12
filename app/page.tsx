@@ -764,8 +764,12 @@ export default function Home() {
   const FunnelChart = ({ simulation }: { simulation: any }) => {
     const stages = ["Seed", "MVP", "PMF", "Scale-up", "Unicorn"];
     const deathCounts: Record<string, number> = simulation?.death_counts ?? simulation?.deathCounts ?? {};
+    const deathRates: Record<string, number> = simulation?.death_rates ?? simulation?.deathRates ?? {};
+    const stageSurvivalRates: Record<string, number> =
+      simulation?.stage_survival_rates ?? simulation?.stageSurvivalRates ?? {};
     const bottleneckStage: string =
       simulation?.bottleneck_stage ?? simulation?.bottleneckStage ?? simulation?.bottleneck ?? "";
+    const survivalLabel = lang === "en" ? "survive" : "생존";
 
     const maxDeaths = Math.max(...(Object.values(deathCounts) as number[]), 0) || 1;
 
@@ -775,6 +779,7 @@ export default function Home() {
           const deaths = deathCounts[stage] || 0;
           const isBottleneck = stage === bottleneckStage;
           const width = (deaths / maxDeaths) * 100;
+          const dropRate = Math.round(((deathRates[stage] ?? 0) * 100) * 10) / 10;
 
           return (
             <div key={stage} className="flex items-center gap-2 text-sm text-zinc-300">
@@ -787,12 +792,25 @@ export default function Home() {
                   style={{ width: `${Math.max(width, deaths > 0 ? 2 : 0)}%` }}
                 />
                 <span className="absolute inset-0 flex items-center justify-end px-2 text-xs font-bold text-white/80">
-                  {deaths > 0 ? `☠️ ${deaths}` : ""}
+                  {deaths > 0 ? `☠️ ${deaths} · ${dropRate}%` : ""}
                 </span>
               </div>
             </div>
           );
         })}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-xs text-zinc-400 mt-2">
+          {stages.map((stage) => {
+            const survivalRate = Math.round(((stageSurvivalRates[stage] ?? 0) * 100) * 10) / 10;
+            return (
+              <div key={`survival-${stage}`} className="flex items-center justify-center gap-1">
+                <span className="font-bold text-zinc-500">{stage}</span>
+                <span>
+                  {survivalRate}% {survivalLabel}
+                </span>
+              </div>
+            );
+          })}
+        </div>
         <p className="text-center text-xs text-zinc-500 mt-2">
           {t.funnelDesc}
           <span className="ml-2 inline-block align-middle">

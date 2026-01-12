@@ -605,12 +605,12 @@ concept_fit, price_fit, business_model_fit, distribution, market_scope, potentia
     // --- MCTS (시장점유율 포함) ---
     const mcts = new StartupMCTS(1500);
 
-    // ✅ "임의 말고" => synthetic fallback 금지
-    // - auto 모드에서도 Gemini가 max_penetration을 "보수적 추정"으로 채우도록 이미 유도했음
+    // ✅ 기본: manual/none은 synthetic fallback 금지
+    // - auto 모드에서는 부족한 값이 있어도 prior로 채워서 시장규모 계산은 진행
     const simulation = mcts.runWithMarket(
       safeStats,
       marketAssumptionsForMcts,
-      { allow_synthetic_fallback: false }
+      { allow_synthetic_fallback: marketMode === "auto" }
     );
 
     // ------------------------------
@@ -625,6 +625,23 @@ concept_fit, price_fit, business_model_fit, distribution, market_scope, potentia
       keywords: string[];
       market_takeaway?: string;
     };
+
+    const weaknessFactors = (() => {
+      const pairs: Array<{ key: string; label: string; score: number }> = [
+        { key: "concept_fit", label: "컨셉", score: safeStats.concept_fit },
+        { key: "price_fit", label: "가격", score: safeStats.price_fit },
+        { key: "business_model_fit", label: "BM", score: safeStats.business_model_fit },
+        { key: "distribution", label: "채널/유통", score: safeStats.distribution },
+        { key: "market_scope", label: "시장 확장성", score: safeStats.market_scope },
+        { key: "potential_customers", label: "잠재고객", score: safeStats.potential_customers },
+        { key: "product", label: "제품력", score: safeStats.product },
+        { key: "strategy", label: "전략", score: safeStats.strategy },
+        { key: "marketing", label: "마케팅", score: safeStats.marketing },
+        { key: "consumer_needs", label: "니즈", score: safeStats.consumer_needs },
+        { key: "founder", label: "창업자", score: safeStats.founder },
+      ];
+      return pairs.sort((a, b) => a.score - b.score).slice(0, 3);
+    })();
 
     const reportParser = new JsonOutputParser<ReportShape>();
     const reportPrompt = PromptTemplate.fromTemplate(
@@ -643,13 +660,15 @@ concept_fit, price_fit, business_model_fit, distribution, market_scope, potentia
 - 아이템/설문: {item}
 - 스탯: {stats}
 - 시뮬레이션: {sim}
-- 가장 많이 죽은 구간: {bottleneck}
+- 드랍률 기준 병목: {bottleneck}
+- 점수 약점 TOP3: {weaknessFactors}
 - 시장데이터: {marketData}
 
 주의:
 - JSON만 출력
 - action_plan에 마크다운 금지(특히 ** 사용 금지)
 - keywords는 "단어/짧은 구" 중심
+- death_cause는 bottleneck 단계가 아니라 점수 약점 TOP3를 근거로 짧게 요약
 
 {format_instructions}`
     );
@@ -662,6 +681,7 @@ concept_fit, price_fit, business_model_fit, distribution, market_scope, potentia
         stats: JSON.stringify(safeStats),
         sim: JSON.stringify(simulation),
         bottleneck: (simulation as any).bottleneck_stage ?? (simulation as any).bottleneck ?? "",
+        weaknessFactors: JSON.stringify(weaknessFactors),
         marketData: combinedMarketData,
         format_instructions: reportParser.getFormatInstructions(),
       },
