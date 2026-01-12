@@ -238,7 +238,7 @@ const translations = {
     marketModeManual: "직접 입력",
     marketManualHint:
       "가능한 '연간' 기준으로 넣으세요. 예: 시장매출(연간), 평균가격(1회 결제), 구매빈도(연/인), 침투율 상한(0~1).",
-    marketTabTitle: "시장점유율/파이 먹기",
+    marketTabTitle: "시장점유율",
     marketNeededMsg:
       "시장점유율 계산에 필요한 시장정보가 부족합니다. 설문에서 '자동 시장조사' 또는 '직접 입력'을 선택해주세요.",
     marketAssumptionsTitle: "사용된 시장 가정",
@@ -246,10 +246,10 @@ const translations = {
     marketMetaTitle: "자동 추정 메모",
     marketShareTitle: "예상 시장점유율(Revenue 기준)",
     marketShareNote: "모델은 '생존'을 통과한 시뮬레이션 런에서만 점유율을 계산합니다.",
-    marketGraphTitle: "면적(파이) 시각화",
+    marketGraphTitle: "면적그래프",
     marketTotal: "전체 시장(추정)",
     marketSAM: "도달 가능한 시장(SAM)",
-    marketSOM: "실제로 먹을 수 있는 파이(SOM)",
+    marketSOM: "실제로 (SOM)",
     marketYou: "당신(추정 매출)",
   },
   en: {
@@ -1564,8 +1564,8 @@ export default function Home() {
                   {marketMode === "auto" && (
                     <div className="mt-4 text-sm text-zinc-400">
                       {lang === "ko"
-                        ? "자동 모드는 Tavily로 시장규모/가격/구매빈도 관련 정보를 검색하고, AI가 숫자(근거 포함)를 추출해 점유율을 계산합니다."
-                        : "Auto mode uses Tavily + AI to extract numbers (with sources) and estimate market share."}
+                        ? "자동으로 시장규모/가격/구매빈도 관련 정보를 검색하고, AI로 점유율을 계산합니다."
+                        : "Auto mode uses AI to extract numbers (with sources) and estimate market share."}
                     </div>
                   )}
                 </div>
