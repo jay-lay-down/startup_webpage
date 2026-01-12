@@ -667,9 +667,10 @@ export async function POST(req: Request) {
 - strategy 점수에도 창업자 특성(실행력/불확실성 내성/설득력/리소스 감각)을 반영하라.
 - sellerInfo에서 드러나는 도메인 지식/경험/연령대를 고려해 founder/strategy를 조정하라.
 - buyerInfo에서 드러나는 연령대/세그먼트를 고려해 consumer_needs와 marketing을 조정하라.
-- 창업자 연령대/경험과 타겟 연령대가 크게 어긋나면 founder/strategy/marketing을 보수적으로 낮춰라.
+- 창업자 연령대/경험과 타겟 연령대가 어긋나면 founder/strategy/marketing을 보수적으로 낮춰라.
 - 타겟 연령대와 채널/마케팅 방식이 어긋나면 marketing/distribution을 낮춰라.
 - 컨셉이 고객 니즈/타겟과 불일치하면 concept_fit과 consumer_needs를 보수적으로 낮춰라.
+- 니즈는 한 번 더 찾아보고 특정 segment에서 큰 니즈가 없으면 니즈가 있을 것이라고 확정적으로 이야기를 하지 말아라.
 
 [채점 규칙(중요)]
 - 대부분의 아이디어는 40~55가 정상 범위다. 근거 없이 70+를 주지 마라.
