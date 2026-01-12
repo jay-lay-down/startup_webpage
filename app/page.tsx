@@ -585,6 +585,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [activeTab, setActiveTab] = useState<"summary" | "autopsy" | "voc" | "market" | "links">("summary");
+  const [skullImgError, setSkullImgError] = useState(false);
 
   // form state
   const [categoryPreset, setCategoryPreset] = useState<string>("가전");
@@ -1155,11 +1156,18 @@ export default function Home() {
         {/* 공통 헤더 */}
         <div className="text-center space-y-2 pt-8">
           <h1 className="flex flex-wrap items-center justify-center gap-3 text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500 tracking-tight">
-            <img
-              src="/images/OIP.webp"
-              alt="Skull"
-              className="h-10 w-10 md:h-12 md:w-12 object-contain"
-            />
+            {!skullImgError ? (
+              <img
+                src="/images/OIP.webp"
+                alt="Skull"
+                className="h-10 w-10 md:h-12 md:w-12 object-contain"
+                onError={() => setSkullImgError(true)}
+              />
+            ) : (
+              <span aria-hidden="true" className="text-3xl md:text-4xl">
+                ☠️
+              </span>
+            )}
             <span>{t.title}</span>
           </h1>
           <p className="text-zinc-400 text-lg">{t.subtitle}</p>
