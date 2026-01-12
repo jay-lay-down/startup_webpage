@@ -540,14 +540,6 @@ export async function POST(req: Request) {
 - consumer_needs가 70+면 needs_analysis에서 지불의사/긴급성/대체재 대비 우위를 반드시 긍정적으로 설명해야 한다.
 - needs_analysis가 부정적이면 consumer_needs를 55 이하로 내린다.
 
-[채점 규칙(중요)]
-- 대부분의 아이디어는 40~55가 정상 범위다. 근거 없이 70+를 주지 마라.
-- 70+는 구체적 근거(명확한 타겟, 대체재 대비 큰 개선, 현실적 채널/CAC 추정 등)가 있을 때만 가능.
-- 85+는 트랙션/실적 등 강한 증거 없으면 금지.
-- business_model_fit < 40 또는 distribution < 40이면 consumer_needs는 최대 65로 캡.
-- consumer_needs가 70+면 needs_analysis에서 지불의사/긴급성/대체재 대비 우위를 반드시 긍정적으로 설명해야 한다.
-- needs_analysis가 부정적이면 consumer_needs를 55 이하로 내린다.
-
 추가 설문 항목(반드시 반영):
 - 컨셉: {concept}
 - 가격: {price}

@@ -766,7 +766,7 @@ export default function Home() {
   };
 
   // --- UI helpers ---
-  const StatBar = ({ label, value, icon: Icon, colorClass, tooltip }: any) => (
+  const StatBar = ({ label, value, icon: Icon, colorClass, barClass, tooltip }: any) => (
     <div className="space-y-2">
       <div className="flex justify-between text-sm font-bold items-center text-zinc-300">
         <div className="flex items-center gap-2">
@@ -780,7 +780,7 @@ export default function Home() {
       </div>
       <div className="h-3 w-full bg-zinc-800 rounded-full overflow-hidden">
         <div
-          className={`h-full ${colorClass.replace("text", "bg")} transition-all duration-1000`}
+          className={`h-full ${barClass} transition-all duration-1000`}
           style={{ width: `${Math.max(0, Math.min(100, value))}%` }}
         />
       </div>
@@ -1538,6 +1538,7 @@ export default function Home() {
                             value={result.stats.product}
                             icon={IconShoppingCart}
                             colorClass="text-blue-400"
+                            barClass="bg-blue-400"
                             tooltip={statTooltips.product}
                           />
                           <StatBar
@@ -1545,6 +1546,7 @@ export default function Home() {
                             value={getFounderScore(result)}
                             icon={IconUsers}
                             colorClass="text-green-400"
+                            barClass="bg-green-400"
                             tooltip={statTooltips.founder}
                           />
                           <StatBar
@@ -1552,6 +1554,7 @@ export default function Home() {
                             value={result.stats.strategy}
                             icon={IconTarget}
                             colorClass="text-purple-400"
+                            barClass="bg-purple-400"
                             tooltip={statTooltips.strategy}
                           />
                           <StatBar
@@ -1559,6 +1562,7 @@ export default function Home() {
                             value={result.stats.marketing}
                             icon={IconTrendingUp}
                             colorClass="text-yellow-400"
+                            barClass="bg-yellow-400"
                             tooltip={statTooltips.marketing}
                           />
                           <StatBar
@@ -1566,6 +1570,7 @@ export default function Home() {
                             value={result.stats.consumer_needs}
                             icon={IconHeart}
                             colorClass="text-red-400"
+                            barClass="bg-red-400"
                             tooltip={statTooltips.consumer_needs}
                           />
                         </div>
@@ -1579,6 +1584,7 @@ export default function Home() {
                             value={result.stats.concept_fit}
                             icon={IconTarget}
                             colorClass="text-blue-300"
+                            barClass="bg-blue-300"
                             tooltip={statTooltips.concept_fit}
                           />
                           <StatBar
@@ -1586,6 +1592,7 @@ export default function Home() {
                             value={result.stats.price_fit}
                             icon={IconDollar}
                             colorClass="text-emerald-400"
+                            barClass="bg-emerald-400"
                             tooltip={statTooltips.price_fit}
                           />
                           <StatBar
@@ -1593,6 +1600,7 @@ export default function Home() {
                             value={result.stats.business_model_fit}
                             icon={IconCash}
                             colorClass="text-lime-400"
+                            barClass="bg-lime-400"
                             tooltip={statTooltips.business_model_fit}
                           />
                           <StatBar
@@ -1600,6 +1608,7 @@ export default function Home() {
                             value={result.stats.distribution}
                             icon={IconTruck}
                             colorClass="text-orange-400"
+                            barClass="bg-orange-400"
                             tooltip={statTooltips.distribution}
                           />
                           <StatBar
@@ -1607,6 +1616,7 @@ export default function Home() {
                             value={result.stats.market_scope}
                             icon={IconGlobe}
                             colorClass="text-purple-300"
+                            barClass="bg-purple-300"
                             tooltip={statTooltips.market_scope}
                           />
                           <StatBar
@@ -1614,6 +1624,7 @@ export default function Home() {
                             value={result.stats.potential_customers}
                             icon={IconPie}
                             colorClass="text-rose-300"
+                            barClass="bg-rose-300"
                             tooltip={statTooltips.potential_customers}
                           />
                         </div>
