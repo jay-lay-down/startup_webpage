@@ -489,37 +489,14 @@ export class StartupMCTS {
     const acqCust: number[] = [];
 
     for (let i = 0; i < this.iterations; i++) {
-      // 1) 어디 stage까지 도달?
-      let reachedIndex = -1;
-
-      for (let s = 0; s < STAGES.length; s++) {
-        const stage = STAGES[s];
-        if (Math.random() > this.getSurvivalProb(stats, stage)) break;
-        reachedIndex = s;
-      }
-
-      if (reachedIndex < 0) {
-        shares.push(0);
-        myRev.push(0);
-        mktRev.push(0);
-        samRev.push(0);
-
-        mktCust.push(0);
-        samCust.push(0);
-        acqCust.push(0);
-        continue;
-      }
-
-      const reachedStage = STAGES[reachedIndex];
-
-      // 2) 샘플링
+      // 1) 샘플링 (시장규모는 생존 여부와 무관하게 계산)
       const price = Math.max(0, sampleTri(resolved.price!));
       const freq = Math.max(0, sampleTri(resolved.purchase_freq_per_year!));
       const maxPen = clamp01(sampleTri(resolved.max_penetration!));
 
       const marketCustomers = resolved.market_customers ? Math.max(0, sampleTri(resolved.market_customers)) : 0;
 
-      // 3) addressable (SAM) 비율: market_scope + potential_customers
+      // 2) addressable (SAM) 비율: market_scope + potential_customers
       const scopeScore = clamp0to100((stats as any)?.market_scope, 50);
       const audienceScore = clamp0to100((stats as any)?.potential_customers, 50);
 
@@ -528,7 +505,7 @@ export class StartupMCTS {
 
       const samCustomers = marketCustomers * clamp01(addressableFrac);
 
-      // 4) penetration(침투) 비율: executionScore → 0~maxPen
+      // 3) penetration(침투) 비율: executionScore → 0~maxPen
       const p = clamp0to100((stats as any)?.product, 50);
       const mk = clamp0to100((stats as any)?.marketing, 50);
       const d = clamp0to100((stats as any)?.distribution, 50);
@@ -539,14 +516,24 @@ export class StartupMCTS {
       const executionScore = 0.25 * p + 0.25 * mk + 0.2 * d + 0.2 * st + 0.05 * pr + 0.05 * bm;
       const penFrac = clamp01(scoreToFrac(executionScore, 58, 10) * maxPen);
 
+      // 4) 어디 stage까지 도달?
+      let reachedIndex = -1;
+
+      for (let s = 0; s < STAGES.length; s++) {
+        const stage = STAGES[s];
+        if (Math.random() > this.getSurvivalProb(stats, stage)) break;
+        reachedIndex = s;
+      }
+
+      const reachedStage = reachedIndex >= 0 ? STAGES[reachedIndex] : null;
       const acquiredCustomers = Math.max(0, samCustomers * penFrac);
 
       // 5) stage factor (optional, default 1)
-      const stageTri = resolved.stage_revenue_factor?.[reachedStage];
+      const stageTri = reachedStage ? resolved.stage_revenue_factor?.[reachedStage] : undefined;
       const stageFactor = stageTri ? Math.max(0, sampleTri(stageTri)) : 1;
 
       // 6) 매출
-      const myRevenue = acquiredCustomers * price * freq * stageFactor;
+      const myRevenue = reachedStage ? acquiredCustomers * price * freq * stageFactor : 0;
 
       // 분모(시장 매출)
       let marketRevenue = 0;
@@ -558,7 +545,7 @@ export class StartupMCTS {
 
       const samRevenue = Math.max(0, samCustomers * price * freq);
 
-      const share = clamp01(myRevenue / marketRevenue);
+      const share = reachedStage ? clamp01(myRevenue / marketRevenue) : 0;
 
       shares.push(share);
       myRev.push(myRevenue);

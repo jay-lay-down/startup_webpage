@@ -766,7 +766,7 @@ export default function Home() {
   };
 
   // --- UI helpers ---
-  const StatBar = ({ label, value, icon: Icon, colorClass, barClass, tooltip }: any) => (
+  const StatBar = ({ label, value, icon: Icon, colorClass, barColor, tooltip }: any) => (
     <div className="space-y-2">
       <div className="flex justify-between text-sm font-bold items-center text-zinc-300">
         <div className="flex items-center gap-2">
@@ -780,8 +780,8 @@ export default function Home() {
       </div>
       <div className="h-3 w-full bg-zinc-800 rounded-full overflow-hidden">
         <div
-          className={`h-full ${barClass} transition-all duration-1000`}
-          style={{ width: `${Math.max(0, Math.min(100, value))}%` }}
+          className="h-full transition-all duration-1000"
+          style={{ width: `${Math.max(0, Math.min(100, value))}%`, backgroundColor: barColor }}
         />
       </div>
     </div>
@@ -797,6 +797,8 @@ export default function Home() {
     const bottleneckStage: string =
       simulation?.bottleneck_stage ?? simulation?.bottleneckStage ?? simulation?.bottleneck ?? "";
     const survivalLabel = lang === "en" ? "survive" : "생존";
+    const heatmapLabel = lang === "en" ? "Death heatmap (N)" : "사망자 히트맵(N)";
+    const maxDeaths = Math.max(...(Object.values(deathCounts) as number[]), 1);
 
     return (
       <div className="space-y-3 mt-4">
@@ -831,18 +833,26 @@ export default function Home() {
             </div>
           );
         })}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-xs text-zinc-400 mt-2">
-          {stages.map((stage) => {
-            const survivalRate = Math.round(((stageSurvivalRates[stage] ?? 0) * 100) * 10) / 10;
-            return (
-              <div key={`survival-${stage}`} className="flex items-center justify-center gap-1">
-                <span className="font-bold text-zinc-500">{stage}</span>
-                <span>
-                  {survivalRate}% {survivalLabel}
-                </span>
-              </div>
-            );
-          })}
+        <div className="mt-4 space-y-2">
+          <div className="text-xs text-zinc-500">{heatmapLabel}</div>
+          <div className="grid grid-cols-5 gap-2">
+            {stages.map((stage) => {
+              const deaths = deathCounts[stage] || 0;
+              const intensity = Math.min(1, Math.max(0, deaths / maxDeaths));
+              const bg = `rgba(239, 68, 68, ${0.15 + 0.75 * intensity})`;
+              return (
+                <div
+                  key={`heat-${stage}`}
+                  className="rounded-md border border-zinc-800 px-2 py-2 text-center text-xs font-bold text-white"
+                  style={{ backgroundColor: bg }}
+                  title={`${stage}: ${fmtInt(deaths)}`}
+                >
+                  <div className="text-[11px] text-white/80">{stage}</div>
+                  <div className="text-sm">{fmtInt(deaths)}</div>
+                </div>
+              );
+            })}
+          </div>
         </div>
         <p className="text-center text-xs text-zinc-500 mt-2">
           {t.funnelDesc}
@@ -1538,7 +1548,7 @@ export default function Home() {
                             value={result.stats.product}
                             icon={IconShoppingCart}
                             colorClass="text-blue-400"
-                            barClass="bg-blue-400"
+                            barColor="#60A5FA"
                             tooltip={statTooltips.product}
                           />
                           <StatBar
@@ -1546,7 +1556,7 @@ export default function Home() {
                             value={getFounderScore(result)}
                             icon={IconUsers}
                             colorClass="text-green-400"
-                            barClass="bg-green-400"
+                            barColor="#4ADE80"
                             tooltip={statTooltips.founder}
                           />
                           <StatBar
@@ -1554,7 +1564,7 @@ export default function Home() {
                             value={result.stats.strategy}
                             icon={IconTarget}
                             colorClass="text-purple-400"
-                            barClass="bg-purple-400"
+                            barColor="#C084FC"
                             tooltip={statTooltips.strategy}
                           />
                           <StatBar
@@ -1562,7 +1572,7 @@ export default function Home() {
                             value={result.stats.marketing}
                             icon={IconTrendingUp}
                             colorClass="text-yellow-400"
-                            barClass="bg-yellow-400"
+                            barColor="#FACC15"
                             tooltip={statTooltips.marketing}
                           />
                           <StatBar
@@ -1570,7 +1580,7 @@ export default function Home() {
                             value={result.stats.consumer_needs}
                             icon={IconHeart}
                             colorClass="text-red-400"
-                            barClass="bg-red-400"
+                            barColor="#F87171"
                             tooltip={statTooltips.consumer_needs}
                           />
                         </div>
@@ -1584,7 +1594,7 @@ export default function Home() {
                             value={result.stats.concept_fit}
                             icon={IconTarget}
                             colorClass="text-blue-300"
-                            barClass="bg-blue-300"
+                            barColor="#93C5FD"
                             tooltip={statTooltips.concept_fit}
                           />
                           <StatBar
@@ -1592,7 +1602,7 @@ export default function Home() {
                             value={result.stats.price_fit}
                             icon={IconDollar}
                             colorClass="text-emerald-400"
-                            barClass="bg-emerald-400"
+                            barColor="#34D399"
                             tooltip={statTooltips.price_fit}
                           />
                           <StatBar
@@ -1600,7 +1610,7 @@ export default function Home() {
                             value={result.stats.business_model_fit}
                             icon={IconCash}
                             colorClass="text-lime-400"
-                            barClass="bg-lime-400"
+                            barColor="#A3E635"
                             tooltip={statTooltips.business_model_fit}
                           />
                           <StatBar
@@ -1608,7 +1618,7 @@ export default function Home() {
                             value={result.stats.distribution}
                             icon={IconTruck}
                             colorClass="text-orange-400"
-                            barClass="bg-orange-400"
+                            barColor="#FB923C"
                             tooltip={statTooltips.distribution}
                           />
                           <StatBar
@@ -1616,7 +1626,7 @@ export default function Home() {
                             value={result.stats.market_scope}
                             icon={IconGlobe}
                             colorClass="text-purple-300"
-                            barClass="bg-purple-300"
+                            barColor="#D8B4FE"
                             tooltip={statTooltips.market_scope}
                           />
                           <StatBar
@@ -1624,7 +1634,7 @@ export default function Home() {
                             value={result.stats.potential_customers}
                             icon={IconPie}
                             colorClass="text-rose-300"
-                            barClass="bg-rose-300"
+                            barColor="#FDA4AF"
                             tooltip={statTooltips.potential_customers}
                           />
                         </div>
