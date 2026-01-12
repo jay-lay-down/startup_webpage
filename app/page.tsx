@@ -8,8 +8,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, AlertTriangle, Terminal, TrendingUp, Users, Target, ShoppingCart, Heart, Globe } from "lucide-react";
-import ReactWordcloud from 'react-wordcloud';
+import { Loader2, AlertTriangle, Terminal, TrendingUp, Users, Target, ShoppingCart, Heart } from "lucide-react";
+
+// ❌ 문제의 라이브러리 import 제거함
+// import ReactWordcloud from 'react-wordcloud';
 
 // --- 언어 팩 (번역 데이터) ---
 const translations = {
@@ -150,13 +152,14 @@ type FounderTraits = {
 };
 
 export default function Home() {
-  const [lang, setLang] = useState<'ko' | 'en'>('ko'); // ✅ 언어 상태 (기본 ko)
+  const [lang, setLang] = useState<'ko' | 'en'>('ko'); // 언어 상태
   const t = translations[lang]; // 현재 언어 팩
 
   const [loading, setLoading] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
 
+  // 입력 폼 상태
   const [sellerInfo, setSellerInfo] = useState("");
   const [buyerInfo, setBuyerInfo] = useState("");
   const [productName, setProductName] = useState("");
@@ -184,7 +187,7 @@ export default function Home() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          language: lang, // ✅ 선택된 언어 전송
+          language: lang,
           sellerInfo,
           buyerInfo,
           productInfo: { name: productName, desc: productDesc },
@@ -253,19 +256,34 @@ export default function Home() {
     );
   };
 
-  const getWordCloudWords = (keywords: string[]) => {
-      if (!keywords || keywords.length === 0) return [{ text: "No Data", value: 10 }];
-      return keywords.map(text => ({ 
-          text, 
-          value: Math.floor(Math.random() * 60) + 20 
-      }));
+  // ✅ [수정됨] 라이브러리 없이 만드는 워드클라우드 (Tag Cloud)
+  // 단순히 텍스트를 나열하되, 랜덤한 크기와 색상을 부여해서 구름처럼 보이게 함
+  const TagCloud = ({ keywords }: { keywords: string[] }) => {
+    if (!keywords || keywords.length === 0) return <div className="text-zinc-500">데이터 분석 중...</div>;
+
+    const getStyle = (i: number) => {
+        const sizes = ["text-sm", "text-base", "text-lg", "text-xl", "text-2xl font-bold"];
+        const colors = ["text-red-400", "text-orange-400", "text-zinc-300", "text-blue-400", "text-white"];
+        // 랜덤처럼 보이지만 i 값에 따라 고정된 스타일 (SSR 매칭 문제 방지)
+        return `${sizes[i % sizes.length]} ${colors[i % colors.length]}`;
+    };
+
+    return (
+        <div className="flex flex-wrap gap-4 justify-center items-center h-full p-4">
+            {keywords.map((word, i) => (
+                <span key={i} className={`${getStyle(i)} transition-all hover:scale-110 cursor-default px-2 py-1 bg-zinc-800/30 rounded-lg`}>
+                    {word}
+                </span>
+            ))}
+        </div>
+    );
   };
 
   return (
     <main className="min-h-screen bg-[#0A0A0A] text-zinc-100 p-4 md:p-8 font-sans">
-      <div className="max-w-5xl mx-auto space-y-8 relative">
+      <div className="max-w-7xl mx-auto space-y-8 relative">
         
-        {/* ✅ 언어 선택 버튼 (우측 상단) */}
+        {/* 언어 선택 버튼 */}
         <div className="absolute top-0 right-0 flex gap-2">
           <Button 
             variant={lang === 'ko' ? 'default' : 'outline'} 
@@ -416,24 +434,12 @@ export default function Home() {
                         </Card>
                     </div>
 
-                    {/* 워드클라우드 */}
+                    {/* 워드클라우드 (라이브러리 제거 -> 커스텀 컴포넌트) */}
                     <Card className="bg-zinc-900/50 border-zinc-800">
                         <CardHeader><CardTitle className="text-lg font-bold">{t.cloudTitle}</CardTitle></CardHeader>
-                        <CardContent className="h-[300px] flex items-center justify-center bg-zinc-950/30 rounded-lg p-2 overflow-hidden">
-                             <div className="w-full h-full">
-                                <ReactWordcloud
-                                    words={getWordCloudWords(result.report.keywords)}
-                                    options={{
-                                        rotations: 2,
-                                        rotationAngles: [0, 0],
-                                        fontSizes: [20, 60],
-                                        fontFamily: 'Pretendard, sans-serif',
-                                        colors: ['#ef4444', '#f97316', '#fbbf24', '#60a5fa', '#a78bfa', '#ffffff'],
-                                        enableTooltip: true,
-                                        deterministic: false,
-                                    }}
-                                />
-                             </div>
+                        <CardContent className="min-h-[250px] flex items-center justify-center bg-zinc-950/30 rounded-lg overflow-hidden">
+                             {/* ✅ 여기만 바뀜! 직접 만든 TagCloud 사용 */}
+                             <TagCloud keywords={result.report.keywords} />
                         </CardContent>
                     </Card>
                 </TabsContent>
