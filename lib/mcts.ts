@@ -483,10 +483,12 @@ export class StartupMCTS {
     const myRev: number[] = [];
     const mktRev: number[] = [];
     const samRev: number[] = [];
+    const somRev: number[] = [];
 
     const mktCust: number[] = [];
     const samCust: number[] = [];
     const acqCust: number[] = [];
+    const somCust: number[] = [];
 
     for (let i = 0; i < this.iterations; i++) {
       // 1) 샘플링 (시장규모는 생존 여부와 무관하게 계산)
@@ -504,6 +506,7 @@ export class StartupMCTS {
         0.5 * scoreToFrac(scopeScore, 55, 12) + 0.5 * scoreToFrac(audienceScore, 55, 12);
 
       const samCustomers = marketCustomers * clamp01(addressableFrac);
+      const somCustomers = samCustomers * maxPen;
 
       // 3) penetration(침투) 비율: executionScore → 0~maxPen
       const p = clamp0to100((stats as any)?.product, 50);
@@ -544,6 +547,7 @@ export class StartupMCTS {
       }
 
       const samRevenue = Math.max(0, samCustomers * price * freq);
+      const somRevenue = Math.max(0, somCustomers * price * freq);
 
       const share = reachedStage ? clamp01(myRevenue / marketRevenue) : 0;
 
@@ -551,20 +555,24 @@ export class StartupMCTS {
       myRev.push(myRevenue);
       mktRev.push(marketRevenue);
       samRev.push(samRevenue);
+      somRev.push(somRevenue);
 
       mktCust.push(marketCustomers);
       samCust.push(samCustomers);
       acqCust.push(acquiredCustomers);
+      somCust.push(somCustomers);
     }
 
     const sharesSorted = [...shares].sort((a, b) => a - b);
     const myRevSorted = [...myRev].sort((a, b) => a - b);
     const mktRevSorted = [...mktRev].sort((a, b) => a - b);
     const samRevSorted = [...samRev].sort((a, b) => a - b);
+    const somRevSorted = [...somRev].sort((a, b) => a - b);
 
     const mktCustSorted = [...mktCust].sort((a, b) => a - b);
     const samCustSorted = [...samCust].sort((a, b) => a - b);
     const acqCustSorted = [...acqCust].sort((a, b) => a - b);
+    const somCustSorted = [...somCust].sort((a, b) => a - b);
 
     const market_share = {
       share_mean_pct: mean(shares) * 100,
@@ -584,8 +592,13 @@ export class StartupMCTS {
       sam_revenue_p50: quantile(samRevSorted, 0.5),
       sam_revenue_p90: quantile(samRevSorted, 0.9),
 
+      som_revenue_p10: quantile(somRevSorted, 0.1),
+      som_revenue_p50: quantile(somRevSorted, 0.5),
+      som_revenue_p90: quantile(somRevSorted, 0.9),
+
       market_customers_p50: quantile(mktCustSorted, 0.5),
       sam_customers_p50: quantile(samCustSorted, 0.5),
+      som_customers_p50: quantile(somCustSorted, 0.5),
       acquired_customers_p50: quantile(acqCustSorted, 0.5),
     };
 
@@ -594,11 +607,13 @@ export class StartupMCTS {
       revenue: {
         total_market_p50: market_share.market_revenue_p50,
         addressable_sam_p50: market_share.sam_revenue_p50,
+        obtainable_som_p50: market_share.som_revenue_p50,
         your_revenue_p50: market_share.my_revenue_p50,
       },
       customers: {
         total_market_p50: market_share.market_customers_p50,
         addressable_sam_p50: market_share.sam_customers_p50,
+        obtainable_som_p50: market_share.som_customers_p50,
         your_customers_p50: market_share.acquired_customers_p50,
       },
     };

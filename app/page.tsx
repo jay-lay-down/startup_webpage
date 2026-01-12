@@ -562,6 +562,20 @@ function fmtInt(v: number | null | undefined) {
   return Math.round(v).toLocaleString();
 }
 
+function fmtTri(tri: any) {
+  if (!tri || typeof tri !== "object") return "-";
+  const min = Number(tri.min);
+  const mode = Number(tri.mode);
+  const max = Number(tri.max);
+  if (![min, mode, max].every(Number.isFinite)) return "-";
+  return `${fmtInt(min)} / ${fmtInt(mode)} / ${fmtInt(max)}`;
+}
+
+function safeNumber(v: any, fallback = 0) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+}
+
 export default function Home() {
   const [lang, setLang] = useState<Lang>("ko");
   const t = translations[lang];
@@ -946,6 +960,69 @@ export default function Home() {
     );
   };
 
+  const MarketAssumptionsCard = ({ assumptions }: { assumptions: AnalysisResult["marketAssumptionsUsed"] }) => {
+    if (!assumptions || typeof assumptions !== "object") {
+      return (
+        <div className="text-xs text-zinc-500">
+          {lang === "en" ? "No market assumptions available." : "시장 가정 데이터 없음"}
+        </div>
+      );
+    }
+
+    const source = String((assumptions as any).source ?? "");
+    const usedFallback = Boolean((assumptions as any).used_synthetic_fallback);
+    const missing = Array.isArray((assumptions as any).missing_fields) ? (assumptions as any).missing_fields : [];
+    const ready = Boolean((assumptions as any).ready);
+
+    return (
+      <div className="space-y-3 text-xs text-zinc-300">
+        <div className="flex flex-wrap gap-2">
+          <span className="rounded-full border border-zinc-700 bg-zinc-950/60 px-2 py-1 text-[11px]">
+            {ready ? (lang === "en" ? "Ready" : "사용 가능") : lang === "en" ? "Missing" : "누락"}
+          </span>
+          {source && (
+            <span className="rounded-full border border-zinc-700 bg-zinc-950/60 px-2 py-1 text-[11px]">source: {source}</span>
+          )}
+          {usedFallback && (
+            <span className="rounded-full border border-red-700/60 bg-red-950/40 px-2 py-1 text-[11px] text-red-200">
+              {lang === "en" ? "fallback used" : "보수 추정 포함"}
+            </span>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div>
+            <div className="text-zinc-500">market_customers</div>
+            <div className="font-semibold">{fmtTri((assumptions as any).market_customers)}</div>
+          </div>
+          <div>
+            <div className="text-zinc-500">market_revenue</div>
+            <div className="font-semibold">{fmtTri((assumptions as any).market_revenue)}</div>
+          </div>
+          <div>
+            <div className="text-zinc-500">price</div>
+            <div className="font-semibold">{fmtTri((assumptions as any).price)}</div>
+          </div>
+          <div>
+            <div className="text-zinc-500">purchase_freq_per_year</div>
+            <div className="font-semibold">{fmtTri((assumptions as any).purchase_freq_per_year)}</div>
+          </div>
+          <div>
+            <div className="text-zinc-500">max_penetration</div>
+            <div className="font-semibold">{fmtTri((assumptions as any).max_penetration)}</div>
+          </div>
+        </div>
+
+        {missing.length > 0 && (
+          <div className="text-[11px] text-red-200">
+            {lang === "en" ? "Missing fields: " : "누락 필드: "}
+            {missing.join(", ")}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const getFounderScore = (r: AnalysisResult | null) => {
     const s: any = r?.stats ?? {};
     return Number(s.founder ?? s.team ?? 0);
@@ -962,16 +1039,19 @@ export default function Home() {
 
   const revLayers = useMemo(() => {
     const rev = marketLayers?.revenue ?? {};
-    const total = Number(rev?.total_market_p50 ?? rev?.total_market ?? 0);
-    const sam = Number(rev?.addressable_sam_p50 ?? rev?.sam ?? 0);
-    const som = Number(rev?.obtainable_som_p50 ?? rev?.som ?? 0);
-    const you = Number(rev?.your_revenue_p50 ?? rev?.you ?? 0);
+    const total = safeNumber(rev?.total_market_p50 ?? rev?.total_market ?? 0);
+    const sam = safeNumber(rev?.addressable_sam_p50 ?? rev?.sam ?? 0);
+    const som = safeNumber(rev?.obtainable_som_p50 ?? rev?.som ?? 0);
+    const you = safeNumber(rev?.your_revenue_p50 ?? rev?.you ?? 0);
     return { total, sam, som, you };
   }, [marketLayers]);
 
-  const shareP50 = Number(marketShare?.p50 ?? marketShare?.share_p50 ?? 0);
-  const shareP10 = Number(marketShare?.p10 ?? marketShare?.share_p10 ?? 0);
-  const shareP90 = Number(marketShare?.p90 ?? marketShare?.share_p90 ?? 0);
+  const shareRawP50 = safeNumber(marketShare?.share_p50_pct ?? marketShare?.p50 ?? marketShare?.share_p50 ?? 0);
+  const shareRawP10 = safeNumber(marketShare?.share_p10_pct ?? marketShare?.p10 ?? marketShare?.share_p10 ?? 0);
+  const shareRawP90 = safeNumber(marketShare?.share_p90_pct ?? marketShare?.p90 ?? marketShare?.share_p90 ?? 0);
+  const shareP50 = shareRawP50 > 1 ? shareRawP50 : shareRawP50 * 100;
+  const shareP10 = shareRawP10 > 1 ? shareRawP10 : shareRawP10 * 100;
+  const shareP90 = shareRawP90 > 1 ? shareRawP90 : shareRawP90 * 100;
   const shareBand = String(marketShare?.band ?? marketShare?.audience_band ?? "");
 
   const MarketAreaBar = ({
@@ -985,10 +1065,15 @@ export default function Home() {
     som: number;
     you: number;
   }) => {
-    const base = total > 0 ? total : 1;
-    const samPct = Math.max(0, Math.min(100, (sam / base) * 100));
-    const somPct = Math.max(0, Math.min(100, (som / base) * 100));
-    const youPct = Math.max(0, Math.min(100, (you / base) * 100));
+    const safeTotal = Number.isFinite(total) ? total : 0;
+    const safeSam = Number.isFinite(sam) ? sam : 0;
+    const safeSom = Number.isFinite(som) ? som : 0;
+    const safeYou = Number.isFinite(you) ? you : 0;
+    const base = safeTotal > 0 ? safeTotal : 1;
+    const samPct = Math.max(0, Math.min(100, (safeSam / base) * 100));
+    const somPct = Math.max(0, Math.min(100, (safeSom / base) * 100));
+    const youPct = Math.max(0, Math.min(100, (safeYou / base) * 100));
+    const hasData = safeTotal > 0 || safeSam > 0 || safeSom > 0 || safeYou > 0;
 
     return (
       <div className="space-y-3">
@@ -1007,26 +1092,34 @@ export default function Home() {
 
           <div className="absolute inset-0 flex items-center justify-between px-3 text-xs font-bold text-white/90">
             <span>{t.marketGraphTitle}</span>
-            <span>{total > 0 ? `Total=${fmtMoney(total)}` : ""}</span>
+            <span>{safeTotal > 0 ? `Total=${fmtMoney(safeTotal)}` : ""}</span>
           </div>
         </div>
+
+        {!hasData && (
+          <div className="rounded-xl border border-zinc-800 bg-zinc-950/40 p-4 text-sm text-zinc-400">
+            {lang === "en"
+              ? "Market sizing data is incomplete. Showing placeholder bar."
+              : "시장 데이터가 부족해 요약 그래프만 표시합니다."}
+          </div>
+        )}
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
           <div className="p-3 rounded-xl bg-zinc-950/40 border border-zinc-800">
             <div className="text-zinc-400 text-xs font-bold">{t.marketTotal}</div>
-            <div className="text-white font-extrabold mt-1">{fmtMoney(total)}</div>
+            <div className="text-white font-extrabold mt-1">{fmtMoney(safeTotal)}</div>
           </div>
           <div className="p-3 rounded-xl bg-zinc-950/40 border border-zinc-800">
             <div className="text-zinc-400 text-xs font-bold">{t.marketSAM}</div>
-            <div className="text-blue-200 font-extrabold mt-1">{fmtMoney(sam)}</div>
+            <div className="text-blue-200 font-extrabold mt-1">{fmtMoney(safeSam)}</div>
           </div>
           <div className="p-3 rounded-xl bg-zinc-950/40 border border-zinc-800">
             <div className="text-zinc-400 text-xs font-bold">{t.marketSOM}</div>
-            <div className="text-orange-200 font-extrabold mt-1">{fmtMoney(som)}</div>
+            <div className="text-orange-200 font-extrabold mt-1">{fmtMoney(safeSom)}</div>
           </div>
           <div className="p-3 rounded-xl bg-zinc-950/40 border border-zinc-800">
             <div className="text-zinc-400 text-xs font-bold">{t.marketYou}</div>
-            <div className="text-red-200 font-extrabold mt-1">{fmtMoney(you)}</div>
+            <div className="text-red-200 font-extrabold mt-1">{fmtMoney(safeYou)}</div>
           </div>
         </div>
       </div>
@@ -1780,11 +1873,9 @@ export default function Home() {
                         <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div className="p-4 rounded-xl bg-zinc-950/40 border border-zinc-800">
                             <div className="text-zinc-400 text-xs font-bold">{t.marketShareTitle}</div>
-                            <div className="text-3xl font-extrabold text-red-300 mt-2">
-                              {(shareP50 * 100).toFixed(2)}%
-                            </div>
+                            <div className="text-3xl font-extrabold text-red-300 mt-2">{shareP50.toFixed(2)}%</div>
                             <div className="text-xs text-zinc-500 mt-2">
-                              p10 {(shareP10 * 100).toFixed(2)}% · p90 {(shareP90 * 100).toFixed(2)}%
+                              p10 {shareP10.toFixed(2)}% · p90 {shareP90.toFixed(2)}%
                             </div>
                           </div>
 
@@ -1798,9 +1889,9 @@ export default function Home() {
 
                           <div className="p-4 rounded-xl bg-zinc-950/40 border border-zinc-800">
                             <div className="text-zinc-400 text-xs font-bold">{t.marketAssumptionsTitle}</div>
-                            <pre className="mt-2 text-xs text-zinc-300 whitespace-pre-wrap font-mono">
-{JSON.stringify(result.marketAssumptionsUsed ?? null, null, 2)}
-                            </pre>
+                            <div className="mt-3">
+                              <MarketAssumptionsCard assumptions={result.marketAssumptionsUsed ?? null} />
+                            </div>
                           </div>
                         </div>
 

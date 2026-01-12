@@ -232,6 +232,93 @@ function clampScore0to100(v: number): number {
   return Math.max(0, Math.min(100, Math.round(v)));
 }
 
+type AgeBand = {
+  min: number;
+  max: number;
+  label: string;
+};
+
+function extractAgeBand(text: string): AgeBand | null {
+  if (!text) return null;
+  const src = text.toLowerCase();
+  const decadeMatch = src.match(/(\d{2})\s*대/);
+  if (decadeMatch) {
+    const decade = Number(decadeMatch[1]);
+    if (Number.isFinite(decade) && decade >= 10 && decade <= 90) {
+      return { min: decade, max: decade + 9, label: `${decade}대` };
+    }
+  }
+
+  if (/(mz|엠지|m\s*z)/i.test(src)) return { min: 20, max: 39, label: "MZ" };
+  if (/z세대|gen\s*z/.test(src)) return { min: 15, max: 29, label: "Z" };
+  if (/알파세대|gen\s*alpha/.test(src)) return { min: 10, max: 14, label: "Alpha" };
+  if (/대학생|college/.test(src)) return { min: 18, max: 25, label: "대학생" };
+  if (/청소년|teen/.test(src)) return { min: 13, max: 19, label: "청소년" };
+  if (/청년/.test(src)) return { min: 20, max: 34, label: "청년" };
+  if (/중장년/.test(src)) return { min: 40, max: 69, label: "중장년" };
+  if (/시니어|실버|노년|노인|장년/.test(src)) return { min: 60, max: 79, label: "시니어" };
+  if (/화이트\s*칼라|office|직장인/.test(src)) return { min: 25, max: 49, label: "직장인" };
+
+  return null;
+}
+
+function midpoint(band: AgeBand) {
+  return (band.min + band.max) / 2;
+}
+
+function clampScore(v: number) {
+  return Math.max(0, Math.min(100, Math.round(v)));
+}
+
+function applyContextAdjustments(
+  stats: Stats,
+  context: {
+    sellerInfo?: string;
+    buyerInfo?: string;
+    salesChannel?: string;
+  }
+): Stats {
+  const updated = { ...stats };
+  const sellerBand = extractAgeBand(String(context.sellerInfo ?? ""));
+  const buyerBand = extractAgeBand(String(context.buyerInfo ?? ""));
+  const channelText = String(context.salesChannel ?? "").toLowerCase();
+
+  if (sellerBand && buyerBand) {
+    const gap = Math.abs(midpoint(sellerBand) - midpoint(buyerBand));
+    if (gap >= 30) {
+      updated.founder = clampScore(updated.founder - 8);
+      updated.strategy = clampScore(updated.strategy - 8);
+      updated.marketing = clampScore(updated.marketing - 6);
+    } else if (gap >= 20) {
+      updated.founder = clampScore(updated.founder - 5);
+      updated.strategy = clampScore(updated.strategy - 5);
+      updated.marketing = clampScore(updated.marketing - 4);
+    }
+  }
+
+  const youthChannels = ["인스타", "instagram", "릴스", "reels", "틱톡", "tiktok", "쇼츠", "shorts", "snap", "디스코드"];
+  const seniorChannels = ["네이버 밴드", "밴드", "카카오톡", "카톡", "오프라인", "전단", "홈쇼핑", "신문", "라디오", "현수막", "약국", "마트", "전화"];
+
+  if (buyerBand) {
+    const isSenior = buyerBand.min >= 50;
+    const isYoung = buyerBand.max <= 29;
+    const hasYouthChannel = youthChannels.some((k) => channelText.includes(k));
+    const hasSeniorChannel = seniorChannels.some((k) => channelText.includes(k));
+
+    if (isSenior && hasYouthChannel) {
+      updated.marketing = clampScore(updated.marketing - 10);
+      updated.distribution = clampScore(updated.distribution - 7);
+    }
+
+    if (isYoung && hasSeniorChannel) {
+      updated.marketing = clampScore(updated.marketing - 8);
+      updated.distribution = clampScore(updated.distribution - 5);
+    }
+  }
+
+  return updated;
+}
+
 function compactSources(results: any[], maxLen = 600) {
   return (results ?? []).map((r: any) => ({
     title: String(r?.title ?? "").slice(0, 160),
@@ -580,6 +667,8 @@ export async function POST(req: Request) {
 - strategy 점수에도 창업자 특성(실행력/불확실성 내성/설득력/리소스 감각)을 반영하라.
 - sellerInfo에서 드러나는 도메인 지식/경험/연령대를 고려해 founder/strategy를 조정하라.
 - buyerInfo에서 드러나는 연령대/세그먼트를 고려해 consumer_needs와 marketing을 조정하라.
+- 창업자 연령대/경험과 타겟 연령대가 크게 어긋나면 founder/strategy/marketing을 보수적으로 낮춰라.
+- 타겟 연령대와 채널/마케팅 방식이 어긋나면 marketing/distribution을 낮춰라.
 - 컨셉이 고객 니즈/타겟과 불일치하면 concept_fit과 consumer_needs를 보수적으로 낮춰라.
 
 [채점 규칙(중요)]
@@ -664,12 +753,18 @@ concept_fit, price_fit, business_model_fit, distribution, market_scope, potentia
       potential_customers: toInt0to100((rawStats as any).potential_customers, 35),
     };
 
+    const contextAdjustedStats = applyContextAdjustments(safeStats, {
+      sellerInfo,
+      buyerInfo,
+      salesChannel,
+    });
+
     const adjustedPriceFit = (() => {
-      if (!priceReference || inputPriceValue == null) return safeStats.price_fit;
+      if (!priceReference || inputPriceValue == null) return contextAdjustedStats.price_fit;
       const min = Number(priceReference.min);
       const max = Number(priceReference.max);
       if (!Number.isFinite(min) || !Number.isFinite(max) || min <= 0 || max <= 0 || min > max) {
-        return safeStats.price_fit;
+        return contextAdjustedStats.price_fit;
       }
       let penalty = 0;
       if (inputPriceValue < min) {
@@ -679,11 +774,11 @@ concept_fit, price_fit, business_model_fit, distribution, market_scope, potentia
       } else {
         penalty = -5;
       }
-      return clampScore0to100(safeStats.price_fit - penalty);
+      return clampScore0to100(contextAdjustedStats.price_fit - penalty);
     })();
 
     const finalStats: Stats = {
-      ...safeStats,
+      ...contextAdjustedStats,
       price_fit: adjustedPriceFit,
     };
 
