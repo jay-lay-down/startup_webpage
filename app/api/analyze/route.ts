@@ -5,11 +5,11 @@ import { StartupMCTS, type Stats } from "@/lib/mcts";
 import { JsonOutputParser } from "@langchain/core/output_parsers";
 import { PromptTemplate } from "@langchain/core/prompts";
 
-// ✅ 1. API 키 강제 로딩 (캐시 끄기) - 이거 필수!
+// ✅ 1. Vercel 캐시 끄기 (API 키 인식 필수)
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
-// ✅ 2. [핵심] 모델을 2.0 -> 1.5 -> 1.0 순서로 다 뒤지는 함수
+// ✅ 2. [핵심] 모델을 2.0 -> 1.5 -> 1.0 -> Pro 순서로 다 뒤지는 함수
 async function generateWithFallback(
   apiKey: string,
   prompt: PromptTemplate,
@@ -62,6 +62,12 @@ export async function POST(req: Request) {
     // 3. 환경변수 로딩 체크
     const tavilyKey = process.env.TAVILY_API_KEY;
     const googleKey = process.env.GOOGLE_API_KEY;
+
+    // 디버깅용 로그 (Vercel 로그에서 확인 가능)
+    console.log("🔑 키 로딩 상태:", { 
+      tavily: tavilyKey ? "OK" : "MISSING", 
+      google: googleKey ? "OK" : "MISSING" 
+    });
 
     if (!tavilyKey || !googleKey) {
       return NextResponse.json({ 
