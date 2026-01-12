@@ -2,23 +2,25 @@
 
 export type Stats = {
   product: number;
-  founder: number; // team -> founder
+  founder: number; // ✅ 정식 키: founder
   strategy: number;
   marketing: number;
   consumer_needs: number;
 
-  // ✅ 설문 추가 항목을 반영하기 위한 스탯(0~100)
-  concept_fit: number;        // 컨셉 명확도/차별성/포지셔닝 적합
-  monetization: number;       // BM(돈 버는 법) + 가격/마진/단위경제성 가능성
-  distribution: number;       // 판매채널 적합/운영 난이도/획득 난이도
-  market_scope: number;       // 판매국가/카테고리의 규제/경쟁/확장성
-  potential_customers: number; // 잠재고객 규모/도달가능성(“지갑 있는 사람”)
+  concept_fit: number;
+  monetization: number;
+  distribution: number;
+  market_scope: number;
+  potential_customers: number;
 };
 
 export const STAGES = ["Seed", "MVP", "PMF", "Scale-up", "Unicorn"] as const;
 export type Stage = (typeof STAGES)[number];
 
 type WeightMap = Partial<Record<keyof Stats, number>>;
+
+// ✅ 이전 버전 호환: route/front가 team으로 보내도 founder로 취급
+type StatsInput = Partial<Stats> & { team?: number };
 
 function clamp0to100(v: any, fallback = 50): number {
   const n = Number(v);
@@ -34,6 +36,15 @@ function audienceBand(score: number) {
   return "Tiny";
 }
 
+// ✅ founder는 founder 우선, 없으면 team을 alias로 사용
+function getStat(stats: StatsInput, key: keyof Stats): number {
+  if (key === "founder") {
+    const v = (stats as any).founder ?? (stats as any).team;
+    return clamp0to100(v, 50);
+  }
+  return clamp0to100((stats as any)?.[key], 50);
+}
+
 export class StartupMCTS {
   private iterations: number;
   private stageWeights: Record<Stage, WeightMap>;
@@ -42,13 +53,6 @@ export class StartupMCTS {
   constructor(iterations: number = 1000) {
     this.iterations = iterations;
 
-    /**
-     * ✅ Stage별 중요도(합 1.0 권장)
-     * - Seed/MVP: founder, concept_fit, monetization, consumer_needs 중심
-     * - PMF: consumer_needs, product, distribution, marketing 중심
-     * - Scale/Unicorn: strategy, marketing, market_scope, distribution 중심
-     * - potential_customers는 전구간에 “바닥”으로 반영 (시장 자체가 너무 작으면 답 없음)
-     */
     this.stageWeights = {
       Seed: {
         founder: 0.20,
@@ -121,7 +125,7 @@ export class StartupMCTS {
     };
   }
 
-  private getSurvivalProb(stats: Partial<Stats>, stage: Stage): number {
+  private getSurvivalProb(stats: StatsInput, stage: Stage): number {
     const weights = this.stageWeights[stage];
 
     let score = 0;
@@ -131,9 +135,7 @@ export class StartupMCTS {
       const w = weights[key] ?? 0;
       if (w <= 0) continue;
 
-      // ✅ route/front가 아직 새 스탯을 안 보내도 기본 50으로 보정해서 안 깨지게
-      const s = clamp0to100((stats as any)?.[key], 50);
-
+      const s = getStat(stats, key);
       score += s * w;
       weightSum += w;
     }
@@ -145,7 +147,7 @@ export class StartupMCTS {
     return Math.max(0.0, Math.min(1.0, p));
   }
 
-  public run(stats: Partial<Stats>) {
+  public run(stats: StatsInput) {
     const deathCounts: Record<Stage, number> = {
       Seed: 0,
       MVP: 0,
@@ -179,17 +181,15 @@ export class StartupMCTS {
 
     const survivalRate = (survivors / this.iterations) * 100;
 
-    // ✅ 프론트 호환: snake_case + camelCase 둘 다 제공
     return {
       survival_rate: survivalRate,
       death_counts: deathCounts,
       bottleneck_stage: bottleneckStage,
 
-      // 잠재고객(지수)도 결과로 같이 반환
       potential_customers_score: audienceScore,
       potential_customers_band: band,
 
-      // (옵션) 기존 키도 같이
+      // legacy
       survivalRate,
       deathCounts,
       bottleneck: bottleneckStage,
