@@ -150,7 +150,7 @@ function InfoTip({ text }: { text: string }) {
 const translations = {
   ko: {
     title: "질문하다. 검증하다. 완성하다.",
-    subtitle: "막연했던 아이디어가 빈틈없는 비즈니스가 되는 순간",
+    subtitle: "막연했던 아이디어가 빈틈없는 비즈니스가 되는 순간.",
     startBtn: "분석 시작",
     startSub: "",
     analyzing: "분석을 진행 중입니다...",
@@ -189,7 +189,7 @@ const translations = {
 
     traitsTitle: "창업자 역량 자가진단 (1~10점)",
     traits: {
-      obsession: "고객 중심 마인드",
+      obsession: "고객/문제 집착",
       speed: "실행 속도",
       ambiguity: "불확실성 내성",
       feedback: "피드백 수용력",
@@ -236,7 +236,7 @@ const translations = {
     youtubeTitle: "유튜브 추천 검색어",
     casesTitle: "유사 아이템/실패 사례(검색 결과)",
     retryBtn: "다시하기",
-    editBtn: "응답 수정",
+    editBtn: "설문 응답 수정",
 
     // market section
     marketSectionTitle: "시장점유율 시뮬레이션",
@@ -257,7 +257,7 @@ const translations = {
     marketGraphTitle: "면적그래프",
     marketTotal: "전체 시장(추정)",
     marketSAM: "도달 가능한 시장(SAM)",
-    marketSOM: "도달 가능 점유율(SOM)",
+    marketSOM: "실제 도달  (SOM)",
     marketYou: "추정 매출",
   },
   en: {
@@ -593,7 +593,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [activeTab, setActiveTab] = useState<"summary" | "autopsy" | "voc" | "market" | "links">("summary");
-  const [showStartHint, setShowStartHint] = useState(false); // ✅ 이 state는 이제 안쓰지만, 스크롤 로직 남겨둬도 문제 없음 (Floating CTA 없으니까)
+  const [showStartHint, setShowStartHint] = useState(false);
 
   useEffect(() => {
     // 스크롤 감지 로직은 놔둬도 무방 (쓰는 곳이 없어짐)
@@ -1642,12 +1642,12 @@ export default function Home() {
         )}
 
         {/* =======================
-            STEP 3) RESULT
+            STEP 3) RESULT (최대 폭 제한 및 가독성 개선)
         ======================= */}
         {step === "result" && result && (
-          <div className="space-y-8">
+          <div className="max-w-5xl mx-auto space-y-8 px-4 md:px-0"> {/* ✅ max-w-5xl 추가하여 폭 제한 */}
             {/* 상단 액션 버튼 */}
-            <div className="flex flex-col md:flex-row gap-3 justify-end px-4">
+            <div className="flex flex-col md:flex-row gap-3 justify-end">
               <button
                 onClick={() => setStep("form")}
                 className="text-sm font-semibold text-zinc-700 underline underline-offset-4 hover:text-zinc-900"
@@ -1681,7 +1681,8 @@ export default function Home() {
                 </div>
                 <div>
                   <p className="text-zinc-400 text-sm font-bold mb-1">{t.deathCause}</p>
-                  <span className="inline-block px-3 py-1 border-b border-zinc-300 text-zinc-700 text-sm font-semibold">
+                  {/* ✅ 텍스트 크기 키우고(text-base), 줄바꿈 허용(whitespace-normal) */}
+                  <span className="inline-block px-3 py-1 border-b border-zinc-300 text-zinc-700 text-base font-semibold whitespace-normal leading-relaxed">
                     {cleanText(result.report.death_cause)}
                   </span>
                 </div>
@@ -1987,8 +1988,9 @@ export default function Home() {
                           rel="noreferrer"
                           className="block p-4 border border-zinc-200 bg-white hover:bg-zinc-50 transition"
                         >
-                          <div className="text-sm text-zinc-400 font-bold mb-1">Query {i + 1}</div>
-                          <div className="text-zinc-100 font-extrabold">{q}</div>
+                          {/* ✅ 글씨 색상 가독성 개선 (zinc-400 -> zinc-900 / zinc-100 -> zinc-900) */}
+                          <div className="text-sm text-zinc-900 font-bold mb-1">Query {i + 1}</div>
+                          <div className="text-zinc-900 font-extrabold">{q}</div>
                           <div className="text-xs text-zinc-500 mt-2">YouTube 검색 열기</div>
                         </a>
                       ))}
@@ -2009,8 +2011,9 @@ export default function Home() {
                           rel="noreferrer"
                           className="block p-4 border border-zinc-200 bg-white hover:bg-zinc-50 transition"
                         >
-                          <div className="text-zinc-100 font-bold">{c.title}</div>
-                          <div className="text-zinc-400 text-sm mt-2 line-clamp-3">
+                          {/* ✅ 글씨 색상 가독성 개선 (zinc-100 -> zinc-900 / zinc-400 -> zinc-600) */}
+                          <div className="text-zinc-900 font-bold">{c.title}</div>
+                          <div className="text-zinc-600 text-sm mt-2 line-clamp-3">
                             {String(c.content ?? "").slice(0, 220)}...
                           </div>
                           <div className="text-xs text-zinc-500 mt-2">링크 열기</div>
