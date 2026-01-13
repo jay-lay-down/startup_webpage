@@ -117,7 +117,7 @@ const IconPie = ({ className }: IconProps) => (
   </svg>
 );
 
-// ✅ 추가된 화살표 아이콘
+// ✅ 추가된 화살표 아이콘 (버튼용)
 const IconArrowRight = ({ className }: IconProps) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
     <path d="M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -150,11 +150,11 @@ function InfoTip({ text }: { text: string }) {
 const translations = {
   ko: {
     title: "질문하다. 검증하다. 완성하다.",
-    subtitle: "막연했던 아이디어가 빈틈없는 비즈니스가 되는 순간.",
+    subtitle: "막연했던 아이디어가 빈틈없는 비즈니스가 되는 순간",
     startBtn: "분석 시작",
     startSub: "",
     analyzing: "분석을 진행 중입니다...",
-    homeHint: "지금 바로 당신의 아이디어를 검증해보세요.",
+    homeHint: "", // ✅ 다시 빈칸으로 원복
 
     formTitle: "프로젝트 인테이크",
     formDesc: "정확한 분석을 위해 구체적으로 입력해 주세요.",
@@ -257,7 +257,7 @@ const translations = {
     marketGraphTitle: "면적그래프",
     marketTotal: "전체 시장(추정)",
     marketSAM: "도달 가능한 시장(SAM)",
-    marketSOM: "실제 도달  (SOM)",
+    marketSOM: "도달 가능한 점유율(SOM)",
     marketYou: "추정 매출",
   },
   en: {
@@ -266,7 +266,7 @@ const translations = {
     startBtn: "Start Analysis",
     startSub: "",
     analyzing: "Running analysis...",
-    homeHint: "Validate your idea right now.",
+    homeHint: "", // ✅ 다시 빈칸으로 원복
 
     formTitle: "Project Intake",
     formDesc: "Provide clear inputs for a reliable assessment.",
@@ -1181,26 +1181,28 @@ export default function Home() {
         </div>
 
         {/* =======================
-            STEP 1) HOME
+            STEP 1) HOME (레이아웃 & 힌트 원복)
         ======================= */}
         {step === "home" && (
           <div className="space-y-8 pb-32">
             <div className="w-full flex justify-center">
-              <div className="w-full overflow-hidden bg-white rounded-2xl shadow-sm border border-zinc-100 max-w-5xl">
+              {/* ✅ 여기서 max-w-5xl, rounded, border 다 빼고 w-full로 원상복구 */}
+              <div className="w-full overflow-hidden bg-white">
+                {/* 힌트가 비어있으면 렌더링 안 됨 (형 원래 코드) */}
                 {t.homeHint ? (
-                  <div className="px-4 py-3 text-sm md:text-base font-medium text-zinc-600 border-b border-zinc-100 bg-zinc-50/50">
-                    {t.homeHint}
+                  <div className="px-0 pb-3 text-sm md:text-base font-medium text-zinc-700 border-b border-zinc-200">
+                    <span className="text-zinc-600">{t.homeHint}</span>
                   </div>
                 ) : null}
 
                 <div className="relative group">
+                  {/* 이미지 스타일 원상복구 (hover 효과 등 제거) */}
                   <img
                     src="https://raw.githubusercontent.com/jay-lay-down/startup_webpage/main/public/images/main_v2.png"
                     alt="Main visual"
-                    className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
+                    className="w-full h-auto object-cover"
                   />
-                  {/* 이미지 위 은은한 딤처리 (가독성 확보) */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
+                  {/* 오버레이 제거됨 */}
                 </div>
               </div>
             </div>
@@ -1208,6 +1210,7 @@ export default function Home() {
             <div className="w-full text-center space-y-4">
               {t.startSub ? <p className="text-zinc-500 text-lg font-medium">{t.startSub}</p> : null}
               
+              {/* ✅ 버튼만 형이 좋아한 디자인 유지 */}
               <button
                 onClick={() => setStep("form")}
                 className="group relative inline-flex items-center gap-3 bg-zinc-900 hover:bg-zinc-800 text-white px-8 py-4 rounded-full text-lg font-bold shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
@@ -2025,7 +2028,7 @@ export default function Home() {
       </div>
 
       {/* =======================
-          FIXED FLOATING CTA (스크롤 시 등장) - 개선된 버전
+          FIXED FLOATING CTA (스크롤 시 등장) - 개선된 버전 유지
       ======================= */}
       <div
         className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-50 transition-all duration-500 transform ${
