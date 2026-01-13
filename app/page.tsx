@@ -1,7 +1,7 @@
 // app/page.tsx
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 /** ✅ 외부 패키지 없이: 파일 내장 SVG 아이콘 */
 type IconProps = { className?: string };
@@ -141,45 +141,45 @@ function InfoTip({ text }: { text: string }) {
 // --- 언어팩 ---
 const translations = {
   ko: {
-    title: "Trash Archive",
-    subtitle: "안녕하세요. 쓰레기를 버려주세요.",
-    startBtn: "🔥 START",
-    startSub: "버튼 누르면 체크리스트가 열립니다.",
-    analyzing: "💀 쓰레기통으로 아이디어를 버리는 중...",
-    homeHint: "당신의 빛나는 아이디어가 쓰레기통에 쳐박히는 시간은?",
+    title: "질문하다. 검증하다. 완성하다.",
+    subtitle: "막연했던 아이디어가 빈틈없는 비즈니스가 되는 순간.",
+    startBtn: "분석 시작",
+    startSub: "클릭하여 분석을 시작하세요.",
+    analyzing: "분석을 진행 중입니다...",
+    homeHint: "아이디어의 시장 적합성과 실행 가능성을 점검합니다.",
 
-    formTitle: "쓰레기통 입장 신청서",
-    formDesc: "최대한 솔직하게 적으세요. 어차피 AI가 다 알아챕니다.",
+    formTitle: "프로젝트 인테이크",
+    formDesc: "정확한 분석을 위해 구체적으로 입력해 주세요.",
 
-    itemCategory: "🏷️ 품목/카테고리 (필수)",
+    itemCategory: "품목/카테고리 (필수)",
     itemCategoryPlace: "예: 가전 / 뷰티 / 식품 / SaaS / 교육 / 헬스케어 ...",
     itemCategoryPreset: "품목 선택",
     itemCategoryDirect: "직접 입력",
     itemCategoryDirectPlace: "예: 가전(냉장고), 생활가전, 뷰티(스킨케어) 등",
 
-    sellerInfo: "🧑‍💻 판매자(나) 정보",
+    sellerInfo: "판매자(본인) 정보",
     sellerPlace: "예: 30대 개발자, 영업 경험 없음",
-    buyerInfo: "🎯 타겟 고객 정보",
+    buyerInfo: "타겟 고객 정보",
     buyerPlace: "예: 20대 대학생, 가성비 중시",
 
-    itemName: "📦 아이템 이름 (필수)",
+    itemName: "아이템 이름 (필수)",
     itemNamePlace: "예: AI 기반 자동 칫솔",
-    itemDesc: "📝 아이템 설명 (구체적으로)",
+    itemDesc: "아이템 설명 (구체적으로)",
     itemDescPlace: "상세 기능과 가격을 적어주세요.",
 
     // extra fields for better market research
-    concept: "🧩 컨셉(포지셔닝 한 줄)",
+    concept: "컨셉(포지셔닝 한 줄)",
     conceptPlace: "예: '월 1만원으로 집안 먼지/털 자동 해결' 같은 한 줄",
-    price: "💳 가격(대략)",
+    price: "가격(대략)",
     pricePlace: "예: 19,900원 / $29 / 월 9.99 ...",
-    businessModel: "🧾 BM(돈 버는 법)",
+    businessModel: "비즈니스 모델(수익화)",
     businessModelPlace: "예: 구독/1회 구매/수수료/광고/리텐션 업셀...",
-    salesChannel: "🛒 판매 채널",
+    salesChannel: "판매 채널",
     salesChannelPlace: "예: 쿠팡/아마존/D2C/오프라인 유통/앱스토어...",
-    salesCountry: "🌍 판매 국가",
+    salesCountry: "판매 국가",
     salesCountryPlace: "예: 한국/미국/일본/동남아...",
 
-    traitsTitle: "🧠 창업자 DNA 자가진단 (1~10점)",
+    traitsTitle: "창업자 역량 자가진단 (1~10점)",
     traits: {
       obsession: "고객/문제 집착",
       speed: "실행 속도",
@@ -190,20 +190,20 @@ const translations = {
       ethics: "윤리/신뢰",
       stamina: "체력/멘탈",
     },
-    diagnoseBtn: "☠️ 진단하기",
+    diagnoseBtn: "분석 실행",
     backBtn: "← 메인으로",
 
-    resultTitle: "시뮬레이션 결과",
-    survival: "생존 확률",
-    deathCause: "주 사망 원인",
-    bottleneck: "최대 병목 구간",
-    needsMatch: "니즈 일치도",
+    resultTitle: "분석 결과",
+    survival: "통과 확률",
+    deathCause: "주요 이탈 원인",
+    bottleneck: "핵심 리스크 구간",
+    needsMatch: "수요 적합도",
 
-    tabSummary: "📊 종합 요약",
-    tabAutopsy: "🧾 부검 리포트",
-    tabVoc: "🗣️ 독설 좌담회",
-    tabMarket: "🥧 시장점유율",
-    tabLinks: "🔗 추천/유사사례",
+    tabSummary: "요약",
+    tabAutopsy: "진단 리포트",
+    tabVoc: "패널 리뷰",
+    tabMarket: "시장점유율",
+    tabLinks: "추천/유사사례",
 
     statProduct: "제품 경쟁력",
     statFounder: "창업자 역량",
@@ -218,27 +218,27 @@ const translations = {
     statScope: "시장 확장성",
     statPotential: "잠재고객(지갑)",
 
-    funnelTitle: "Death Funnel",
-    funnelDesc: "단계별 ㅈ망 가능성",
-    cloudTitle: "☁️ 핵심 키워드",
-    autopsyTitle: "🧾 상세 부검 결과",
-    needsTitle: "🎯 소비자 니즈",
-    actionTitle: "🩸 최후의 발악",
-    vocTitle: "🗣️ 지옥에서 온 좌담회",
-    youtubeTitle: "▶️ 유튜브 추천 검색어",
-    casesTitle: "🧩 유사 아이템/실패 사례(검색 결과)",
-    retryBtn: "🔄 다시하기",
-    editBtn: "✍️ 설문 응답 수정",
+    funnelTitle: "리스크 퍼널",
+    funnelDesc: "단계별 이탈 비율",
+    cloudTitle: "핵심 키워드",
+    autopsyTitle: "상세 진단 결과",
+    needsTitle: "소비자 니즈",
+    actionTitle: "개선 제안",
+    vocTitle: "전문가 패널",
+    youtubeTitle: "유튜브 추천 검색어",
+    casesTitle: "유사 아이템/실패 사례(검색 결과)",
+    retryBtn: "다시하기",
+    editBtn: "설문 응답 수정",
 
     // market section
-    marketSectionTitle: "🥧 시장점유율 시뮬레이션",
+    marketSectionTitle: "시장점유율 시뮬레이션",
     marketModeLabel: "시장정보 입력 방식",
     marketModeNone: "필요없음",
     marketModeAuto: "AI 자동 시장조사",
     marketModeManual: "직접 입력",
     marketManualHint:
       "가능한 '연간' 기준으로 넣으세요. 예: 시장매출(연간), 평균가격(1회 결제), 구매빈도(연/인), 침투율 상한(0~1).",
-    marketTabTitle: "시장점유율",
+    marketTabTitle: "시장점유율 분석",
     marketNeededMsg:
       "시장점유율 계산에 필요한 시장정보가 부족합니다. 설문에서 '자동 시장조사' 또는 '직접 입력'을 선택해주세요.",
     marketAssumptionsTitle: "사용된 시장 가정",
@@ -249,48 +249,48 @@ const translations = {
     marketGraphTitle: "면적그래프",
     marketTotal: "전체 시장(추정)",
     marketSAM: "도달 가능한 시장(SAM)",
-    marketSOM: "실제로 (SOM)",
-    marketYou: "당신(추정 매출)",
+    marketSOM: "실제 도달  (SOM)",
+    marketYou: "추정 매출",
   },
   en: {
-    title: "Trash Archive",
-    subtitle: "We brutally simulate how fast your idea will fail.",
-    startBtn: "🔥 Start",
-    startSub: "Click to open the survey.",
-    analyzing: "💀 Roasting your idea...",
-    homeHint: "When you abandon conscience → bottom right",
+    title: "Question. Validate. Deliver.",
+    subtitle: "When a vague idea becomes a rigorous business.",
+    startBtn: "Start Analysis",
+    startSub: "Click to begin the analysis.",
+    analyzing: "Running analysis...",
+    homeHint: "Assess market fit and execution readiness.",
 
-    formTitle: "Hell Gate Application",
-    formDesc: "Be honest. AI knows everything anyway.",
+    formTitle: "Project Intake",
+    formDesc: "Provide clear inputs for a reliable assessment.",
 
-    itemCategory: "🏷️ Category (Required)",
+    itemCategory: "Category (Required)",
     itemCategoryPlace: "e.g. Home appliance / Beauty / Food / SaaS / Education / Healthcare ...",
     itemCategoryPreset: "Select category",
     itemCategoryDirect: "Custom input",
     itemCategoryDirectPlace: "e.g. Home appliance (fridge), Beauty (skincare) ...",
 
-    sellerInfo: "🧑‍💻 Seller (You)",
+    sellerInfo: "Seller (You)",
     sellerPlace: "e.g. 30yo Dev, No sales exp",
-    buyerInfo: "🎯 Target Audience",
+    buyerInfo: "Target Audience",
     buyerPlace: "e.g. College students, Price sensitive",
 
-    itemName: "📦 Product Name (Required)",
+    itemName: "Product Name (Required)",
     itemNamePlace: "e.g. AI Toothbrush",
-    itemDesc: "📝 Description (Specific)",
+    itemDesc: "Description (Specific)",
     itemDescPlace: "Features, price, how it works...",
 
-    concept: "🧩 Concept (one-liner positioning)",
+    concept: "Concept (one-liner positioning)",
     conceptPlace: "e.g. 'Solve dust & hair automatically for $9.99/mo'",
-    price: "💳 Price (rough)",
+    price: "Price (rough)",
     pricePlace: "e.g. $29 / 19,900 KRW / $9.99/mo ...",
-    businessModel: "🧾 Business model",
+    businessModel: "Business model",
     businessModelPlace: "Subscription / One-off purchase / Commission / Ads ...",
-    salesChannel: "🛒 Sales channel",
+    salesChannel: "Sales channel",
     salesChannelPlace: "Amazon / Coupang / D2C / Offline retail / App store ...",
-    salesCountry: "🌍 Country",
+    salesCountry: "Country",
     salesCountryPlace: "Korea / US / Japan / SEA ...",
 
-    traitsTitle: "🧠 Founder DNA Test (1-10)",
+    traitsTitle: "Founder Capability Check (1-10)",
     traits: {
       obsession: "Customer Obsession",
       speed: "Execution Speed",
@@ -301,20 +301,20 @@ const translations = {
       ethics: "Ethics/Trust",
       stamina: "Stamina/Grit",
     },
-    diagnoseBtn: "☠️ Diagnose",
+    diagnoseBtn: "Run Analysis",
     backBtn: "← Back to Home",
 
-    resultTitle: "Result",
-    survival: "Survival Rate",
-    deathCause: "Main Cause of Death",
-    bottleneck: "Major Bottleneck",
-    needsMatch: "Needs Match",
+    resultTitle: "Analysis Result",
+    survival: "Pass-through Rate",
+    deathCause: "Primary Drop-off Driver",
+    bottleneck: "Key Risk Stage",
+    needsMatch: "Demand Fit",
 
-    tabSummary: "📊 Summary",
-    tabAutopsy: "🧾 Autopsy",
-    tabVoc: "🗣️ Debate",
-    tabMarket: "🥧 Market Share",
-    tabLinks: "🔗 Links/Cases",
+    tabSummary: "Summary",
+    tabAutopsy: "Diagnosis",
+    tabVoc: "Panel Review",
+    tabMarket: "Market Share",
+    tabLinks: "Links/Cases",
 
     statProduct: "Product",
     statFounder: "Founder",
@@ -329,26 +329,26 @@ const translations = {
     statScope: "Market scope",
     statPotential: "Potential buyers",
 
-    funnelTitle: "Death Funnel",
-    funnelDesc: "Deaths per stage (higher is worse)",
-    cloudTitle: "☁️ Keywords",
-    autopsyTitle: "🧾 Detailed Autopsy",
-    needsTitle: "🎯 Needs Reality Check",
-    actionTitle: "🩸 Action Plan",
-    vocTitle: "🗣️ Toxic Panel",
-    youtubeTitle: "▶️ YouTube Search Queries",
-    casesTitle: "🧩 Similar items / failure cases (search results)",
-    retryBtn: "🔄 Restart",
-    editBtn: "✍️ Edit Survey",
+    funnelTitle: "Risk Funnel",
+    funnelDesc: "Drop-off rates by stage",
+    cloudTitle: "Keywords",
+    autopsyTitle: "Detailed Diagnosis",
+    needsTitle: "Needs Reality Check",
+    actionTitle: "Action Plan",
+    vocTitle: "Expert Panel",
+    youtubeTitle: "YouTube Search Queries",
+    casesTitle: "Similar items / failure cases (search results)",
+    retryBtn: "Restart",
+    editBtn: "Edit Survey",
 
-    marketSectionTitle: "🥧 Market share simulation",
+    marketSectionTitle: "Market share simulation",
     marketModeLabel: "Market info mode",
     marketModeNone: "Skip (no market share)",
     marketModeAuto: "I don't know → Auto research (Tavily + AI)",
     marketModeManual: "I know → Manual input (min/mode/max)",
     marketManualHint:
       "Use yearly basis if possible. e.g. market revenue (yearly), avg price (per purchase), purchase freq (per year), max penetration (0~1).",
-    marketTabTitle: "Market share / pie slice",
+    marketTabTitle: "Market share analysis",
     marketNeededMsg:
       "Not enough market data for share calculation. Choose 'Auto research' or 'Manual input' in the survey.",
     marketAssumptionsTitle: "Market assumptions used",
@@ -502,8 +502,8 @@ function ActionList({ text }: { text: string }) {
     <ul className="space-y-3 text-zinc-200 text-sm leading-relaxed">
       {items.map((it, i) => (
         <li key={i} className="flex items-start gap-3">
-          <span className="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded border border-red-500/60 bg-red-950/30">
-            <span className="h-2 w-2 rounded-sm bg-red-400/70" />
+          <span className="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded border border-zinc-500/60 bg-zinc-900/60">
+            <span className="h-2 w-2 rounded-sm bg-zinc-300/80" />
           </span>
           <span>{it.replace(/^[\-\u2022•]\s*/, "").trim()}</span>
         </li>
@@ -585,7 +585,14 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [activeTab, setActiveTab] = useState<"summary" | "autopsy" | "voc" | "market" | "links">("summary");
-  const [skullImgError, setSkullImgError] = useState(false);
+  const [showStartHint, setShowStartHint] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setShowStartHint(window.scrollY > 120);
+    window.addEventListener("scroll", onScroll);
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   // form state
   const [categoryPreset, setCategoryPreset] = useState<string>("가전");
@@ -689,7 +696,7 @@ export default function Home() {
       market_scope: "규제/경쟁/확장성(국가·세그·제품 확장 가능).",
       potential_customers: "지갑 있는 잠재고객 + 도달가능성.",
 
-      funnel: "단계별로 어디서 제일 많이 망하는지. 막대 높을수록 그 구간이 지옥.",
+      funnel: "단계별 이탈 비율을 보여줍니다. 막대가 높을수록 위험 구간입니다.",
       market: "시장점유율은 '시장가정 + 생존한 런' 기반으로 추정됩니다.",
     };
   }, [lang]);
@@ -819,7 +826,7 @@ export default function Home() {
     const bottleneckStage: string =
       simulation?.bottleneck_stage ?? simulation?.bottleneckStage ?? simulation?.bottleneck ?? "";
     const survivalLabel = lang === "en" ? "survive" : "생존";
-    const heatmapLabel = lang === "en" ? "Death heatmap (N)" : "사망자 히트맵(N)";
+    const heatmapLabel = lang === "en" ? "Drop-off heatmap (N)" : "이탈 히트맵(N)";
     const maxDeaths = Math.max(...(Object.values(deathCounts) as number[]), 1);
 
     return (
@@ -845,10 +852,10 @@ export default function Home() {
                     style={{ width: `${Math.max(width, deaths > 0 ? 2 : 0)}%` }}
                   />
                   <span className="absolute inset-0 flex items-center justify-end px-2 text-xs font-bold text-white/80">
-                    {deaths > 0 ? `☠️ ${fmtInt(deaths)} · ${dropRate}%` : ""}
+                    {deaths > 0 ? `${fmtInt(deaths)} · ${dropRate}%` : ""}
                   </span>
                 </div>
-                <span className={`w-20 text-right font-bold ${isBottleneck ? "text-red-500" : "text-zinc-400"}`}>
+                <span className={`w-20 text-right font-bold ${isBottleneck ? "text-zinc-200" : "text-zinc-400"}`}>
                   {survivalRate}% {survivalLabel}
                 </span>
               </div>
@@ -889,7 +896,7 @@ export default function Home() {
   const TagCloud = ({ words }: { words: string[] }) => {
     if (!words || words.length === 0) return <div className="text-zinc-500">No Data</div>;
     const sizes = ["text-sm", "text-base", "text-lg", "text-xl", "text-2xl font-bold"];
-    const colors = ["text-red-400", "text-orange-400", "text-zinc-300", "text-blue-400", "text-white"];
+    const colors = ["text-zinc-400", "text-zinc-300", "text-zinc-200", "text-zinc-100", "text-white"];
     return (
       <div className="flex flex-wrap gap-4 justify-center items-center h-full p-6 bg-zinc-900/50 rounded-xl border border-zinc-800 min-h-[180px]">
         {words.slice(0, 10).map((w, i) => (
@@ -985,7 +992,7 @@ export default function Home() {
             <span className="rounded-full border border-zinc-700 bg-zinc-950/60 px-2 py-1 text-[11px]">source: {source}</span>
           )}
           {usedFallback && (
-            <span className="rounded-full border border-red-700/60 bg-red-950/40 px-2 py-1 text-[11px] text-red-200">
+            <span className="rounded-full border border-zinc-700 bg-zinc-950/60 px-2 py-1 text-[11px] text-zinc-200">
               {lang === "en" ? "fallback used" : "보수 추정 포함"}
             </span>
           )}
@@ -1015,7 +1022,7 @@ export default function Home() {
         </div>
 
         {missing.length > 0 && (
-          <div className="text-[11px] text-red-200">
+          <div className="text-[11px] text-zinc-300">
             {lang === "en" ? "Missing fields: " : "누락 필드: "}
             {missing.join(", ")}
           </div>
@@ -1120,7 +1127,7 @@ export default function Home() {
           </div>
           <div className="p-3 rounded-xl bg-zinc-950/40 border border-zinc-800">
             <div className="text-zinc-400 text-xs font-bold">{t.marketYou}</div>
-            <div className="text-red-200 font-extrabold mt-1">{fmtMoney(safeYou)}</div>
+            <div className="text-zinc-200 font-semibold mt-1">{fmtMoney(safeYou)}</div>
           </div>
         </div>
       </div>
@@ -1131,39 +1138,38 @@ export default function Home() {
   // Render
   // ------------------------------
   return (
-    <main className="min-h-screen bg-[#0A0A0A] text-zinc-100 p-4 md:p-8 font-sans">
-      <div className="max-w-7xl mx-auto space-y-8 relative">
+    <main className="min-h-screen bg-white text-zinc-900 p-4 md:p-8 font-sans">
+      <div className="max-w-[1680px] mx-auto space-y-10 relative">
         {/* 언어 버튼 */}
         <div className="absolute top-0 right-0 flex gap-2">
           <button
             onClick={() => setLang("ko")}
             className={`px-3 py-1 text-sm font-bold rounded-md border ${
-              lang === "ko" ? "bg-red-600 border-red-600 text-white" : "border-zinc-700 text-zinc-400 hover:bg-zinc-800"
+              lang === "ko"
+                ? "bg-zinc-200 border-zinc-200 text-zinc-900"
+                : "border-zinc-700 text-zinc-400 hover:bg-zinc-900"
             }`}
           >
-            🇰🇷 KO
+            KO
           </button>
           <button
             onClick={() => setLang("en")}
             className={`px-3 py-1 text-sm font-bold rounded-md border ${
-              lang === "en" ? "bg-blue-600 border-blue-600 text-white" : "border-zinc-700 text-zinc-400 hover:bg-zinc-800"
+              lang === "en"
+                ? "bg-zinc-200 border-zinc-200 text-zinc-900"
+                : "border-zinc-700 text-zinc-400 hover:bg-zinc-900"
             }`}
           >
-            🇺🇸 EN
+            EN
           </button>
         </div>
 
         {/* 공통 헤더 */}
-        <div className="text-center space-y-2 pt-8">
-          <h1 className="flex flex-wrap items-center justify-center gap-3 text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500 tracking-tight">
-            <img
-              src="https://raw.githubusercontent.com/jay-lay-down/startup_webpage/main/public/images/%ED%95%B4%EA%B3%A8100.png"
-              alt="Skull"
-              className="h-10 w-10 md:h-12 md:w-12 object-contain"
-            />
-            <span>{t.title}</span>
+        <div className="text-center space-y-3 pt-6 md:pt-10">
+          <h1 className="text-4xl md:text-5xl font-semibold tracking-tight text-zinc-900">
+            {t.title}
           </h1>
-          <p className="text-zinc-400 text-lg">{t.subtitle}</p>
+          <p className="text-zinc-600 text-base md:text-lg">{t.subtitle}</p>
         </div>
 
         {/* =======================
@@ -1172,25 +1178,29 @@ export default function Home() {
         {step === "home" && (
           <div className="space-y-6">
             <div className="w-full flex justify-center">
-              <div className="w-full max-w-4xl rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900/40 shadow-2xl">
-                <div className="px-4 py-3 text-sm md:text-base font-bold text-zinc-200 border-b border-zinc-800 bg-zinc-950/40">
-                  <span className="text-red-400">{t.homeHint}</span>
+              <div className="w-full max-w-6xl overflow-hidden border border-zinc-200 bg-white shadow-sm">
+                <div className="px-4 py-3 text-sm md:text-base font-medium text-zinc-700 border-b border-zinc-200 bg-zinc-50">
+                  <span className="text-zinc-600">{t.homeHint}</span>
                 </div>
 
                 <div className="relative">
-                  <img src="/images/jjal.jpeg" alt="Startup Hell Meme" className="w-full h-auto object-cover" />
-                  <div className="absolute bottom-3 right-3 text-[11px] md:text-xs px-2 py-1 rounded-md bg-black/60 text-zinc-200 border border-white/10">
-                    hell-sim v2
+                  <img
+                    src="https://raw.githubusercontent.com/jay-lay-down/startup_webpage/main/public/images/main.png"
+                    alt="Main visual"
+                    className="w-full h-auto object-cover"
+                  />
+                  <div className="absolute bottom-3 right-3 text-[11px] md:text-xs px-2 py-1 rounded-md bg-white/80 text-zinc-700 border border-zinc-200">
+                    analysis v2
                   </div>
                 </div>
               </div>
             </div>
 
             <div className="max-w-4xl mx-auto text-center space-y-3">
-              <p className="text-zinc-400">{t.startSub}</p>
+              <p className="text-zinc-600">{t.startSub}</p>
               <button
                 onClick={() => setStep("form")}
-                className="w-full max-w-xl mx-auto bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white font-extrabold py-4 px-6 rounded-xl text-lg shadow-lg transition-all"
+                className="w-full max-w-xl mx-auto bg-zinc-900 hover:bg-zinc-800 text-white font-semibold py-4 px-6 text-lg transition-all"
               >
                 {t.startBtn}
               </button>
@@ -1207,25 +1217,25 @@ export default function Home() {
               {t.backBtn}
             </button>
 
-            <div className="bg-zinc-900/50 border border-zinc-800 shadow-2xl backdrop-blur-sm rounded-xl p-6">
+            <div className="bg-white border border-zinc-200 shadow-sm backdrop-blur-sm p-6">
               <div className="mb-6 border-b border-zinc-800 pb-4">
-                <h2 className="text-2xl font-bold flex items-center gap-2 text-white">
-                  <IconTerminal className="w-6 h-6 text-red-500" />
+                <h2 className="text-2xl font-semibold flex items-center gap-2 text-zinc-900">
+                  <IconTerminal className="w-6 h-6 text-zinc-500" />
                   {t.formTitle}
                 </h2>
-                <p className="text-zinc-400 mt-1">{t.formDesc}</p>
+                <p className="text-zinc-600 mt-1">{t.formDesc}</p>
               </div>
 
               <div className="space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* ✅ 품목/카테고리 */}
                   <div className="space-y-2 md:col-span-2">
-                    <label className="text-sm font-bold text-red-400 block">{t.itemCategory}</label>
+                    <label className="text-sm font-bold text-zinc-300 block">{t.itemCategory}</label>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <select
                         value={categoryPreset}
                         onChange={(e) => setCategoryPreset(e.target.value)}
-                        className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+                        className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-zinc-500"
                       >
                         <option value="가전">{lang === "ko" ? "가전" : "Home Appliance"}</option>
                         <option value="생활용품">{lang === "ko" ? "생활용품" : "Household"}</option>
@@ -1245,7 +1255,7 @@ export default function Home() {
                           placeholder={t.itemCategoryDirectPlace}
                           value={categoryCustom}
                           onChange={(e) => setCategoryCustom(e.target.value)}
-                          className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+                          className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-zinc-500"
                         />
                       ) : (
                         <input
@@ -1271,7 +1281,7 @@ export default function Home() {
                       placeholder={t.sellerPlace}
                       value={sellerInfo}
                       onChange={(e) => setSellerInfo(e.target.value)}
-                      className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+                      className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-zinc-500"
                     />
                   </div>
 
@@ -1282,28 +1292,28 @@ export default function Home() {
                       placeholder={t.buyerPlace}
                       value={buyerInfo}
                       onChange={(e) => setBuyerInfo(e.target.value)}
-                      className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+                      className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-zinc-500"
                     />
                   </div>
 
                   <div className="space-y-2 md:col-span-2">
-                    <label className="text-sm font-bold text-red-400 block">{t.itemName}</label>
+                    <label className="text-sm font-bold text-zinc-300 block">{t.itemName}</label>
                     <input
                       type="text"
                       placeholder={t.itemNamePlace}
                       value={productName}
                       onChange={(e) => setProductName(e.target.value)}
-                      className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white font-bold focus:outline-none focus:border-red-500"
+                      className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white font-bold focus:outline-none focus:border-zinc-500"
                     />
                   </div>
 
                   <div className="space-y-2 md:col-span-2">
-                    <label className="text-sm font-bold text-red-400 block">{t.itemDesc}</label>
+                    <label className="text-sm font-bold text-zinc-300 block">{t.itemDesc}</label>
                     <textarea
                       placeholder={t.itemDescPlace}
                       value={productDesc}
                       onChange={(e) => setProductDesc(e.target.value)}
-                      className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white min-h-[120px] focus:outline-none focus:border-red-500"
+                      className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white min-h-[120px] focus:outline-none focus:border-zinc-500"
                     />
                   </div>
 
@@ -1315,7 +1325,7 @@ export default function Home() {
                       placeholder={t.conceptPlace}
                       value={concept}
                       onChange={(e) => setConcept(e.target.value)}
-                      className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+                      className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-zinc-500"
                     />
                   </div>
 
@@ -1326,7 +1336,7 @@ export default function Home() {
                       placeholder={t.pricePlace}
                       value={priceText}
                       onChange={(e) => setPriceText(e.target.value)}
-                      className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+                      className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-zinc-500"
                     />
                   </div>
 
@@ -1337,7 +1347,7 @@ export default function Home() {
                       placeholder={t.businessModelPlace}
                       value={businessModel}
                       onChange={(e) => setBusinessModel(e.target.value)}
-                      className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+                      className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-zinc-500"
                     />
                   </div>
 
@@ -1348,7 +1358,7 @@ export default function Home() {
                       placeholder={t.salesChannelPlace}
                       value={salesChannel}
                       onChange={(e) => setSalesChannel(e.target.value)}
-                      className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+                      className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-zinc-500"
                     />
                   </div>
 
@@ -1359,7 +1369,7 @@ export default function Home() {
                       placeholder={t.salesCountryPlace}
                       value={salesCountry}
                       onChange={(e) => setSalesCountry(e.target.value)}
-                      className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+                      className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-zinc-500"
                     />
                   </div>
                 </div>
@@ -1379,7 +1389,7 @@ export default function Home() {
                       onClick={() => setMarketMode("none")}
                       className={`p-4 rounded-xl border font-bold text-sm text-left transition ${
                         marketMode === "none"
-                          ? "border-red-600 bg-red-600/20 text-white"
+                          ? "border-zinc-200 bg-zinc-200 text-zinc-900"
                           : "border-zinc-800 bg-zinc-950/30 text-zinc-300 hover:bg-zinc-900"
                       }`}
                     >
@@ -1391,7 +1401,7 @@ export default function Home() {
                       onClick={() => setMarketMode("auto")}
                       className={`p-4 rounded-xl border font-bold text-sm text-left transition ${
                         marketMode === "auto"
-                          ? "border-blue-600 bg-blue-600/15 text-white"
+                          ? "border-zinc-200 bg-zinc-200 text-zinc-900"
                           : "border-zinc-800 bg-zinc-950/30 text-zinc-300 hover:bg-zinc-900"
                       }`}
                     >
@@ -1403,7 +1413,7 @@ export default function Home() {
                       onClick={() => setMarketMode("manual")}
                       className={`p-4 rounded-xl border font-bold text-sm text-left transition ${
                         marketMode === "manual"
-                          ? "border-orange-600 bg-orange-600/15 text-white"
+                          ? "border-zinc-200 bg-zinc-200 text-zinc-900"
                           : "border-zinc-800 bg-zinc-950/30 text-zinc-300 hover:bg-zinc-900"
                       }`}
                     >
@@ -1578,7 +1588,7 @@ export default function Home() {
                       <div key={key} className="space-y-2">
                         <div className="flex justify-between text-sm">
                           <label className="font-bold text-zinc-300">{t.traits[key as keyof typeof t.traits]}</label>
-                          <span className="text-red-400 font-bold">{founderTraits[key as keyof FounderTraits]}점</span>
+                          <span className="text-zinc-200 font-bold">{founderTraits[key as keyof FounderTraits]}점</span>
                         </div>
                         <input
                           type="range"
@@ -1587,7 +1597,7 @@ export default function Home() {
                           step="1"
                           value={founderTraits[key as keyof FounderTraits]}
                           onChange={(e) => handleTraitChange(key as keyof FounderTraits, parseInt(e.target.value, 10))}
-                          className="w-full accent-red-500 h-2 bg-zinc-700 rounded-lg appearance-none cursor-pointer"
+                          className="w-full accent-zinc-400 h-2 bg-zinc-700 rounded-lg appearance-none cursor-pointer"
                         />
                       </div>
                     ))}
@@ -1597,7 +1607,7 @@ export default function Home() {
                 <button
                   onClick={runAnalysis}
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white font-extrabold py-4 px-6 rounded-xl text-lg shadow-lg disabled:opacity-50 flex justify-center items-center gap-2 transition-all"
+                  className="w-full bg-zinc-100 hover:bg-zinc-200 text-zinc-900 font-semibold py-4 px-6 rounded-xl text-lg shadow-lg disabled:opacity-50 flex justify-center items-center gap-2 transition-all"
                 >
                   {loading ? (
                     <>
@@ -1638,32 +1648,32 @@ export default function Home() {
             </div>
 
             {/* 요약 카드 */}
-            <div className="bg-zinc-900/80 border border-red-900/30 shadow-2xl relative overflow-hidden rounded-xl p-6">
-              <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-transparent pointer-events-none" />
+            <div className="bg-zinc-900/80 border border-zinc-800 shadow-2xl relative overflow-hidden rounded-xl p-6">
+              <div className="absolute inset-0 bg-gradient-to-r from-zinc-800/40 to-transparent pointer-events-none" />
               <div className="pb-4 relative z-10 border-b border-zinc-800 mb-4">
-                <h2 className="text-2xl font-bold flex items-center gap-2 text-red-400">
-                  <IconAlertTriangle className="h-6 w-6 text-red-500" />
+                <h2 className="text-2xl font-semibold flex items-center gap-2 text-zinc-200">
+                  <IconAlertTriangle className="h-6 w-6 text-zinc-400" />
                   {t.resultTitle}
                 </h2>
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center relative z-10">
                 <div>
-                  <p className="text-zinc-400 text-sm font-bold mb-1">💀 {t.survival}</p>
-                  <p className="text-4xl font-extrabold text-red-500">{survival.toFixed(1)}%</p>
+                  <p className="text-zinc-400 text-sm font-bold mb-1">{t.survival}</p>
+                  <p className="text-4xl font-semibold text-zinc-100">{survival.toFixed(1)}%</p>
                 </div>
                 <div>
-                  <p className="text-zinc-400 text-sm font-bold mb-1">⚰️ {t.deathCause}</p>
-                  <span className="inline-block px-3 py-1 rounded-full bg-red-900/50 text-red-200 text-sm font-bold border border-red-800">
+                  <p className="text-zinc-400 text-sm font-bold mb-1">{t.deathCause}</p>
+                  <span className="inline-block px-3 py-1 rounded-full bg-zinc-800 text-zinc-200 text-sm font-semibold border border-zinc-700">
                     {cleanText(result.report.death_cause)}
                   </span>
                 </div>
                 <div>
-                  <p className="text-zinc-400 text-sm font-bold mb-1">🧗 {t.bottleneck}</p>
+                  <p className="text-zinc-400 text-sm font-bold mb-1">{t.bottleneck}</p>
                   <p className="text-xl font-bold text-white">{String(bottleneck || "-")}</p>
                 </div>
                 <div>
-                  <p className="text-zinc-400 text-sm font-bold mb-1">🎯 {t.needsMatch}</p>
+                  <p className="text-zinc-400 text-sm font-bold mb-1">{t.needsMatch}</p>
                   <p className="text-2xl font-bold text-orange-400">{result.stats.consumer_needs}점</p>
                 </div>
               </div>
@@ -1685,7 +1695,7 @@ export default function Home() {
                     key={k}
                     onClick={() => setActiveTab(k)}
                     className={`py-2 text-sm font-bold rounded-md transition-all ${
-                      activeTab === k ? "bg-red-600 text-white" : "text-zinc-400 hover:text-white"
+                      activeTab === k ? "bg-zinc-200 text-zinc-900" : "text-zinc-400 hover:text-white"
                     }`}
                   >
                     {label}
@@ -1710,40 +1720,40 @@ export default function Home() {
                             label={t.statProduct}
                             value={result.stats.product}
                             icon={IconShoppingCart}
-                            colorClass="text-blue-400"
-                            barColor="#60A5FA"
+                            colorClass="text-zinc-300"
+                            barColor="#A1A1AA"
                             tooltip={statTooltips.product}
                           />
                           <StatBar
                             label={t.statFounder}
                             value={getFounderScore(result)}
                             icon={IconUsers}
-                            colorClass="text-green-400"
-                            barColor="#4ADE80"
+                            colorClass="text-zinc-300"
+                            barColor="#A1A1AA"
                             tooltip={statTooltips.founder}
                           />
                           <StatBar
                             label={t.statStrategy}
                             value={result.stats.strategy}
                             icon={IconTarget}
-                            colorClass="text-purple-400"
-                            barColor="#C084FC"
+                            colorClass="text-zinc-300"
+                            barColor="#A1A1AA"
                             tooltip={statTooltips.strategy}
                           />
                           <StatBar
                             label={t.statMarketing}
                             value={result.stats.marketing}
                             icon={IconTrendingUp}
-                            colorClass="text-yellow-400"
-                            barColor="#FACC15"
+                            colorClass="text-zinc-300"
+                            barColor="#A1A1AA"
                             tooltip={statTooltips.marketing}
                           />
                           <StatBar
                             label={t.statNeeds}
                             value={result.stats.consumer_needs}
                             icon={IconHeart}
-                            colorClass="text-red-400"
-                            barColor="#F87171"
+                            colorClass="text-zinc-300"
+                            barColor="#A1A1AA"
                             tooltip={statTooltips.consumer_needs}
                           />
                         </div>
@@ -1756,48 +1766,48 @@ export default function Home() {
                             label={t.statConcept}
                             value={result.stats.concept_fit}
                             icon={IconTarget}
-                            colorClass="text-blue-300"
-                            barColor="#93C5FD"
+                            colorClass="text-zinc-300"
+                            barColor="#A1A1AA"
                             tooltip={statTooltips.concept_fit}
                           />
                           <StatBar
                             label={t.statPriceFit}
                             value={result.stats.price_fit}
                             icon={IconDollar}
-                            colorClass="text-emerald-400"
-                            barColor="#34D399"
+                            colorClass="text-zinc-300"
+                            barColor="#A1A1AA"
                             tooltip={statTooltips.price_fit}
                           />
                           <StatBar
                             label={t.statBusinessModel}
                             value={result.stats.business_model_fit}
                             icon={IconCash}
-                            colorClass="text-lime-400"
-                            barColor="#A3E635"
+                            colorClass="text-zinc-300"
+                            barColor="#A1A1AA"
                             tooltip={statTooltips.business_model_fit}
                           />
                           <StatBar
                             label={t.statDistribution}
                             value={result.stats.distribution}
                             icon={IconTruck}
-                            colorClass="text-orange-400"
-                            barColor="#FB923C"
+                            colorClass="text-zinc-300"
+                            barColor="#A1A1AA"
                             tooltip={statTooltips.distribution}
                           />
                           <StatBar
                             label={t.statScope}
                             value={result.stats.market_scope}
                             icon={IconGlobe}
-                            colorClass="text-purple-300"
-                            barColor="#D8B4FE"
+                            colorClass="text-zinc-300"
+                            barColor="#A1A1AA"
                             tooltip={statTooltips.market_scope}
                           />
                           <StatBar
                             label={t.statPotential}
                             value={result.stats.potential_customers}
                             icon={IconPie}
-                            colorClass="text-rose-300"
-                            barColor="#FDA4AF"
+                            colorClass="text-zinc-300"
+                            barColor="#A1A1AA"
                             tooltip={statTooltips.potential_customers}
                           />
                         </div>
@@ -1806,7 +1816,7 @@ export default function Home() {
 
                     <div className="bg-zinc-900/50 border border-zinc-800 h-full rounded-xl p-6">
                       <h3 className="flex items-center gap-2 text-lg font-bold text-white mb-6">
-                        <IconAlertTriangle className="w-5 h-5 text-red-500" />
+                        <IconAlertTriangle className="w-5 h-5 text-zinc-400" />
                         {t.funnelTitle}
                         <InfoTip text={statTooltips.funnel} />
                       </h3>
@@ -1826,8 +1836,8 @@ export default function Home() {
               {activeTab === "autopsy" && (
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="bg-zinc-900/50 border border-red-900/50 rounded-xl p-6">
-                      <h3 className="text-lg font-bold text-red-400 mb-4">{t.autopsyTitle}</h3>
+                    <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6">
+                      <h3 className="text-lg font-bold text-zinc-200 mb-4">{t.autopsyTitle}</h3>
                       <TextBlock text={result.report.autopsy_report} />
                     </div>
 
@@ -1837,11 +1847,11 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="bg-red-950/30 border border-red-900/50 shadow-lg rounded-xl overflow-hidden">
-                    <div className="p-6 border-b border-red-900/30">
-                      <h3 className="text-xl font-bold text-red-200">{t.actionTitle}</h3>
+                  <div className="bg-zinc-900/40 border border-zinc-800 shadow-lg rounded-xl overflow-hidden">
+                    <div className="p-6 border-b border-zinc-800">
+                      <h3 className="text-xl font-semibold text-zinc-200">{t.actionTitle}</h3>
                     </div>
-                    <div className="p-6 bg-red-950/20">
+                    <div className="p-6 bg-zinc-900/30">
                       <ActionList text={result.report.action_plan} />
                     </div>
                   </div>
@@ -1863,13 +1873,13 @@ export default function Home() {
                 <div className="space-y-6">
                   <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6">
                     <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
-                      <IconPie className="w-6 h-6 text-red-400" />
+                      <IconPie className="w-6 h-6 text-zinc-300" />
                       {t.marketTabTitle}
                     </h3>
                     <div className="text-sm text-zinc-400">{t.marketShareNote}</div>
 
                     {marketNeeded && (
-                      <div className="mt-4 p-4 rounded-xl border border-red-900/40 bg-red-950/20 text-red-200 text-sm font-bold">
+                      <div className="mt-4 p-4 rounded-xl border border-zinc-800 bg-zinc-900/40 text-zinc-200 text-sm font-semibold">
                         {t.marketNeededMsg}
                       </div>
                     )}
@@ -1879,7 +1889,7 @@ export default function Home() {
                         <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div className="p-4 rounded-xl bg-zinc-950/40 border border-zinc-800">
                             <div className="text-zinc-400 text-xs font-bold">{t.marketShareTitle}</div>
-                            <div className="text-3xl font-extrabold text-red-300 mt-2">{shareP50.toFixed(2)}%</div>
+                            <div className="text-3xl font-semibold text-zinc-200 mt-2">{shareP50.toFixed(2)}%</div>
                             <div className="text-xs text-zinc-500 mt-2">
                               p10 {shareP10.toFixed(2)}% · p90 {shareP90.toFixed(2)}%
                             </div>
@@ -2000,6 +2010,11 @@ export default function Home() {
           </div>
         )}
       </div>
+      {showStartHint && step === "home" && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 text-sm text-zinc-600">
+          {t.startBtn}
+        </div>
+      )}
     </main>
   );
 }
