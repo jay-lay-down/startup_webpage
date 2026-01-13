@@ -150,7 +150,7 @@ function InfoTip({ text }: { text: string }) {
 const translations = {
   ko: {
     title: "질문하다. 검증하다. 완성하다.",
-    subtitle: "막연했던 아이디어가 빈틈없는 비즈니스가 되는 순간.",
+    subtitle: "막연했던 아이디어가 빈틈없는 비즈니스가 되는 순간",
     startBtn: "분석 시작",
     startSub: "",
     analyzing: "분석을 진행 중입니다...",
