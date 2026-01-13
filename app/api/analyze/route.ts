@@ -705,7 +705,7 @@ export async function POST(req: Request) {
 - 컨셉이 고객 니즈/타겟과 불일치하면 concept_fit과 consumer_needs를 보수적으로 낮춰라.
 
 [채점 규칙(중요)]
-- 대부분의 아이디어는 40~55가 정상 범위다. 근거 없이 70+를 주지 마라.
+- 대부분의 아이디어는 30~50 정상 범위다. 근거 없이 70+를 주지 마라.
 - 70+는 구체적 근거(명확한 타겟, 대체재 대비 큰 개선, 현실적 채널/CAC 추정 등)가 있을 때만 가능.
 - 85+는 트랙션/실적 등 강한 증거 없으면 금지.
 - business_model_fit < 40 또는 distribution < 40이면 consumer_needs는 최대 65로 캡.
