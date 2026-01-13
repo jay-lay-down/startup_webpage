@@ -270,18 +270,35 @@ function clampScore(v: number) {
   return Math.max(0, Math.min(100, Math.round(v)));
 }
 
+function extractMonthlyIncome(text: string): number | null {
+  if (!text) return null;
+  const src = text.replace(/,/g, "");
+  const match = src.match(/(\d+(?:\.\d+)?)\s*(만|만원|천|천원|원)?/);
+  if (!match) return null;
+  const raw = Number(match[1]);
+  if (!Number.isFinite(raw)) return null;
+  const unit = match[2] ?? "";
+  if (unit === "만" || unit === "만원") return raw * 10000;
+  if (unit === "천" || unit === "천원") return raw * 1000;
+  if (unit === "원" || unit === "") return raw;
+  return raw;
+}
+
 function applyContextAdjustments(
   stats: Stats,
   context: {
     sellerInfo?: string;
     buyerInfo?: string;
     salesChannel?: string;
+    price?: string;
   }
 ): Stats {
   const updated = { ...stats };
   const sellerBand = extractAgeBand(String(context.sellerInfo ?? ""));
   const buyerBand = extractAgeBand(String(context.buyerInfo ?? ""));
   const channelText = String(context.salesChannel ?? "").toLowerCase();
+  const buyerIncome = extractMonthlyIncome(String(context.buyerInfo ?? ""));
+  const priceValue = parsePriceValue(context.price);
 
   if (sellerBand && buyerBand) {
     const gap = Math.abs(midpoint(sellerBand) - midpoint(buyerBand));
@@ -306,13 +323,29 @@ function applyContextAdjustments(
     const hasSeniorChannel = seniorChannels.some((k) => channelText.includes(k));
 
     if (isSenior && hasYouthChannel) {
-      updated.marketing = clampScore(updated.marketing - 10);
-      updated.distribution = clampScore(updated.distribution - 7);
+      updated.marketing = clampScore(updated.marketing - 15);
+      updated.distribution = clampScore(updated.distribution - 10);
     }
 
     if (isYoung && hasSeniorChannel) {
-      updated.marketing = clampScore(updated.marketing - 8);
-      updated.distribution = clampScore(updated.distribution - 5);
+      updated.marketing = clampScore(updated.marketing - 12);
+      updated.distribution = clampScore(updated.distribution - 8);
+    }
+  }
+
+  if (buyerIncome != null && priceValue != null) {
+    const affordability = priceValue / Math.max(1, buyerIncome);
+    if (affordability >= 0.5) {
+      updated.price_fit = clampScore(updated.price_fit - 25);
+      updated.consumer_needs = clampScore(updated.consumer_needs - 15);
+      updated.potential_customers = clampScore(updated.potential_customers - 15);
+    } else if (affordability >= 0.2) {
+      updated.price_fit = clampScore(updated.price_fit - 18);
+      updated.consumer_needs = clampScore(updated.consumer_needs - 10);
+      updated.potential_customers = clampScore(updated.potential_customers - 10);
+    } else if (affordability >= 0.1) {
+      updated.price_fit = clampScore(updated.price_fit - 10);
+      updated.potential_customers = clampScore(updated.potential_customers - 6);
     }
   }
 
@@ -667,14 +700,12 @@ export async function POST(req: Request) {
 - strategy 점수에도 창업자 특성(실행력/불확실성 내성/설득력/리소스 감각)을 반영하라.
 - sellerInfo에서 드러나는 도메인 지식/경험/연령대를 고려해 founder/strategy를 조정하라.
 - buyerInfo에서 드러나는 연령대/세그먼트를 고려해 consumer_needs와 marketing을 조정하라.
-- 창업자 연령대/경험과 타겟 연령대가 어긋나면 founder/strategy/marketing을 보수적으로 낮춰라.
+- 창업자 연령대/경험과 타겟 연령대가 크게 어긋나면 founder/strategy/marketing을 보수적으로 낮춰라.
 - 타겟 연령대와 채널/마케팅 방식이 어긋나면 marketing/distribution을 낮춰라.
 - 컨셉이 고객 니즈/타겟과 불일치하면 concept_fit과 consumer_needs를 보수적으로 낮춰라.
-- 니즈는 한 번 더 찾아보고 특정 segment에서 큰 니즈가 없으면 니즈가 있을 것이라고 확정적으로 이야기를 하지 말아라.
-- 연령대와 홍보 채널, 연령대와 판매 채널, 연령대와 아이템이 매칭되지 않으면 반드시 이 부분을 꼭 지적해라. 
 
 [채점 규칙(중요)]
-- 대부분의 아이디어는 35~55가 정상 범위다. 근거 없이 70+를 주지 마라.
+- 대부분의 아이디어는 30~50 정상 범위다. 근거 없이 70+를 주지 마라.
 - 70+는 구체적 근거(명확한 타겟, 대체재 대비 큰 개선, 현실적 채널/CAC 추정 등)가 있을 때만 가능.
 - 85+는 트랙션/실적 등 강한 증거 없으면 금지.
 - business_model_fit < 40 또는 distribution < 40이면 consumer_needs는 최대 65로 캡.
@@ -759,6 +790,7 @@ concept_fit, price_fit, business_model_fit, distribution, market_scope, potentia
       sellerInfo,
       buyerInfo,
       salesChannel,
+      price: typeof price === "string" ? price : String(price ?? ""),
     });
 
     const adjustedPriceFit = (() => {
