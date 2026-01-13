@@ -1,7 +1,7 @@
 // app/page.tsx
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 /** ✅ 외부 패키지 없이: 파일 내장 SVG 아이콘 */
 type IconProps = { className?: string };
@@ -71,7 +71,7 @@ const IconHeart = ({ className }: IconProps) => (
   </svg>
 );
 
-// extra icons for 10 stats / market
+// extra icons for 11 stats / market
 const IconDollar = ({ className }: IconProps) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
     <path d="M12 2v20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -81,6 +81,14 @@ const IconDollar = ({ className }: IconProps) => (
       strokeWidth="2"
       strokeLinecap="round"
     />
+  </svg>
+);
+
+const IconCash = ({ className }: IconProps) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <rect x="3" y="6" width="18" height="12" rx="2" stroke="currentColor" strokeWidth="2" />
+    <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" />
+    <path d="M7 10h.01M17 14h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
   </svg>
 );
 
@@ -115,14 +123,14 @@ function InfoTip({ text }: { text: string }) {
   return (
     <span className="relative inline-flex items-center group align-middle">
       <span
-        className="ml-2 inline-flex items-center justify-center w-5 h-5 rounded-full border border-zinc-700 text-zinc-300 text-xs font-black bg-zinc-900/60 cursor-help select-none"
+        className="ml-2 inline-flex items-center justify-center w-5 h-5 rounded-full border border-zinc-300 text-zinc-500 text-xs font-semibold bg-zinc-100 cursor-help select-none"
         aria-label="info"
         title={text}
       >
         i
       </span>
       <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-2 w-[260px] opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">
-        <span className="block text-xs leading-relaxed text-zinc-100 bg-zinc-950 border border-zinc-800 rounded-xl p-3 shadow-2xl">
+        <span className="block text-xs leading-relaxed text-zinc-600 bg-white border border-zinc-200 rounded-md p-3 shadow-sm">
           {text}
         </span>
       </span>
@@ -133,45 +141,45 @@ function InfoTip({ text }: { text: string }) {
 // --- 언어팩 ---
 const translations = {
   ko: {
-    title: "☠️ 스타트업 지옥 시뮬레이터",
-    subtitle: "안녕하세요. 쓰레기를 버려주세요.",
-    startBtn: "🔥 START",
-    startSub: "버튼 누르면 체크리스트가 열립니다.",
-    analyzing: "💀 쓰레기통으로 아이디어를 버리는 중...",
-    homeHint: "양심을 버리시나요?",
+    title: "질문하다. 검증하다. 완성하다.",
+    subtitle: "막연했던 아이디어가 빈틈없는 비즈니스가 되는 순간.",
+    startBtn: "분석 시작",
+    startSub: "",
+    analyzing: "분석을 진행 중입니다...",
+    homeHint: "",
 
-    formTitle: "쓰레기통 입장 신청서",
-    formDesc: "최대한 솔직하게 적으세요. 어차피 AI가 다 알아챕니다.",
+    formTitle: "프로젝트 인테이크",
+    formDesc: "정확한 분석을 위해 구체적으로 입력해 주세요.",
 
-    itemCategory: "🏷️ 품목/카테고리 (필수)",
+    itemCategory: "품목/카테고리 (필수)",
     itemCategoryPlace: "예: 가전 / 뷰티 / 식품 / SaaS / 교육 / 헬스케어 ...",
     itemCategoryPreset: "품목 선택",
     itemCategoryDirect: "직접 입력",
     itemCategoryDirectPlace: "예: 가전(냉장고), 생활가전, 뷰티(스킨케어) 등",
 
-    sellerInfo: "🧑‍💻 판매자(나) 정보",
+    sellerInfo: "판매자(본인) 정보",
     sellerPlace: "예: 30대 개발자, 영업 경험 없음",
-    buyerInfo: "🎯 타겟 고객 정보",
+    buyerInfo: "타겟 고객 정보",
     buyerPlace: "예: 20대 대학생, 가성비 중시",
 
-    itemName: "📦 아이템 이름 (필수)",
+    itemName: "아이템 이름 (필수)",
     itemNamePlace: "예: AI 기반 자동 칫솔",
-    itemDesc: "📝 아이템 설명 (구체적으로)",
+    itemDesc: "아이템 설명 (구체적으로)",
     itemDescPlace: "상세 기능과 가격을 적어주세요.",
 
     // extra fields for better market research
-    concept: "🧩 컨셉(포지셔닝 한 줄)",
+    concept: "컨셉(포지셔닝 한 줄)",
     conceptPlace: "예: '월 1만원으로 집안 먼지/털 자동 해결' 같은 한 줄",
-    price: "💳 가격(대략)",
+    price: "가격(대략)",
     pricePlace: "예: 19,900원 / $29 / 월 9.99 ...",
-    businessModel: "🧾 BM(돈 버는 법)",
+    businessModel: "비즈니스 모델(수익화)",
     businessModelPlace: "예: 구독/1회 구매/수수료/광고/리텐션 업셀...",
-    salesChannel: "🛒 판매 채널",
+    salesChannel: "판매 채널",
     salesChannelPlace: "예: 쿠팡/아마존/D2C/오프라인 유통/앱스토어...",
-    salesCountry: "🌍 판매 국가",
+    salesCountry: "판매 국가",
     salesCountryPlace: "예: 한국/미국/일본/동남아...",
 
-    traitsTitle: "🧠 창업자 DNA 자가진단 (1~10점)",
+    traitsTitle: "창업자 역량 자가진단 (1~10점)",
     traits: {
       obsession: "고객/문제 집착",
       speed: "실행 속도",
@@ -182,20 +190,20 @@ const translations = {
       ethics: "윤리/신뢰",
       stamina: "체력/멘탈",
     },
-    diagnoseBtn: "☠️ 진단하기",
+    diagnoseBtn: "분석 실행",
     backBtn: "← 메인으로",
 
-    resultTitle: "시뮬레이션 결과",
-    survival: "생존 확률",
-    deathCause: "주 사망 원인",
-    bottleneck: "최대 병목 구간",
-    needsMatch: "니즈 일치도",
+    resultTitle: "분석 결과",
+    survival: "통과 확률",
+    deathCause: "주요 이탈 원인",
+    bottleneck: "핵심 리스크 구간",
+    needsMatch: "수요 적합도",
 
-    tabSummary: "📊 종합 요약",
-    tabAutopsy: "🧾 부검 리포트",
-    tabVoc: "🗣️ 독설 좌담회",
-    tabMarket: "🥧 시장점유율",
-    tabLinks: "🔗 추천/유사사례",
+    tabSummary: "요약",
+    tabAutopsy: "진단 리포트",
+    tabVoc: "패널 리뷰",
+    tabMarket: "시장점유율",
+    tabLinks: "추천/유사사례",
 
     statProduct: "제품 경쟁력",
     statFounder: "창업자 역량",
@@ -204,32 +212,33 @@ const translations = {
     statNeeds: "시장 니즈",
 
     statConcept: "컨셉 적합",
-    statMonetization: "수익화/단위경제",
+    statPriceFit: "가격 적합",
+    statBusinessModel: "BM 타당성",
     statDistribution: "유통/채널 실행",
     statScope: "시장 확장성",
     statPotential: "잠재고객(지갑)",
 
-    funnelTitle: "Death Funnel",
-    funnelDesc: "단계별 ㅈ망 가능성",
-    cloudTitle: "☁️ 핵심 키워드",
-    autopsyTitle: "🧾 상세 부검 결과",
-    needsTitle: "🎯 소비자 니즈",
-    actionTitle: "🩸 최후의 발악",
-    vocTitle: "🗣️ 지옥에서 온 좌담회",
-    youtubeTitle: "▶️ 유튜브 추천 검색어",
-    casesTitle: "🧩 유사 아이템/실패 사례(검색 결과)",
-    retryBtn: "🔄 다시하기",
-    editBtn: "✍️ 설문 응답 수정",
+    funnelTitle: "리스크 퍼널",
+    funnelDesc: "단계별 이탈 비율",
+    cloudTitle: "핵심 키워드",
+    autopsyTitle: "상세 진단 결과",
+    needsTitle: "소비자 니즈",
+    actionTitle: "개선 제안",
+    vocTitle: "전문가 패널",
+    youtubeTitle: "유튜브 추천 검색어",
+    casesTitle: "유사 아이템/실패 사례(검색 결과)",
+    retryBtn: "다시하기",
+    editBtn: "설문 응답 수정",
 
     // market section
-    marketSectionTitle: "🥧 시장점유율 시뮬레이션",
+    marketSectionTitle: "시장점유율 시뮬레이션",
     marketModeLabel: "시장정보 입력 방식",
     marketModeNone: "안 할래요(점유율 계산 X)",
     marketModeAuto: "모름 → 자동 시장조사(Tavily + AI)",
     marketModeManual: "알아요 → 직접 입력(3점 추정: min/mode/max)",
     marketManualHint:
       "가능한 '연간' 기준으로 넣으세요. 예: 시장매출(연간), 평균가격(1회 결제), 구매빈도(연/인), 침투율 상한(0~1).",
-    marketTabTitle: "시장점유율/파이 먹기",
+    marketTabTitle: "시장점유율 분석",
     marketNeededMsg:
       "시장점유율 계산에 필요한 시장정보가 부족합니다. 설문에서 '자동 시장조사' 또는 '직접 입력'을 선택해주세요.",
     marketAssumptionsTitle: "사용된 시장 가정",
@@ -244,44 +253,44 @@ const translations = {
     marketYou: "당신(추정 매출)",
   },
   en: {
-    title: "☠️ Startup Hell Simulator",
-    subtitle: "We brutally simulate how fast your idea will fail.",
-    startBtn: "🔥 Start",
-    startSub: "Click to open the survey.",
-    analyzing: "💀 Roasting your idea...",
-    homeHint: "When you abandon conscience → bottom right",
+    title: "Question. Validate. Deliver.",
+    subtitle: "When a vague idea becomes a rigorous business.",
+    startBtn: "Start Analysis",
+    startSub: "",
+    analyzing: "Running analysis...",
+    homeHint: "",
 
-    formTitle: "Hell Gate Application",
-    formDesc: "Be honest. AI knows everything anyway.",
+    formTitle: "Project Intake",
+    formDesc: "Provide clear inputs for a reliable assessment.",
 
-    itemCategory: "🏷️ Category (Required)",
+    itemCategory: "Category (Required)",
     itemCategoryPlace: "e.g. Home appliance / Beauty / Food / SaaS / Education / Healthcare ...",
     itemCategoryPreset: "Select category",
     itemCategoryDirect: "Custom input",
     itemCategoryDirectPlace: "e.g. Home appliance (fridge), Beauty (skincare) ...",
 
-    sellerInfo: "🧑‍💻 Seller (You)",
+    sellerInfo: "Seller (You)",
     sellerPlace: "e.g. 30yo Dev, No sales exp",
-    buyerInfo: "🎯 Target Audience",
+    buyerInfo: "Target Audience",
     buyerPlace: "e.g. College students, Price sensitive",
 
-    itemName: "📦 Product Name (Required)",
+    itemName: "Product Name (Required)",
     itemNamePlace: "e.g. AI Toothbrush",
-    itemDesc: "📝 Description (Specific)",
+    itemDesc: "Description (Specific)",
     itemDescPlace: "Features, price, how it works...",
 
-    concept: "🧩 Concept (one-liner positioning)",
+    concept: "Concept (one-liner positioning)",
     conceptPlace: "e.g. 'Solve dust & hair automatically for $9.99/mo'",
-    price: "💳 Price (rough)",
+    price: "Price (rough)",
     pricePlace: "e.g. $29 / 19,900 KRW / $9.99/mo ...",
-    businessModel: "🧾 Business model",
+    businessModel: "Business model",
     businessModelPlace: "Subscription / One-off purchase / Commission / Ads ...",
-    salesChannel: "🛒 Sales channel",
+    salesChannel: "Sales channel",
     salesChannelPlace: "Amazon / Coupang / D2C / Offline retail / App store ...",
-    salesCountry: "🌍 Country",
+    salesCountry: "Country",
     salesCountryPlace: "Korea / US / Japan / SEA ...",
 
-    traitsTitle: "🧠 Founder DNA Test (1-10)",
+    traitsTitle: "Founder Capability Check (1-10)",
     traits: {
       obsession: "Customer Obsession",
       speed: "Execution Speed",
@@ -292,20 +301,20 @@ const translations = {
       ethics: "Ethics/Trust",
       stamina: "Stamina/Grit",
     },
-    diagnoseBtn: "☠️ Diagnose",
+    diagnoseBtn: "Run Analysis",
     backBtn: "← Back to Home",
 
-    resultTitle: "Result",
-    survival: "Survival Rate",
-    deathCause: "Main Cause of Death",
-    bottleneck: "Major Bottleneck",
-    needsMatch: "Needs Match",
+    resultTitle: "Analysis Result",
+    survival: "Pass-through Rate",
+    deathCause: "Primary Drop-off Driver",
+    bottleneck: "Key Risk Stage",
+    needsMatch: "Demand Fit",
 
-    tabSummary: "📊 Summary",
-    tabAutopsy: "🧾 Autopsy",
-    tabVoc: "🗣️ Debate",
-    tabMarket: "🥧 Market Share",
-    tabLinks: "🔗 Links/Cases",
+    tabSummary: "Summary",
+    tabAutopsy: "Diagnosis",
+    tabVoc: "Panel Review",
+    tabMarket: "Market Share",
+    tabLinks: "Links/Cases",
 
     statProduct: "Product",
     statFounder: "Founder",
@@ -314,31 +323,32 @@ const translations = {
     statNeeds: "Market Needs",
 
     statConcept: "Concept fit",
-    statMonetization: "Monetization",
+    statPriceFit: "Price fit",
+    statBusinessModel: "Business model fit",
     statDistribution: "Distribution",
     statScope: "Market scope",
     statPotential: "Potential buyers",
 
-    funnelTitle: "Death Funnel",
-    funnelDesc: "Deaths per stage (higher is worse)",
-    cloudTitle: "☁️ Keywords",
-    autopsyTitle: "🧾 Detailed Autopsy",
-    needsTitle: "🎯 Needs Reality Check",
-    actionTitle: "🩸 Action Plan",
-    vocTitle: "🗣️ Toxic Panel",
-    youtubeTitle: "▶️ YouTube Search Queries",
-    casesTitle: "🧩 Similar items / failure cases (search results)",
-    retryBtn: "🔄 Restart",
-    editBtn: "✍️ Edit Survey",
+    funnelTitle: "Risk Funnel",
+    funnelDesc: "Drop-off rates by stage",
+    cloudTitle: "Keywords",
+    autopsyTitle: "Detailed Diagnosis",
+    needsTitle: "Needs Reality Check",
+    actionTitle: "Action Plan",
+    vocTitle: "Expert Panel",
+    youtubeTitle: "YouTube Search Queries",
+    casesTitle: "Similar items / failure cases (search results)",
+    retryBtn: "Restart",
+    editBtn: "Edit Survey",
 
-    marketSectionTitle: "🥧 Market share simulation",
+    marketSectionTitle: "Market share simulation",
     marketModeLabel: "Market info mode",
     marketModeNone: "Skip (no market share)",
     marketModeAuto: "I don't know → Auto research (Tavily + AI)",
     marketModeManual: "I know → Manual input (min/mode/max)",
     marketManualHint:
       "Use yearly basis if possible. e.g. market revenue (yearly), avg price (per purchase), purchase freq (per year), max penetration (0~1).",
-    marketTabTitle: "Market share / pie slice",
+    marketTabTitle: "Market share analysis",
     marketNeededMsg:
       "Not enough market data for share calculation. Choose 'Auto research' or 'Manual input' in the survey.",
     marketAssumptionsTitle: "Market assumptions used",
@@ -377,7 +387,8 @@ type AnalysisResult = {
     consumer_needs: number;
 
     concept_fit: number;
-    monetization: number;
+    price_fit: number;
+    business_model_fit: number;
     distribution: number;
     market_scope: number;
     potential_customers: number;
@@ -401,6 +412,13 @@ type AnalysisResult = {
   marketAssumptionsUsed?: any;
   marketSizingSources?: Array<{ title: string; url: string; content: string }>;
   marketAutoMeta?: { assumed_fields: string[]; rationale: string } | null;
+  priceReference?: {
+    min?: number;
+    max?: number;
+    currency_or_unit_note?: string;
+    source?: string;
+    user_price?: number | null;
+  } | null;
   error?: string;
 };
 
@@ -445,7 +463,7 @@ function TextBlock({ text }: { text: string }) {
   if (hasOrdered) {
     const items = lines.map((l) => l.replace(/^\d+\.\s+/, "").trim()).filter(Boolean);
     return (
-      <ol className="list-decimal pl-5 space-y-2 text-zinc-200 text-sm leading-relaxed">
+      <ol className="list-decimal pl-5 space-y-2 text-zinc-700 text-sm leading-relaxed">
         {items.map((it, i) => (
           <li key={i}>{it}</li>
         ))}
@@ -456,7 +474,7 @@ function TextBlock({ text }: { text: string }) {
   if (hasBullets) {
     const items = lines.map((l) => l.replace(/^•\s+/, "").trim()).filter(Boolean);
     return (
-      <ul className="list-disc pl-5 space-y-2 text-zinc-200 text-sm leading-relaxed">
+      <ul className="list-disc pl-5 space-y-2 text-zinc-700 text-sm leading-relaxed">
         {items.map((it, i) => (
           <li key={i}>{it}</li>
         ))}
@@ -465,11 +483,32 @@ function TextBlock({ text }: { text: string }) {
   }
 
   return (
-    <div className="space-y-3 text-zinc-200 text-sm leading-relaxed whitespace-pre-wrap">
+    <div className="space-y-3 text-zinc-700 text-sm leading-relaxed whitespace-pre-wrap">
       {cleaned.split("\n\n").map((p, i) => (
         <p key={i}>{p.trim()}</p>
       ))}
     </div>
+  );
+}
+
+function ActionList({ text }: { text: string }) {
+  const cleaned = cleanText(text);
+  const numbered = cleaned.split(/\s*\d+\.\s+/).map((l) => l.trim()).filter(Boolean);
+  let items = numbered.length > 1 ? numbered : cleaned.split("\n").map((l) => l.trim()).filter(Boolean);
+  if (items.length <= 1 && cleaned.includes(",")) {
+    items = cleaned.split(",").map((l) => l.trim()).filter(Boolean);
+  }
+  return (
+    <ul className="space-y-3 text-zinc-700 text-sm leading-relaxed">
+      {items.map((it, i) => (
+        <li key={i} className="flex items-start gap-3">
+          <span className="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded border border-blue-200 bg-blue-50">
+            <span className="h-2 w-2 rounded-sm bg-blue-500" />
+          </span>
+          <span>{it.replace(/^[\-\u2022•]\s*/, "").trim()}</span>
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -518,6 +557,25 @@ function fmtMoney(v: number | null | undefined) {
   return String(Math.round(v));
 }
 
+function fmtInt(v: number | null | undefined) {
+  if (v == null || !Number.isFinite(v)) return "-";
+  return Math.round(v).toLocaleString();
+}
+
+function fmtTri(tri: any) {
+  if (!tri || typeof tri !== "object") return "-";
+  const min = Number(tri.min);
+  const mode = Number(tri.mode);
+  const max = Number(tri.max);
+  if (![min, mode, max].every(Number.isFinite)) return "-";
+  return `${fmtInt(min)} / ${fmtInt(mode)} / ${fmtInt(max)}`;
+}
+
+function safeNumber(v: any, fallback = 0) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+}
+
 export default function Home() {
   const [lang, setLang] = useState<Lang>("ko");
   const t = translations[lang];
@@ -527,6 +585,14 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [activeTab, setActiveTab] = useState<"summary" | "autopsy" | "voc" | "market" | "links">("summary");
+  const [showStartHint, setShowStartHint] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setShowStartHint(window.scrollY > 120);
+    window.addEventListener("scroll", onScroll);
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   // form state
   const [categoryPreset, setCategoryPreset] = useState<string>("가전");
@@ -606,7 +672,8 @@ export default function Home() {
         consumer_needs: "Pain intensity + urgency + willingness to pay.",
 
         concept_fit: "Clarity/uniqueness/positioning fit.",
-        monetization: "Unit economics, pricing, margin, monetization logic.",
+        price_fit: "Pricing rationality, willingness to pay, value alignment.",
+        business_model_fit: "Revenue model, margin, unit economics viability.",
         distribution: "Channel fit + ops/logistics/partner feasibility.",
         market_scope: "Regulation/competition/expandability across segments/regions.",
         potential_customers: "Size of buyers who can actually pay + reachable.",
@@ -623,12 +690,13 @@ export default function Home() {
       consumer_needs: "고객이 실제로 돈을 낼지(강도/긴급성/지불의사).",
 
       concept_fit: "컨셉 명확도/차별성/포지셔닝 적합.",
-      monetization: "단위경제/마진/가격/수익 구조 타당성.",
+      price_fit: "가격의 합리성/지불의사/가격-가치 정합성.",
+      business_model_fit: "BM/마진/단위경제 타당성.",
       distribution: "유통/채널 실행 난이도(운영·물류·파트너).",
       market_scope: "규제/경쟁/확장성(국가·세그·제품 확장 가능).",
       potential_customers: "지갑 있는 잠재고객 + 도달가능성.",
 
-      funnel: "단계별로 어디서 제일 많이 망하는지. 막대 높을수록 그 구간이 지옥.",
+      funnel: "단계별 이탈 비율을 보여줍니다. 막대가 높을수록 위험 구간입니다.",
       market: "시장점유율은 '시장가정 + 생존한 런' 기반으로 추정됩니다.",
     };
   }, [lang]);
@@ -727,9 +795,9 @@ export default function Home() {
   };
 
   // --- UI helpers ---
-  const StatBar = ({ label, value, icon: Icon, colorClass, tooltip }: any) => (
+  const StatBar = ({ label, value, icon: Icon, colorClass, barColor, tooltip }: any) => (
     <div className="space-y-2">
-      <div className="flex justify-between text-sm font-bold items-center text-zinc-300">
+      <div className="flex justify-between text-sm font-semibold items-center text-zinc-700">
         <div className="flex items-center gap-2">
           <Icon className={`w-4 h-4 ${colorClass}`} />
           <span className="inline-flex items-center">
@@ -739,10 +807,10 @@ export default function Home() {
         </div>
         <span className={colorClass}>{value}/100</span>
       </div>
-      <div className="h-3 w-full bg-zinc-800 rounded-full overflow-hidden">
+      <div className="h-3 w-full bg-zinc-100 rounded-full overflow-hidden">
         <div
-          className={`h-full ${colorClass.replace("text", "bg")} transition-all duration-1000`}
-          style={{ width: `${Math.max(0, Math.min(100, value))}%` }}
+          className="h-full transition-all duration-1000"
+          style={{ width: `${Math.max(0, Math.min(100, value))}%`, backgroundColor: barColor }}
         />
       </div>
     </div>
@@ -751,35 +819,70 @@ export default function Home() {
   const FunnelChart = ({ simulation }: { simulation: any }) => {
     const stages = ["Seed", "MVP", "PMF", "Scale-up", "Unicorn"];
     const deathCounts: Record<string, number> = simulation?.death_counts ?? simulation?.deathCounts ?? {};
+    const deathRates: Record<string, number> = simulation?.death_rates ?? simulation?.deathRates ?? {};
+    const stageSurvivalRates: Record<string, number> =
+      simulation?.stage_survival_rates ?? simulation?.stageSurvivalRates ?? {};
+    const stageEntries: Record<string, number> = simulation?.stage_entries ?? simulation?.stageEntries ?? {};
     const bottleneckStage: string =
       simulation?.bottleneck_stage ?? simulation?.bottleneckStage ?? simulation?.bottleneck ?? "";
-
-    const maxDeaths = Math.max(...(Object.values(deathCounts) as number[]), 0) || 1;
+    const survivalLabel = lang === "en" ? "survive" : "생존";
+    const heatmapLabel = lang === "en" ? "Drop-off heatmap (N)" : "이탈 히트맵(N)";
+    const maxDeaths = Math.max(...(Object.values(deathCounts) as number[]), 1);
 
     return (
       <div className="space-y-3 mt-4">
         {stages.map((stage) => {
           const deaths = deathCounts[stage] || 0;
+          const entries = stageEntries[stage] || 0;
           const isBottleneck = stage === bottleneckStage;
-          const width = (deaths / maxDeaths) * 100;
+          const dropRate = Math.round(((deathRates[stage] ?? 0) * 100) * 10) / 10;
+          const survivalRate = Math.round(((stageSurvivalRates[stage] ?? 0) * 100) * 10) / 10;
+          const width = survivalRate;
 
           return (
-            <div key={stage} className="flex items-center gap-2 text-sm text-zinc-300">
-              <span className={`w-20 text-right font-bold ${isBottleneck ? "text-red-500" : "text-zinc-500"}`}>
-                {stage}
-              </span>
-              <div className="flex-1 h-6 bg-zinc-800 rounded-sm overflow-hidden relative">
-                <div
-                  className={`h-full ${isBottleneck ? "bg-red-600" : "bg-zinc-600"} transition-all duration-1000`}
-                  style={{ width: `${Math.max(width, deaths > 0 ? 2 : 0)}%` }}
-                />
-                <span className="absolute inset-0 flex items-center justify-end px-2 text-xs font-bold text-white/80">
-                  {deaths > 0 ? `☠️ ${deaths}` : ""}
+            <div key={stage} className="space-y-2 text-sm text-zinc-700">
+              <div className="flex items-center justify-between text-xs text-zinc-500">
+                <span className="font-bold">{stage}</span>
+                <span>N={fmtInt(entries)}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 h-6 bg-zinc-100 rounded-sm overflow-hidden relative">
+                  <div
+                    className={`h-full ${isBottleneck ? "bg-blue-600" : "bg-blue-400"} transition-all duration-1000`}
+                    style={{ width: `${Math.max(width, deaths > 0 ? 2 : 0)}%` }}
+                  />
+                  <span className="absolute inset-0 flex items-center justify-end px-2 text-xs font-semibold text-white/90">
+                    {deaths > 0 ? `${fmtInt(deaths)} · ${dropRate}%` : ""}
+                  </span>
+                </div>
+                <span className={`w-20 text-right font-semibold ${isBottleneck ? "text-zinc-800" : "text-zinc-500"}`}>
+                  {survivalRate}% {survivalLabel}
                 </span>
               </div>
             </div>
           );
         })}
+        <div className="mt-4 space-y-2">
+          <div className="text-xs text-zinc-500">{heatmapLabel}</div>
+          <div className="grid grid-cols-5 gap-2">
+            {stages.map((stage) => {
+              const deaths = deathCounts[stage] || 0;
+              const intensity = Math.min(1, Math.max(0, deaths / maxDeaths));
+              const bg = `rgba(37, 99, 235, ${0.15 + 0.75 * intensity})`;
+              return (
+                <div
+                  key={`heat-${stage}`}
+                  className="rounded-md border border-zinc-200 px-2 py-2 text-center text-xs font-semibold text-white"
+                  style={{ backgroundColor: bg }}
+                  title={`${stage}: ${fmtInt(deaths)}`}
+                >
+                  <div className="text-[11px] text-white/90">{stage}</div>
+                  <div className="text-sm">{fmtInt(deaths)}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
         <p className="text-center text-xs text-zinc-500 mt-2">
           {t.funnelDesc}
           <span className="ml-2 inline-block align-middle">
@@ -793,17 +896,137 @@ export default function Home() {
   const TagCloud = ({ words }: { words: string[] }) => {
     if (!words || words.length === 0) return <div className="text-zinc-500">No Data</div>;
     const sizes = ["text-sm", "text-base", "text-lg", "text-xl", "text-2xl font-bold"];
-    const colors = ["text-red-400", "text-orange-400", "text-zinc-300", "text-blue-400", "text-white"];
+    const colors = ["text-zinc-500", "text-zinc-600", "text-zinc-700", "text-blue-600", "text-zinc-900"];
     return (
-      <div className="flex flex-wrap gap-4 justify-center items-center h-full p-6 bg-zinc-900/50 rounded-xl border border-zinc-800 min-h-[180px]">
+      <div className="flex flex-wrap gap-4 justify-center items-center h-full p-6 bg-zinc-50 border border-zinc-200 min-h-[180px]">
         {words.slice(0, 10).map((w, i) => (
           <span
             key={`${w}-${i}`}
-            className={`${sizes[i % sizes.length]} ${colors[i % colors.length]} px-2 py-1 bg-zinc-800/30 rounded-lg`}
+            className={`${sizes[i % sizes.length]} ${colors[i % colors.length]} px-2 py-1 bg-zinc-100`}
           >
             {w}
           </span>
         ))}
+      </div>
+    );
+  };
+
+  const PriceReferenceCard = ({ priceReference }: { priceReference?: AnalysisResult["priceReference"] | null }) => {
+    if (!priceReference) {
+      return <div className="text-xs text-zinc-500">{lang === "en" ? "No price reference data." : "가격 비교 데이터 없음"}</div>;
+    }
+    const min = Number(priceReference.min);
+    const max = Number(priceReference.max);
+    const userPrice = Number(priceReference.user_price);
+    const hasRange = Number.isFinite(min) && Number.isFinite(max) && min > 0 && max > 0 && min <= max;
+    const hasUser = Number.isFinite(userPrice);
+
+    if (!hasRange && !hasUser) {
+      return <div className="text-xs text-zinc-500">{lang === "en" ? "No price reference data." : "가격 비교 데이터 없음"}</div>;
+    }
+
+    const range = hasRange ? max - min : 0;
+    const position = hasRange && hasUser && range > 0 ? Math.max(0, Math.min(100, ((userPrice - min) / range) * 100)) : 0;
+    const note = priceReference.currency_or_unit_note ? ` (${priceReference.currency_or_unit_note})` : "";
+    const title = lang === "en" ? `Price reference range${note}` : `가격 적합도 참고 범위${note}`;
+    const rangeLabel = lang === "en" ? "Comparable price range" : "유사 제품 가격 범위";
+    const myPriceLabel = lang === "en" ? "Your price" : "내 가격";
+
+    return (
+      <div className="mt-4 border border-zinc-200 bg-white p-4">
+        <div className="text-sm font-semibold text-zinc-800">{title}</div>
+        {hasRange ? (
+          <div className="mt-2 text-xs text-zinc-500">
+            {rangeLabel}: {fmtInt(min)} ~ {fmtInt(max)}
+          </div>
+        ) : (
+          <div className="mt-2 text-xs text-zinc-500">{rangeLabel}: -</div>
+        )}
+        <div className="mt-3">
+          <div className="relative h-2 rounded-full bg-zinc-100">
+            {hasRange && (
+              <div
+                className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-500/20 via-blue-500/30 to-blue-600/40"
+              />
+            )}
+            {hasUser && hasRange && (
+              <div
+                className="absolute -top-1 h-4 w-0.5 bg-blue-600"
+                style={{ left: `calc(${position}% - 1px)` }}
+              />
+            )}
+          </div>
+          {hasUser ? (
+            <div className="mt-2 text-xs text-zinc-600">
+              {myPriceLabel}: <span className="font-semibold text-zinc-900">{fmtInt(userPrice)}</span>
+            </div>
+          ) : (
+            <div className="mt-2 text-xs text-zinc-500">{myPriceLabel}: -</div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const MarketAssumptionsCard = ({ assumptions }: { assumptions: AnalysisResult["marketAssumptionsUsed"] }) => {
+    if (!assumptions || typeof assumptions !== "object") {
+      return (
+        <div className="text-xs text-zinc-500">
+          {lang === "en" ? "No market assumptions available." : "시장 가정 데이터 없음"}
+        </div>
+      );
+    }
+
+    const source = String((assumptions as any).source ?? "");
+    const usedFallback = Boolean((assumptions as any).used_synthetic_fallback);
+    const missing = Array.isArray((assumptions as any).missing_fields) ? (assumptions as any).missing_fields : [];
+    const ready = Boolean((assumptions as any).ready);
+
+    return (
+      <div className="space-y-3 text-xs text-zinc-600">
+        <div className="flex flex-wrap gap-2">
+          <span className="rounded-full border border-zinc-300 bg-zinc-100 px-2 py-1 text-[11px]">
+            {ready ? (lang === "en" ? "Ready" : "사용 가능") : lang === "en" ? "Missing" : "누락"}
+          </span>
+          {source && (
+            <span className="rounded-full border border-zinc-300 bg-zinc-100 px-2 py-1 text-[11px]">source: {source}</span>
+          )}
+          {usedFallback && (
+            <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-1 text-[11px] text-blue-700">
+              {lang === "en" ? "fallback used" : "보수 추정 포함"}
+            </span>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div>
+            <div className="text-zinc-500">market_customers</div>
+            <div className="font-semibold text-zinc-800">{fmtTri((assumptions as any).market_customers)}</div>
+          </div>
+          <div>
+            <div className="text-zinc-500">market_revenue</div>
+            <div className="font-semibold text-zinc-800">{fmtTri((assumptions as any).market_revenue)}</div>
+          </div>
+          <div>
+            <div className="text-zinc-500">price</div>
+            <div className="font-semibold text-zinc-800">{fmtTri((assumptions as any).price)}</div>
+          </div>
+          <div>
+            <div className="text-zinc-500">purchase_freq_per_year</div>
+            <div className="font-semibold text-zinc-800">{fmtTri((assumptions as any).purchase_freq_per_year)}</div>
+          </div>
+          <div>
+            <div className="text-zinc-500">max_penetration</div>
+            <div className="font-semibold text-zinc-800">{fmtTri((assumptions as any).max_penetration)}</div>
+          </div>
+        </div>
+
+        {missing.length > 0 && (
+          <div className="text-[11px] text-zinc-300">
+            {lang === "en" ? "Missing fields: " : "누락 필드: "}
+            {missing.join(", ")}
+          </div>
+        )}
       </div>
     );
   };
@@ -824,16 +1047,19 @@ export default function Home() {
 
   const revLayers = useMemo(() => {
     const rev = marketLayers?.revenue ?? {};
-    const total = Number(rev?.total_market_p50 ?? rev?.total_market ?? 0);
-    const sam = Number(rev?.addressable_sam_p50 ?? rev?.sam ?? 0);
-    const som = Number(rev?.obtainable_som_p50 ?? rev?.som ?? 0);
-    const you = Number(rev?.your_revenue_p50 ?? rev?.you ?? 0);
+    const total = safeNumber(rev?.total_market_p50 ?? rev?.total_market ?? 0);
+    const sam = safeNumber(rev?.addressable_sam_p50 ?? rev?.sam ?? 0);
+    const som = safeNumber(rev?.obtainable_som_p50 ?? rev?.som ?? 0);
+    const you = safeNumber(rev?.your_revenue_p50 ?? rev?.you ?? 0);
     return { total, sam, som, you };
   }, [marketLayers]);
 
-  const shareP50 = Number(marketShare?.p50 ?? marketShare?.share_p50 ?? 0);
-  const shareP10 = Number(marketShare?.p10 ?? marketShare?.share_p10 ?? 0);
-  const shareP90 = Number(marketShare?.p90 ?? marketShare?.share_p90 ?? 0);
+  const shareRawP50 = safeNumber(marketShare?.share_p50_pct ?? marketShare?.p50 ?? marketShare?.share_p50 ?? 0);
+  const shareRawP10 = safeNumber(marketShare?.share_p10_pct ?? marketShare?.p10 ?? marketShare?.share_p10 ?? 0);
+  const shareRawP90 = safeNumber(marketShare?.share_p90_pct ?? marketShare?.p90 ?? marketShare?.share_p90 ?? 0);
+  const shareP50 = shareRawP50 > 1 ? shareRawP50 : shareRawP50 * 100;
+  const shareP10 = shareRawP10 > 1 ? shareRawP10 : shareRawP10 * 100;
+  const shareP90 = shareRawP90 > 1 ? shareRawP90 : shareRawP90 * 100;
   const shareBand = String(marketShare?.band ?? marketShare?.audience_band ?? "");
 
   const MarketAreaBar = ({
@@ -847,48 +1073,61 @@ export default function Home() {
     som: number;
     you: number;
   }) => {
-    const base = total > 0 ? total : 1;
-    const samPct = Math.max(0, Math.min(100, (sam / base) * 100));
-    const somPct = Math.max(0, Math.min(100, (som / base) * 100));
-    const youPct = Math.max(0, Math.min(100, (you / base) * 100));
+    const safeTotal = Number.isFinite(total) ? total : 0;
+    const safeSam = Number.isFinite(sam) ? sam : 0;
+    const safeSom = Number.isFinite(som) ? som : 0;
+    const safeYou = Number.isFinite(you) ? you : 0;
+    const base = safeTotal > 0 ? safeTotal : 1;
+    const samPct = Math.max(0, Math.min(100, (safeSam / base) * 100));
+    const somPct = Math.max(0, Math.min(100, (safeSom / base) * 100));
+    const youPct = Math.max(0, Math.min(100, (safeYou / base) * 100));
+    const hasData = safeTotal > 0 || safeSam > 0 || safeSom > 0 || safeYou > 0;
 
     return (
       <div className="space-y-3">
-        <div className="h-10 bg-zinc-800 rounded-xl overflow-hidden relative border border-zinc-700">
+        <div className="h-10 bg-zinc-100 overflow-hidden relative border border-zinc-200">
           {/* total base */}
-          <div className="absolute inset-0 bg-zinc-700/30" />
+          <div className="absolute inset-0 bg-zinc-200/60" />
 
           {/* SAM overlay */}
-          <div className="absolute inset-y-0 left-0 bg-blue-600/30" style={{ width: `${samPct}%` }} />
+          <div className="absolute inset-y-0 left-0 bg-blue-200/80" style={{ width: `${samPct}%` }} />
 
           {/* SOM overlay */}
-          <div className="absolute inset-y-0 left-0 bg-orange-600/35" style={{ width: `${somPct}%` }} />
+          <div className="absolute inset-y-0 left-0 bg-blue-400/70" style={{ width: `${somPct}%` }} />
 
           {/* YOU overlay */}
-          <div className="absolute inset-y-0 left-0 bg-red-600/55" style={{ width: `${youPct}%` }} />
+          <div className="absolute inset-y-0 left-0 bg-blue-600/70" style={{ width: `${youPct}%` }} />
 
-          <div className="absolute inset-0 flex items-center justify-between px-3 text-xs font-bold text-white/90">
+          <div className="absolute inset-0 flex items-center justify-between px-3 text-xs font-semibold text-zinc-700">
             <span>{t.marketGraphTitle}</span>
-            <span>{total > 0 ? `Total=${fmtMoney(total)}` : ""}</span>
+            <span>{safeTotal > 0 ? `Total=${fmtMoney(safeTotal)}` : ""}</span>
           </div>
         </div>
 
+        {!hasData && (
+          <div className="border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-500">
+            {lang === "en"
+              ? "Market sizing data is incomplete. Showing placeholder bar."
+              : "시장 데이터가 부족해 요약 그래프만 표시합니다."}
+          </div>
+        )}
+
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-          <div className="p-3 rounded-xl bg-zinc-950/40 border border-zinc-800">
-            <div className="text-zinc-400 text-xs font-bold">{t.marketTotal}</div>
-            <div className="text-white font-extrabold mt-1">{fmtMoney(total)}</div>
+          <div className="p-3 border border-zinc-200">
+            <div className="text-zinc-500 text-xs font-semibold">{t.marketTotal}</div>
+            <div className="text-zinc-900 font-semibold mt-1">{fmtMoney(safeTotal)}</div>
           </div>
-          <div className="p-3 rounded-xl bg-zinc-950/40 border border-zinc-800">
-            <div className="text-zinc-400 text-xs font-bold">{t.marketSAM}</div>
-            <div className="text-blue-200 font-extrabold mt-1">{fmtMoney(sam)}</div>
+          <div className="p-3 border border-zinc-200">
+            <div className="text-zinc-500 text-xs font-semibold">{t.marketSAM}</div>
+            <div className="text-blue-700 font-semibold mt-1">{fmtMoney(safeSam)}</div>
           </div>
-          <div className="p-3 rounded-xl bg-zinc-950/40 border border-zinc-800">
-            <div className="text-zinc-400 text-xs font-bold">{t.marketSOM}</div>
-            <div className="text-orange-200 font-extrabold mt-1">{fmtMoney(som)}</div>
+          <div className="p-3 border border-zinc-200">
+            <div className="text-zinc-500 text-xs font-semibold">{t.marketSOM}</div>
+            <div className="text-blue-700 font-semibold mt-1">{fmtMoney(safeSom)}</div>
           </div>
-          <div className="p-3 rounded-xl bg-zinc-950/40 border border-zinc-800">
-            <div className="text-zinc-400 text-xs font-bold">{t.marketYou}</div>
-            <div className="text-red-200 font-extrabold mt-1">{fmtMoney(you)}</div>
+          <div className="p-3 border border-zinc-200">
+            <div className="text-zinc-500 text-xs font-semibold">{t.marketYou}</div>
+            <div className="text-blue-700 font-semibold mt-1">{fmtMoney(safeYou)}</div>
           </div>
         </div>
       </div>
@@ -899,34 +1138,38 @@ export default function Home() {
   // Render
   // ------------------------------
   return (
-    <main className="min-h-screen bg-[#0A0A0A] text-zinc-100 p-4 md:p-8 font-sans">
-      <div className="max-w-7xl mx-auto space-y-8 relative">
+    <main className="min-h-screen bg-white text-zinc-900 px-0 py-6 font-sans">
+      <div className="w-full mx-auto space-y-10 relative">
         {/* 언어 버튼 */}
-        <div className="absolute top-0 right-0 flex gap-2">
+        <div className="absolute top-0 right-0 flex gap-4">
           <button
             onClick={() => setLang("ko")}
-            className={`px-3 py-1 text-sm font-bold rounded-md border ${
-              lang === "ko" ? "bg-red-600 border-red-600 text-white" : "border-zinc-700 text-zinc-400 hover:bg-zinc-800"
+            className={`text-sm font-semibold border-b-2 ${
+              lang === "ko"
+                ? "border-zinc-900 text-zinc-900"
+                : "border-transparent text-zinc-400 hover:text-zinc-700"
             }`}
           >
-            🇰🇷 KO
+            KO
           </button>
           <button
             onClick={() => setLang("en")}
-            className={`px-3 py-1 text-sm font-bold rounded-md border ${
-              lang === "en" ? "bg-blue-600 border-blue-600 text-white" : "border-zinc-700 text-zinc-400 hover:bg-zinc-800"
+            className={`text-sm font-semibold border-b-2 ${
+              lang === "en"
+                ? "border-zinc-900 text-zinc-900"
+                : "border-transparent text-zinc-400 hover:text-zinc-700"
             }`}
           >
-            🇺🇸 EN
+            EN
           </button>
         </div>
 
         {/* 공통 헤더 */}
-        <div className="text-center space-y-2 pt-8">
-          <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500 tracking-tight">
+        <div className="text-center space-y-3 pt-6 md:pt-10">
+          <h1 className="text-4xl md:text-5xl font-semibold tracking-tight text-zinc-900">
             {t.title}
           </h1>
-          <p className="text-zinc-400 text-lg">{t.subtitle}</p>
+          <p className="text-zinc-600 text-base md:text-lg">{t.subtitle}</p>
         </div>
 
         {/* =======================
@@ -935,25 +1178,28 @@ export default function Home() {
         {step === "home" && (
           <div className="space-y-6">
             <div className="w-full flex justify-center">
-              <div className="w-full max-w-4xl rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900/40 shadow-2xl">
-                <div className="px-4 py-3 text-sm md:text-base font-bold text-zinc-200 border-b border-zinc-800 bg-zinc-950/40">
-                  <span className="text-red-400">{t.homeHint}</span>
-                </div>
+              <div className="w-full overflow-hidden bg-white">
+                {t.homeHint ? (
+                  <div className="px-0 pb-3 text-sm md:text-base font-medium text-zinc-700 border-b border-zinc-200">
+                    <span className="text-zinc-600">{t.homeHint}</span>
+                  </div>
+                ) : null}
 
                 <div className="relative">
-                  <img src="/images/jjal.jpeg" alt="Startup Hell Meme" className="w-full h-auto object-cover" />
-                  <div className="absolute bottom-3 right-3 text-[11px] md:text-xs px-2 py-1 rounded-md bg-black/60 text-zinc-200 border border-white/10">
-                    hell-sim v2
-                  </div>
+                  <img
+                    src="https://raw.githubusercontent.com/jay-lay-down/startup_webpage/main/public/images/main_v2.png"
+                    alt="Main visual"
+                    className="w-full h-auto object-cover"
+                  />
                 </div>
               </div>
             </div>
 
-            <div className="max-w-4xl mx-auto text-center space-y-3">
-              <p className="text-zinc-400">{t.startSub}</p>
+            <div className="w-full text-center space-y-2">
+              {t.startSub ? <p className="text-zinc-600">{t.startSub}</p> : null}
               <button
                 onClick={() => setStep("form")}
-                className="w-full max-w-xl mx-auto bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white font-extrabold py-4 px-6 rounded-xl text-lg shadow-lg transition-all"
+                className="text-sm font-semibold text-zinc-900 underline underline-offset-8 decoration-2 hover:text-zinc-600 transition"
               >
                 {t.startBtn}
               </button>
@@ -966,29 +1212,29 @@ export default function Home() {
         ======================= */}
         {step === "form" && (
           <div className="space-y-4">
-            <button onClick={() => setStep("home")} className="text-sm font-bold text-zinc-400 hover:text-white">
+            <button onClick={() => setStep("home")} className="text-sm font-semibold text-zinc-500 hover:text-zinc-800">
               {t.backBtn}
             </button>
 
-            <div className="bg-zinc-900/50 border border-zinc-800 shadow-2xl backdrop-blur-sm rounded-xl p-6">
-              <div className="mb-6 border-b border-zinc-800 pb-4">
-                <h2 className="text-2xl font-bold flex items-center gap-2 text-white">
-                  <IconTerminal className="w-6 h-6 text-red-500" />
+            <div className="max-w-5xl mx-auto bg-white border-0 shadow-none px-6 md:px-10">
+              <div className="mb-6 border-b border-zinc-200 pb-4">
+                <h2 className="text-2xl font-semibold flex items-center gap-2 text-zinc-900">
+                  <IconTerminal className="w-6 h-6 text-zinc-500" />
                   {t.formTitle}
                 </h2>
-                <p className="text-zinc-400 mt-1">{t.formDesc}</p>
+                <p className="text-zinc-600 mt-1">{t.formDesc}</p>
               </div>
 
               <div className="space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* ✅ 품목/카테고리 */}
                   <div className="space-y-2 md:col-span-2">
-                    <label className="text-sm font-bold text-red-400 block">{t.itemCategory}</label>
+                    <label className="text-sm font-semibold text-zinc-700 block">{t.itemCategory}</label>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <select
                         value={categoryPreset}
                         onChange={(e) => setCategoryPreset(e.target.value)}
-                        className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+                        className="w-full p-3 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                       >
                         <option value="가전">{lang === "ko" ? "가전" : "Home Appliance"}</option>
                         <option value="생활용품">{lang === "ko" ? "생활용품" : "Household"}</option>
@@ -1008,7 +1254,7 @@ export default function Home() {
                           placeholder={t.itemCategoryDirectPlace}
                           value={categoryCustom}
                           onChange={(e) => setCategoryCustom(e.target.value)}
-                          className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+                          className="w-full p-3 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                         />
                       ) : (
                         <input
@@ -1016,7 +1262,7 @@ export default function Home() {
                           placeholder={t.itemCategoryPlace}
                           value={itemCategory}
                           readOnly
-                          className="w-full p-3 bg-zinc-900/40 border border-zinc-800 rounded-lg text-zinc-400"
+                          className="w-full p-3 bg-zinc-100 border border-zinc-200 rounded-none text-zinc-500"
                         />
                       )}
                     </div>
@@ -1028,109 +1274,109 @@ export default function Home() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-zinc-300 block">{t.sellerInfo}</label>
+                    <label className="text-sm font-semibold text-zinc-700 block">{t.sellerInfo}</label>
                     <input
                       type="text"
                       placeholder={t.sellerPlace}
                       value={sellerInfo}
                       onChange={(e) => setSellerInfo(e.target.value)}
-                      className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+                      className="w-full p-3 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-zinc-300 block">{t.buyerInfo}</label>
+                    <label className="text-sm font-semibold text-zinc-700 block">{t.buyerInfo}</label>
                     <input
                       type="text"
                       placeholder={t.buyerPlace}
                       value={buyerInfo}
                       onChange={(e) => setBuyerInfo(e.target.value)}
-                      className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+                      className="w-full p-3 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                     />
                   </div>
 
                   <div className="space-y-2 md:col-span-2">
-                    <label className="text-sm font-bold text-red-400 block">{t.itemName}</label>
+                    <label className="text-sm font-semibold text-zinc-700 block">{t.itemName}</label>
                     <input
                       type="text"
                       placeholder={t.itemNamePlace}
                       value={productName}
                       onChange={(e) => setProductName(e.target.value)}
-                      className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white font-bold focus:outline-none focus:border-red-500"
+                      className="w-full p-3 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 font-semibold focus:outline-none focus:border-blue-500"
                     />
                   </div>
 
                   <div className="space-y-2 md:col-span-2">
-                    <label className="text-sm font-bold text-red-400 block">{t.itemDesc}</label>
+                    <label className="text-sm font-semibold text-zinc-700 block">{t.itemDesc}</label>
                     <textarea
                       placeholder={t.itemDescPlace}
                       value={productDesc}
                       onChange={(e) => setProductDesc(e.target.value)}
-                      className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white min-h-[120px] focus:outline-none focus:border-red-500"
+                      className="w-full p-3 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 min-h-[120px] focus:outline-none focus:border-blue-500"
                     />
                   </div>
 
                   {/* optional fields (help auto market research + scoring) */}
                   <div className="space-y-2 md:col-span-2">
-                    <label className="text-sm font-bold text-zinc-300 block">{t.concept}</label>
+                    <label className="text-sm font-semibold text-zinc-700 block">{t.concept}</label>
                     <input
                       type="text"
                       placeholder={t.conceptPlace}
                       value={concept}
                       onChange={(e) => setConcept(e.target.value)}
-                      className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+                      className="w-full p-3 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-zinc-300 block">{t.price}</label>
+                    <label className="text-sm font-semibold text-zinc-700 block">{t.price}</label>
                     <input
                       type="text"
                       placeholder={t.pricePlace}
                       value={priceText}
                       onChange={(e) => setPriceText(e.target.value)}
-                      className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+                      className="w-full p-3 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-zinc-300 block">{t.businessModel}</label>
+                    <label className="text-sm font-semibold text-zinc-700 block">{t.businessModel}</label>
                     <input
                       type="text"
                       placeholder={t.businessModelPlace}
                       value={businessModel}
                       onChange={(e) => setBusinessModel(e.target.value)}
-                      className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+                      className="w-full p-3 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-zinc-300 block">{t.salesChannel}</label>
+                    <label className="text-sm font-semibold text-zinc-700 block">{t.salesChannel}</label>
                     <input
                       type="text"
                       placeholder={t.salesChannelPlace}
                       value={salesChannel}
                       onChange={(e) => setSalesChannel(e.target.value)}
-                      className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+                      className="w-full p-3 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-zinc-300 block">{t.salesCountry}</label>
+                    <label className="text-sm font-semibold text-zinc-700 block">{t.salesCountry}</label>
                     <input
                       type="text"
                       placeholder={t.salesCountryPlace}
                       value={salesCountry}
                       onChange={(e) => setSalesCountry(e.target.value)}
-                      className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-red-500"
+                      className="w-full p-3 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                     />
                   </div>
                 </div>
 
                 {/* Market share section */}
-                <div className="bg-zinc-900/40 border border-zinc-800 rounded-xl p-6">
-                  <div className="flex items-center gap-2 mb-2">
-                    <h3 className="text-lg font-extrabold text-white">{t.marketSectionTitle}</h3>
+                <div className="border-t border-zinc-200 pt-6">
+                    <div className="flex items-center gap-2 mb-2">
+                    <h3 className="text-lg font-semibold text-zinc-800">{t.marketSectionTitle}</h3>
                     <InfoTip text={statTooltips.market} />
                   </div>
 
@@ -1140,10 +1386,10 @@ export default function Home() {
                     <button
                       type="button"
                       onClick={() => setMarketMode("none")}
-                      className={`p-4 rounded-xl border font-bold text-sm text-left transition ${
+                      className={`p-4 border-b font-semibold text-sm text-left transition ${
                         marketMode === "none"
-                          ? "border-red-600 bg-red-600/20 text-white"
-                          : "border-zinc-800 bg-zinc-950/30 text-zinc-300 hover:bg-zinc-900"
+                          ? "border-zinc-900 text-zinc-900"
+                          : "border-zinc-200 text-zinc-500 hover:text-zinc-800"
                       }`}
                     >
                       {t.marketModeNone}
@@ -1152,10 +1398,10 @@ export default function Home() {
                     <button
                       type="button"
                       onClick={() => setMarketMode("auto")}
-                      className={`p-4 rounded-xl border font-bold text-sm text-left transition ${
+                      className={`p-4 border-b font-semibold text-sm text-left transition ${
                         marketMode === "auto"
-                          ? "border-blue-600 bg-blue-600/15 text-white"
-                          : "border-zinc-800 bg-zinc-950/30 text-zinc-300 hover:bg-zinc-900"
+                          ? "border-zinc-900 text-zinc-900"
+                          : "border-zinc-200 text-zinc-500 hover:text-zinc-800"
                       }`}
                     >
                       {t.marketModeAuto}
@@ -1164,10 +1410,10 @@ export default function Home() {
                     <button
                       type="button"
                       onClick={() => setMarketMode("manual")}
-                      className={`p-4 rounded-xl border font-bold text-sm text-left transition ${
+                      className={`p-4 border-b font-semibold text-sm text-left transition ${
                         marketMode === "manual"
-                          ? "border-orange-600 bg-orange-600/15 text-white"
-                          : "border-zinc-800 bg-zinc-950/30 text-zinc-300 hover:bg-zinc-900"
+                          ? "border-zinc-900 text-zinc-900"
+                          : "border-zinc-200 text-zinc-500 hover:text-zinc-800"
                       }`}
                     >
                       {t.marketModeManual}
@@ -1181,8 +1427,8 @@ export default function Home() {
                       {/* inputs */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* market revenue */}
-                        <div className="p-4 rounded-xl bg-zinc-950/40 border border-zinc-800">
-                          <div className="text-sm font-bold text-zinc-200 mb-2">
+                        <div className="p-4 border-b border-zinc-200">
+                          <div className="text-sm font-semibold text-zinc-700 mb-2">
                             시장매출(연간) <span className="text-zinc-500 text-xs">(숫자)</span>
                           </div>
                           <div className="grid grid-cols-3 gap-2">
@@ -1190,26 +1436,26 @@ export default function Home() {
                               value={mRevMin}
                               onChange={(e) => setMRevMin(e.target.value)}
                               placeholder="min"
-                              className="p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                              className="p-2 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                             />
                             <input
                               value={mRevMode}
                               onChange={(e) => setMRevMode(e.target.value)}
                               placeholder="mode"
-                              className="p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                              className="p-2 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                             />
                             <input
                               value={mRevMax}
                               onChange={(e) => setMRevMax(e.target.value)}
                               placeholder="max"
-                              className="p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                              className="p-2 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                             />
                           </div>
                         </div>
 
                         {/* market customers */}
-                        <div className="p-4 rounded-xl bg-zinc-950/40 border border-zinc-800">
-                          <div className="text-sm font-bold text-zinc-200 mb-2">
+                        <div className="p-4 border-b border-zinc-200">
+                          <div className="text-sm font-semibold text-zinc-700 mb-2">
                             시장 고객수(연간 구매자) <span className="text-zinc-500 text-xs">(선택)</span>
                           </div>
                           <div className="grid grid-cols-3 gap-2">
@@ -1217,26 +1463,26 @@ export default function Home() {
                               value={mCustMin}
                               onChange={(e) => setMCustMin(e.target.value)}
                               placeholder="min"
-                              className="p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                              className="p-2 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                             />
                             <input
                               value={mCustMode}
                               onChange={(e) => setMCustMode(e.target.value)}
                               placeholder="mode"
-                              className="p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                              className="p-2 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                             />
                             <input
                               value={mCustMax}
                               onChange={(e) => setMCustMax(e.target.value)}
                               placeholder="max"
-                              className="p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                              className="p-2 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                             />
                           </div>
                         </div>
 
                         {/* price */}
-                        <div className="p-4 rounded-xl bg-zinc-950/40 border border-zinc-800">
-                          <div className="text-sm font-bold text-zinc-200 mb-2">
+                        <div className="p-4 border-b border-zinc-200">
+                          <div className="text-sm font-semibold text-zinc-700 mb-2">
                             평균 가격(1회 결제) <span className="text-zinc-500 text-xs">(숫자)</span>
                           </div>
                           <div className="grid grid-cols-3 gap-2">
@@ -1244,26 +1490,26 @@ export default function Home() {
                               value={mPriceMin}
                               onChange={(e) => setMPriceMin(e.target.value)}
                               placeholder="min"
-                              className="p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                              className="p-2 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                             />
                             <input
                               value={mPriceMode}
                               onChange={(e) => setMPriceMode(e.target.value)}
                               placeholder="mode"
-                              className="p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                              className="p-2 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                             />
                             <input
                               value={mPriceMax}
                               onChange={(e) => setMPriceMax(e.target.value)}
                               placeholder="max"
-                              className="p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                              className="p-2 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                             />
                           </div>
                         </div>
 
                         {/* freq */}
-                        <div className="p-4 rounded-xl bg-zinc-950/40 border border-zinc-800">
-                          <div className="text-sm font-bold text-zinc-200 mb-2">
+                        <div className="p-4 border-b border-zinc-200">
+                          <div className="text-sm font-semibold text-zinc-700 mb-2">
                             구매빈도(연/인) <span className="text-zinc-500 text-xs">(숫자)</span>
                           </div>
                           <div className="grid grid-cols-3 gap-2">
@@ -1271,26 +1517,26 @@ export default function Home() {
                               value={mFreqMin}
                               onChange={(e) => setMFreqMin(e.target.value)}
                               placeholder="min"
-                              className="p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                              className="p-2 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                             />
                             <input
                               value={mFreqMode}
                               onChange={(e) => setMFreqMode(e.target.value)}
                               placeholder="mode"
-                              className="p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                              className="p-2 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                             />
                             <input
                               value={mFreqMax}
                               onChange={(e) => setMFreqMax(e.target.value)}
                               placeholder="max"
-                              className="p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                              className="p-2 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                             />
                           </div>
                         </div>
 
                         {/* max penetration */}
-                        <div className="p-4 rounded-xl bg-zinc-950/40 border border-zinc-800 md:col-span-2">
-                          <div className="text-sm font-bold text-zinc-200 mb-2">
+                        <div className="p-4 border-b border-zinc-200 md:col-span-2">
+                          <div className="text-sm font-semibold text-zinc-700 mb-2">
                             침투율 상한(0~1) <span className="text-zinc-500 text-xs">(필수, 예: 0.001 ~ 0.01)</span>
                           </div>
                           <div className="grid grid-cols-3 gap-2">
@@ -1298,19 +1544,19 @@ export default function Home() {
                               value={mPenMin}
                               onChange={(e) => setMPenMin(e.target.value)}
                               placeholder="min (0~1)"
-                              className="p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                              className="p-2 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                             />
                             <input
                               value={mPenMode}
                               onChange={(e) => setMPenMode(e.target.value)}
                               placeholder="mode (0~1)"
-                              className="p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                              className="p-2 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                             />
                             <input
                               value={mPenMax}
                               onChange={(e) => setMPenMax(e.target.value)}
                               placeholder="max (0~1)"
-                              className="p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                              className="p-2 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                             />
                           </div>
                         </div>
@@ -1335,13 +1581,13 @@ export default function Home() {
 
                 {/* 창업자 특성 */}
                 <div>
-                  <h3 className="text-lg font-bold text-zinc-200 mb-4">{t.traitsTitle}</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 p-6 bg-zinc-800/30 rounded-xl border border-zinc-700/50">
+                  <h3 className="text-lg font-semibold text-zinc-800 mb-4">{t.traitsTitle}</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 p-6 border-t border-zinc-200">
                     {Object.keys(t.traits).map((key) => (
                       <div key={key} className="space-y-2">
                         <div className="flex justify-between text-sm">
-                          <label className="font-bold text-zinc-300">{t.traits[key as keyof typeof t.traits]}</label>
-                          <span className="text-red-400 font-bold">{founderTraits[key as keyof FounderTraits]}점</span>
+                          <label className="font-semibold text-zinc-600">{t.traits[key as keyof typeof t.traits]}</label>
+                          <span className="text-zinc-700 font-semibold">{founderTraits[key as keyof FounderTraits]}점</span>
                         </div>
                         <input
                           type="range"
@@ -1350,7 +1596,7 @@ export default function Home() {
                           step="1"
                           value={founderTraits[key as keyof FounderTraits]}
                           onChange={(e) => handleTraitChange(key as keyof FounderTraits, parseInt(e.target.value, 10))}
-                          className="w-full accent-red-500 h-2 bg-zinc-700 rounded-lg appearance-none cursor-pointer"
+                          className="w-full accent-blue-500 h-2 bg-zinc-200 rounded-lg appearance-none cursor-pointer"
                         />
                       </div>
                     ))}
@@ -1360,7 +1606,7 @@ export default function Home() {
                 <button
                   onClick={runAnalysis}
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white font-extrabold py-4 px-6 rounded-xl text-lg shadow-lg disabled:opacity-50 flex justify-center items-center gap-2 transition-all"
+                  className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-4 px-6 text-lg disabled:opacity-50 flex justify-center items-center gap-2 transition-all"
                 >
                   {loading ? (
                     <>
@@ -1385,7 +1631,7 @@ export default function Home() {
             <div className="flex flex-col md:flex-row gap-3 justify-end">
               <button
                 onClick={() => setStep("form")}
-                className="px-4 py-2 rounded-xl border border-zinc-700 text-zinc-200 hover:bg-zinc-800 font-bold"
+                className="text-sm font-semibold text-zinc-700 underline underline-offset-4 hover:text-zinc-900"
               >
                 {t.editBtn}
               </button>
@@ -1394,47 +1640,46 @@ export default function Home() {
                   setResult(null);
                   setStep("home");
                 }}
-                className="px-4 py-2 rounded-xl bg-zinc-800 text-white hover:bg-zinc-700 font-bold"
+                className="text-sm font-semibold text-zinc-700 underline underline-offset-4 hover:text-zinc-900"
               >
                 {t.retryBtn}
               </button>
             </div>
 
             {/* 요약 카드 */}
-            <div className="bg-zinc-900/80 border border-red-900/30 shadow-2xl relative overflow-hidden rounded-xl p-6">
-              <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-transparent pointer-events-none" />
-              <div className="pb-4 relative z-10 border-b border-zinc-800 mb-4">
-                <h2 className="text-2xl font-bold flex items-center gap-2 text-red-400">
-                  <IconAlertTriangle className="h-6 w-6 text-red-500" />
+            <div className="bg-white border border-zinc-200 shadow-sm relative overflow-hidden p-6">
+              <div className="pb-4 relative z-10 border-b border-zinc-200 mb-4">
+                <h2 className="text-2xl font-semibold flex items-center gap-2 text-zinc-800">
+                  <IconAlertTriangle className="h-6 w-6 text-zinc-500" />
                   {t.resultTitle}
                 </h2>
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center relative z-10">
                 <div>
-                  <p className="text-zinc-400 text-sm font-bold mb-1">💀 {t.survival}</p>
-                  <p className="text-4xl font-extrabold text-red-500">{survival.toFixed(1)}%</p>
+                  <p className="text-zinc-400 text-sm font-bold mb-1">{t.survival}</p>
+                  <p className="text-4xl font-semibold text-zinc-900">{survival.toFixed(1)}%</p>
                 </div>
                 <div>
-                  <p className="text-zinc-400 text-sm font-bold mb-1">⚰️ {t.deathCause}</p>
-                  <span className="inline-block px-3 py-1 rounded-full bg-red-900/50 text-red-200 text-sm font-bold border border-red-800">
+                  <p className="text-zinc-400 text-sm font-bold mb-1">{t.deathCause}</p>
+                  <span className="inline-block px-3 py-1 border-b border-zinc-300 text-zinc-700 text-sm font-semibold">
                     {cleanText(result.report.death_cause)}
                   </span>
                 </div>
                 <div>
-                  <p className="text-zinc-400 text-sm font-bold mb-1">🧗 {t.bottleneck}</p>
-                  <p className="text-xl font-bold text-white">{String(bottleneck || "-")}</p>
+                  <p className="text-zinc-400 text-sm font-bold mb-1">{t.bottleneck}</p>
+                  <p className="text-xl font-semibold text-zinc-900">{String(bottleneck || "-")}</p>
                 </div>
                 <div>
-                  <p className="text-zinc-400 text-sm font-bold mb-1">🎯 {t.needsMatch}</p>
-                  <p className="text-2xl font-bold text-orange-400">{result.stats.consumer_needs}점</p>
+                  <p className="text-zinc-400 text-sm font-bold mb-1">{t.needsMatch}</p>
+                  <p className="text-2xl font-semibold text-zinc-900">{result.stats.consumer_needs}점</p>
                 </div>
               </div>
             </div>
 
             {/* 탭 */}
             <div className="w-full">
-              <div className="grid w-full grid-cols-5 bg-zinc-800/50 p-1 rounded-lg mb-6">
+              <div className="grid w-full grid-cols-5 bg-zinc-100 p-1 mb-6">
                 {(
                   [
                     ["summary", t.tabSummary],
@@ -1448,7 +1693,7 @@ export default function Home() {
                     key={k}
                     onClick={() => setActiveTab(k)}
                     className={`py-2 text-sm font-bold rounded-md transition-all ${
-                      activeTab === k ? "bg-red-600 text-white" : "text-zinc-400 hover:text-white"
+                      activeTab === k ? "bg-zinc-200 text-zinc-900" : "text-zinc-500 hover:text-zinc-800"
                     }`}
                   >
                     {label}
@@ -1460,10 +1705,10 @@ export default function Home() {
               {activeTab === "summary" && (
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="bg-zinc-900/50 border border-zinc-800 h-full rounded-xl p-6">
-                      <h3 className="flex items-center gap-2 text-lg font-bold text-white mb-6">
-                        <IconTrendingUp className="w-5 h-5 text-blue-400" />
-                        10 Stats
+                    <div className="bg-white border border-zinc-200 h-full p-6">
+                      <h3 className="flex items-center gap-2 text-lg font-semibold text-zinc-800 mb-6">
+                        <IconTrendingUp className="w-5 h-5 text-blue-600" />
+                        11 Stats
                       </h3>
 
                       <div className="grid grid-cols-1 gap-6">
@@ -1473,35 +1718,40 @@ export default function Home() {
                             label={t.statProduct}
                             value={result.stats.product}
                             icon={IconShoppingCart}
-                            colorClass="text-blue-400"
+                            colorClass="text-zinc-700"
+                            barColor="#2563EB"
                             tooltip={statTooltips.product}
                           />
                           <StatBar
                             label={t.statFounder}
                             value={getFounderScore(result)}
                             icon={IconUsers}
-                            colorClass="text-green-400"
+                            colorClass="text-zinc-700"
+                            barColor="#2563EB"
                             tooltip={statTooltips.founder}
                           />
                           <StatBar
                             label={t.statStrategy}
                             value={result.stats.strategy}
                             icon={IconTarget}
-                            colorClass="text-purple-400"
+                            colorClass="text-zinc-700"
+                            barColor="#2563EB"
                             tooltip={statTooltips.strategy}
                           />
                           <StatBar
                             label={t.statMarketing}
                             value={result.stats.marketing}
                             icon={IconTrendingUp}
-                            colorClass="text-yellow-400"
+                            colorClass="text-zinc-700"
+                            barColor="#2563EB"
                             tooltip={statTooltips.marketing}
                           />
                           <StatBar
                             label={t.statNeeds}
                             value={result.stats.consumer_needs}
                             icon={IconHeart}
-                            colorClass="text-red-400"
+                            colorClass="text-zinc-700"
+                            barColor="#2563EB"
                             tooltip={statTooltips.consumer_needs}
                           />
                         </div>
@@ -1514,44 +1764,57 @@ export default function Home() {
                             label={t.statConcept}
                             value={result.stats.concept_fit}
                             icon={IconTarget}
-                            colorClass="text-blue-300"
+                            colorClass="text-zinc-700"
+                            barColor="#2563EB"
                             tooltip={statTooltips.concept_fit}
                           />
                           <StatBar
-                            label={t.statMonetization}
-                            value={result.stats.monetization}
+                            label={t.statPriceFit}
+                            value={result.stats.price_fit}
                             icon={IconDollar}
-                            colorClass="text-emerald-400"
-                            tooltip={statTooltips.monetization}
+                            colorClass="text-zinc-700"
+                            barColor="#2563EB"
+                            tooltip={statTooltips.price_fit}
+                          />
+                          <StatBar
+                            label={t.statBusinessModel}
+                            value={result.stats.business_model_fit}
+                            icon={IconCash}
+                            colorClass="text-zinc-700"
+                            barColor="#2563EB"
+                            tooltip={statTooltips.business_model_fit}
                           />
                           <StatBar
                             label={t.statDistribution}
                             value={result.stats.distribution}
                             icon={IconTruck}
-                            colorClass="text-orange-400"
+                            colorClass="text-zinc-700"
+                            barColor="#2563EB"
                             tooltip={statTooltips.distribution}
                           />
                           <StatBar
                             label={t.statScope}
                             value={result.stats.market_scope}
                             icon={IconGlobe}
-                            colorClass="text-purple-300"
+                            colorClass="text-zinc-700"
+                            barColor="#2563EB"
                             tooltip={statTooltips.market_scope}
                           />
                           <StatBar
                             label={t.statPotential}
                             value={result.stats.potential_customers}
                             icon={IconPie}
-                            colorClass="text-rose-300"
+                            colorClass="text-zinc-700"
+                            barColor="#2563EB"
                             tooltip={statTooltips.potential_customers}
                           />
                         </div>
                       </div>
                     </div>
 
-                    <div className="bg-zinc-900/50 border border-zinc-800 h-full rounded-xl p-6">
-                      <h3 className="flex items-center gap-2 text-lg font-bold text-white mb-6">
-                        <IconAlertTriangle className="w-5 h-5 text-red-500" />
+                    <div className="bg-white border border-zinc-200 h-full p-6">
+                      <h3 className="flex items-center gap-2 text-lg font-semibold text-zinc-800 mb-6">
+                        <IconAlertTriangle className="w-5 h-5 text-blue-600" />
                         {t.funnelTitle}
                         <InfoTip text={statTooltips.funnel} />
                       </h3>
@@ -1559,9 +1822,10 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6">
-                    <h3 className="text-lg font-bold text-white mb-4">{t.cloudTitle}</h3>
+                  <div className="bg-white border border-zinc-200 p-6">
+                    <h3 className="text-lg font-semibold text-zinc-800 mb-4">{t.cloudTitle}</h3>
                     <TagCloud words={keywords} />
+                    <PriceReferenceCard priceReference={result?.priceReference} />
                   </div>
                 </div>
               )}
@@ -1570,23 +1834,23 @@ export default function Home() {
               {activeTab === "autopsy" && (
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="bg-zinc-900/50 border border-red-900/50 rounded-xl p-6">
-                      <h3 className="text-lg font-bold text-red-400 mb-4">{t.autopsyTitle}</h3>
+                    <div className="bg-white border border-zinc-200 p-6">
+                      <h3 className="text-lg font-semibold text-zinc-800 mb-4">{t.autopsyTitle}</h3>
                       <TextBlock text={result.report.autopsy_report} />
                     </div>
 
-                    <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6">
+                    <div className="bg-white border border-zinc-200 p-6">
                       <h3 className="text-lg font-bold text-orange-400 mb-4">{t.needsTitle}</h3>
                       <TextBlock text={result.report.needs_analysis} />
                     </div>
                   </div>
 
-                  <div className="bg-red-950/30 border border-red-900/50 shadow-lg rounded-xl overflow-hidden">
-                    <div className="p-6 border-b border-red-900/30">
-                      <h3 className="text-xl font-bold text-red-200">{t.actionTitle}</h3>
+                  <div className="bg-white border border-zinc-200 shadow-sm overflow-hidden">
+                    <div className="p-6 border-b border-zinc-200">
+                      <h3 className="text-xl font-semibold text-zinc-800">{t.actionTitle}</h3>
                     </div>
-                    <div className="p-6 bg-red-950/20">
-                      <TextBlock text={result.report.action_plan} />
+                    <div className="p-6 bg-white">
+                      <ActionList text={result.report.action_plan} />
                     </div>
                   </div>
                 </div>
@@ -1594,9 +1858,9 @@ export default function Home() {
 
               {/* Debate */}
               {activeTab === "voc" && (
-                <div className="bg-zinc-900/50 border border-zinc-800 shadow-xl rounded-xl p-6">
-                  <h3 className="text-xl font-bold text-white mb-4">{t.vocTitle}</h3>
-                  <div className="bg-zinc-950/50 p-6 rounded-xl border border-zinc-800/50 text-zinc-300 leading-relaxed whitespace-pre-wrap font-mono text-sm">
+                <div className="bg-white border border-zinc-200 shadow-sm p-6">
+                  <h3 className="text-xl font-semibold text-zinc-800 mb-4">{t.vocTitle}</h3>
+                  <div className="bg-zinc-50 p-6 border border-zinc-200 text-zinc-700 leading-relaxed whitespace-pre-wrap font-mono text-sm">
                     {cleanText(result.debate)}
                   </div>
                 </div>
@@ -1605,15 +1869,15 @@ export default function Home() {
               {/* Market */}
               {activeTab === "market" && (
                 <div className="space-y-6">
-                  <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6">
-                    <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
-                      <IconPie className="w-6 h-6 text-red-400" />
+                  <div className="bg-white border border-zinc-200 p-6">
+                    <h3 className="text-xl font-semibold text-zinc-800 mb-2 flex items-center gap-2">
+                      <IconPie className="w-6 h-6 text-blue-600" />
                       {t.marketTabTitle}
                     </h3>
-                    <div className="text-sm text-zinc-400">{t.marketShareNote}</div>
+                    <div className="text-sm text-zinc-500">{t.marketShareNote}</div>
 
                     {marketNeeded && (
-                      <div className="mt-4 p-4 rounded-xl border border-red-900/40 bg-red-950/20 text-red-200 text-sm font-bold">
+                      <div className="mt-4 p-4 border border-zinc-200 bg-zinc-50 text-zinc-700 text-sm font-semibold">
                         {t.marketNeededMsg}
                       </div>
                     )}
@@ -1621,34 +1885,32 @@ export default function Home() {
                     {!marketNeeded && (
                       <>
                         <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div className="p-4 rounded-xl bg-zinc-950/40 border border-zinc-800">
-                            <div className="text-zinc-400 text-xs font-bold">{t.marketShareTitle}</div>
-                            <div className="text-3xl font-extrabold text-red-300 mt-2">
-                              {(shareP50 * 100).toFixed(2)}%
-                            </div>
+                          <div className="p-4 border border-zinc-200">
+                            <div className="text-zinc-500 text-xs font-semibold">{t.marketShareTitle}</div>
+                            <div className="text-3xl font-semibold text-zinc-900 mt-2">{shareP50.toFixed(2)}%</div>
                             <div className="text-xs text-zinc-500 mt-2">
-                              p10 {(shareP10 * 100).toFixed(2)}% · p90 {(shareP90 * 100).toFixed(2)}%
+                              p10 {shareP10.toFixed(2)}% · p90 {shareP90.toFixed(2)}%
                             </div>
                           </div>
 
-                          <div className="p-4 rounded-xl bg-zinc-950/40 border border-zinc-800">
-                            <div className="text-zinc-400 text-xs font-bold">Band</div>
-                            <div className="text-2xl font-extrabold text-white mt-2">{shareBand || "-"}</div>
+                          <div className="p-4 border border-zinc-200">
+                            <div className="text-zinc-500 text-xs font-semibold">Band</div>
+                            <div className="text-2xl font-semibold text-zinc-900 mt-2">{shareBand || "-"}</div>
                             <div className="text-xs text-zinc-500 mt-2">
                               {result.report.market_takeaway ? cleanText(result.report.market_takeaway) : ""}
                             </div>
                           </div>
 
-                          <div className="p-4 rounded-xl bg-zinc-950/40 border border-zinc-800">
-                            <div className="text-zinc-400 text-xs font-bold">{t.marketAssumptionsTitle}</div>
-                            <pre className="mt-2 text-xs text-zinc-300 whitespace-pre-wrap font-mono">
-{JSON.stringify(result.marketAssumptionsUsed ?? null, null, 2)}
-                            </pre>
+                          <div className="p-4 border border-zinc-200">
+                            <div className="text-zinc-500 text-xs font-semibold">{t.marketAssumptionsTitle}</div>
+                            <div className="mt-3">
+                              <MarketAssumptionsCard assumptions={result.marketAssumptionsUsed ?? null} />
+                            </div>
                           </div>
                         </div>
 
                         <div className="mt-6">
-                          <h4 className="text-lg font-extrabold text-white mb-3">{t.marketGraphTitle}</h4>
+                          <h4 className="text-lg font-semibold text-zinc-800 mb-3">{t.marketGraphTitle}</h4>
                           <MarketAreaBar total={revLayers.total} sam={revLayers.sam} som={revLayers.som} you={revLayers.you} />
                         </div>
                       </>
@@ -1657,8 +1919,8 @@ export default function Home() {
 
                   {/* Auto sources */}
                   {(result.marketSizingSources?.length ?? 0) > 0 && (
-                    <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6">
-                      <h3 className="text-lg font-bold text-white mb-4">{t.marketSourcesTitle}</h3>
+                    <div className="bg-white border border-zinc-200 p-6">
+                      <h3 className="text-lg font-semibold text-zinc-800 mb-4">{t.marketSourcesTitle}</h3>
                       <div className="space-y-3">
                         {result.marketSizingSources!.slice(0, 6).map((c, i) => (
                           <a
@@ -1666,7 +1928,7 @@ export default function Home() {
                             href={c.url}
                             target="_blank"
                             rel="noreferrer"
-                            className="block p-4 rounded-xl border border-zinc-800 bg-zinc-950/40 hover:bg-zinc-900 transition"
+                            className="block p-4 border border-zinc-200 bg-white hover:bg-zinc-50 transition"
                           >
                             <div className="text-zinc-100 font-bold">{c.title}</div>
                             <div className="text-zinc-400 text-sm mt-2 line-clamp-3">{String(c.content ?? "").slice(0, 240)}...</div>
@@ -1676,11 +1938,11 @@ export default function Home() {
                       </div>
 
                       {result.marketAutoMeta && (
-                        <div className="mt-6 p-4 rounded-xl border border-zinc-800 bg-zinc-950/30">
-                          <h4 className="text-sm font-extrabold text-white mb-2">{t.marketMetaTitle}</h4>
-                          <div className="text-xs text-zinc-400">
+                        <div className="mt-6 p-4 border border-zinc-200 bg-zinc-50">
+                          <h4 className="text-sm font-semibold text-zinc-800 mb-2">{t.marketMetaTitle}</h4>
+                          <div className="text-xs text-zinc-600">
                             <div className="mb-2">
-                              <span className="font-bold text-zinc-300">assumed_fields:</span>{" "}
+                              <span className="font-semibold text-zinc-700">assumed_fields:</span>{" "}
                               {(result.marketAutoMeta.assumed_fields ?? []).join(", ") || "-"}
                             </div>
                             <div className="whitespace-pre-wrap">{cleanText(result.marketAutoMeta.rationale ?? "")}</div>
@@ -1695,8 +1957,8 @@ export default function Home() {
               {/* Links / Cases */}
               {activeTab === "links" && (
                 <div className="space-y-6">
-                  <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6">
-                    <h3 className="text-lg font-bold text-white mb-4">{t.youtubeTitle}</h3>
+                  <div className="bg-white border border-zinc-200 p-6">
+                    <h3 className="text-lg font-semibold text-zinc-800 mb-4">{t.youtubeTitle}</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                       {(result.report.youtube_queries ?? []).slice(0, 3).map((q, i) => (
                         <a
@@ -1704,7 +1966,7 @@ export default function Home() {
                           href={youtubeSearchUrl(q)}
                           target="_blank"
                           rel="noreferrer"
-                          className="block p-4 rounded-xl border border-zinc-800 bg-zinc-950/40 hover:bg-zinc-900 transition"
+                          className="block p-4 border border-zinc-200 bg-white hover:bg-zinc-50 transition"
                         >
                           <div className="text-sm text-zinc-400 font-bold mb-1">Query {i + 1}</div>
                           <div className="text-zinc-100 font-extrabold">{q}</div>
@@ -1717,8 +1979,8 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6">
-                    <h3 className="text-lg font-bold text-white mb-4">{t.casesTitle}</h3>
+                  <div className="bg-white border border-zinc-200 p-6">
+                    <h3 className="text-lg font-semibold text-zinc-800 mb-4">{t.casesTitle}</h3>
                     <div className="space-y-3">
                       {(result.pastCases ?? []).slice(0, 6).map((c, i) => (
                         <a
@@ -1726,7 +1988,7 @@ export default function Home() {
                           href={c.url}
                           target="_blank"
                           rel="noreferrer"
-                          className="block p-4 rounded-xl border border-zinc-800 bg-zinc-950/40 hover:bg-zinc-900 transition"
+                          className="block p-4 border border-zinc-200 bg-white hover:bg-zinc-50 transition"
                         >
                           <div className="text-zinc-100 font-bold">{c.title}</div>
                           <div className="text-zinc-400 text-sm mt-2 line-clamp-3">
@@ -1746,6 +2008,11 @@ export default function Home() {
           </div>
         )}
       </div>
+      {showStartHint && step === "home" && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 text-sm text-zinc-600">
+          {t.startBtn}
+        </div>
+      )}
     </main>
   );
 }
