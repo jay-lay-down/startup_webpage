@@ -224,7 +224,7 @@ const translations = {
     statBusinessModel: "BM 타당성",
     statDistribution: "유통/채널 실행",
     statScope: "시장 확장성",
-    statPotential: "잠재고객(지갑)",
+    statPotential: "잠재고객",
 
     funnelTitle: "리스크 퍼널",
     funnelDesc: "단계별 이탈 비율",
@@ -257,7 +257,7 @@ const translations = {
     marketGraphTitle: "면적그래프",
     marketTotal: "전체 시장(추정)",
     marketSAM: "도달 가능한 시장(SAM)",
-    marketSOM: "실제 도달  (SOM)",
+    marketSOM: "도달 가능 점유율(SOM)",
     marketYou: "추정 매출",
   },
   en: {
