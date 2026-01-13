@@ -1,7 +1,7 @@
 // app/page.tsx
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 /** ✅ 외부 패키지 없이: 파일 내장 SVG 아이콘 */
 type IconProps = { className?: string };
@@ -141,8 +141,8 @@ function InfoTip({ text }: { text: string }) {
 // --- 언어팩 ---
 const translations = {
   ko: {
-    title: "스타트업 사업성 분석",
-    subtitle: "핵심 가정과 리스크를 구조적으로 점검합니다.",
+    title: "질문하다. 검증하다. 완성하다.",
+    subtitle: "막연했던 아이디어가 빈틈없는 비즈니스가 되는 순간.",
     startBtn: "분석 시작",
     startSub: "클릭하여 분석을 시작하세요.",
     analyzing: "분석을 진행 중입니다...",
@@ -253,8 +253,8 @@ const translations = {
     marketYou: "당신(추정 매출)",
   },
   en: {
-    title: "Startup Feasibility Analysis",
-    subtitle: "Structured assessment of assumptions, risks, and execution fit.",
+    title: "Question. Validate. Deliver.",
+    subtitle: "When a vague idea becomes a rigorous business.",
     startBtn: "Start Analysis",
     startSub: "Click to begin the analysis.",
     analyzing: "Running analysis...",
@@ -585,6 +585,14 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [activeTab, setActiveTab] = useState<"summary" | "autopsy" | "voc" | "market" | "links">("summary");
+  const [showStartHint, setShowStartHint] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setShowStartHint(window.scrollY > 120);
+    window.addEventListener("scroll", onScroll);
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   // form state
   const [categoryPreset, setCategoryPreset] = useState<string>("가전");
@@ -1130,8 +1138,8 @@ export default function Home() {
   // Render
   // ------------------------------
   return (
-    <main className="min-h-screen bg-zinc-950 text-zinc-100 p-4 md:p-10 font-sans">
-      <div className="max-w-[1440px] mx-auto space-y-10 relative">
+    <main className="min-h-screen bg-white text-zinc-900 p-4 md:p-8 font-sans">
+      <div className="max-w-[1680px] mx-auto space-y-10 relative">
         {/* 언어 버튼 */}
         <div className="absolute top-0 right-0 flex gap-2">
           <button
@@ -1157,11 +1165,11 @@ export default function Home() {
         </div>
 
         {/* 공통 헤더 */}
-        <div className="text-center space-y-3 pt-10">
-          <h1 className="text-4xl md:text-5xl font-semibold tracking-tight text-zinc-100">
+        <div className="text-center space-y-3 pt-6 md:pt-10">
+          <h1 className="text-4xl md:text-5xl font-semibold tracking-tight text-zinc-900">
             {t.title}
           </h1>
-          <p className="text-zinc-400 text-base md:text-lg">{t.subtitle}</p>
+          <p className="text-zinc-600 text-base md:text-lg">{t.subtitle}</p>
         </div>
 
         {/* =======================
@@ -1170,9 +1178,9 @@ export default function Home() {
         {step === "home" && (
           <div className="space-y-6">
             <div className="w-full flex justify-center">
-              <div className="w-full max-w-4xl rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900/40 shadow-2xl">
-                <div className="px-4 py-3 text-sm md:text-base font-bold text-zinc-200 border-b border-zinc-800 bg-zinc-950/40">
-                  <span className="text-zinc-300">{t.homeHint}</span>
+              <div className="w-full max-w-6xl overflow-hidden border border-zinc-200 bg-white shadow-sm">
+                <div className="px-4 py-3 text-sm md:text-base font-medium text-zinc-700 border-b border-zinc-200 bg-zinc-50">
+                  <span className="text-zinc-600">{t.homeHint}</span>
                 </div>
 
                 <div className="relative">
@@ -1181,7 +1189,7 @@ export default function Home() {
                     alt="Main visual"
                     className="w-full h-auto object-cover"
                   />
-                  <div className="absolute bottom-3 right-3 text-[11px] md:text-xs px-2 py-1 rounded-md bg-black/60 text-zinc-200 border border-white/10">
+                  <div className="absolute bottom-3 right-3 text-[11px] md:text-xs px-2 py-1 rounded-md bg-white/80 text-zinc-700 border border-zinc-200">
                     analysis v2
                   </div>
                 </div>
@@ -1189,10 +1197,10 @@ export default function Home() {
             </div>
 
             <div className="max-w-4xl mx-auto text-center space-y-3">
-              <p className="text-zinc-400">{t.startSub}</p>
+              <p className="text-zinc-600">{t.startSub}</p>
               <button
                 onClick={() => setStep("form")}
-                className="w-full max-w-xl mx-auto bg-zinc-100 hover:bg-zinc-200 text-zinc-900 font-semibold py-4 px-6 rounded-xl text-lg shadow-lg transition-all"
+                className="w-full max-w-xl mx-auto bg-zinc-900 hover:bg-zinc-800 text-white font-semibold py-4 px-6 text-lg transition-all"
               >
                 {t.startBtn}
               </button>
@@ -1209,13 +1217,13 @@ export default function Home() {
               {t.backBtn}
             </button>
 
-            <div className="bg-zinc-900/50 border border-zinc-800 shadow-2xl backdrop-blur-sm rounded-xl p-6">
+            <div className="bg-white border border-zinc-200 shadow-sm backdrop-blur-sm p-6">
               <div className="mb-6 border-b border-zinc-800 pb-4">
-                <h2 className="text-2xl font-bold flex items-center gap-2 text-white">
-                  <IconTerminal className="w-6 h-6 text-zinc-400" />
+                <h2 className="text-2xl font-semibold flex items-center gap-2 text-zinc-900">
+                  <IconTerminal className="w-6 h-6 text-zinc-500" />
                   {t.formTitle}
                 </h2>
-                <p className="text-zinc-400 mt-1">{t.formDesc}</p>
+                <p className="text-zinc-600 mt-1">{t.formDesc}</p>
               </div>
 
               <div className="space-y-8">
@@ -2002,6 +2010,11 @@ export default function Home() {
           </div>
         )}
       </div>
+      {showStartHint && step === "home" && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 text-sm text-zinc-600">
+          {t.startBtn}
+        </div>
+      )}
     </main>
   );
 }
