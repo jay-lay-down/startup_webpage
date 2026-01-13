@@ -154,7 +154,7 @@ const translations = {
     startBtn: "분석 시작",
     startSub: "",
     analyzing: "분석을 진행 중입니다...",
-    homeHint: "", // ✅ 다시 빈칸으로 원복
+    homeHint: "", // ✅ 빈칸 유지
 
     formTitle: "프로젝트 인테이크",
     formDesc: "정확한 분석을 위해 구체적으로 입력해 주세요.",
@@ -189,7 +189,7 @@ const translations = {
 
     traitsTitle: "창업자 역량 자가진단 (1~10점)",
     traits: {
-      obsession: "고객/문제 집착",
+      obsession: "고객 중심 마인드",
       speed: "실행 속도",
       ambiguity: "불확실성 내성",
       feedback: "피드백 수용력",
@@ -236,7 +236,7 @@ const translations = {
     youtubeTitle: "유튜브 추천 검색어",
     casesTitle: "유사 아이템/실패 사례(검색 결과)",
     retryBtn: "다시하기",
-    editBtn: "설문 응답 수정",
+    editBtn: "응답 수정",
 
     // market section
     marketSectionTitle: "시장점유율 시뮬레이션",
@@ -257,7 +257,7 @@ const translations = {
     marketGraphTitle: "면적그래프",
     marketTotal: "전체 시장(추정)",
     marketSAM: "도달 가능한 시장(SAM)",
-    marketSOM: "도달 가능한 점유율(SOM)",
+    marketSOM: "도달 가능 점유율(SOM)",
     marketYou: "추정 매출",
   },
   en: {
@@ -266,7 +266,7 @@ const translations = {
     startBtn: "Start Analysis",
     startSub: "",
     analyzing: "Running analysis...",
-    homeHint: "", // ✅ 다시 빈칸으로 원복
+    homeHint: "", // ✅ 빈칸 유지
 
     formTitle: "Project Intake",
     formDesc: "Provide clear inputs for a reliable assessment.",
@@ -593,9 +593,10 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [activeTab, setActiveTab] = useState<"summary" | "autopsy" | "voc" | "market" | "links">("summary");
-  const [showStartHint, setShowStartHint] = useState(false);
+  const [showStartHint, setShowStartHint] = useState(false); // ✅ 이 state는 이제 안쓰지만, 스크롤 로직 남겨둬도 문제 없음 (Floating CTA 없으니까)
 
   useEffect(() => {
+    // 스크롤 감지 로직은 놔둬도 무방 (쓰는 곳이 없어짐)
     const onScroll = () => setShowStartHint(window.scrollY > 120);
     window.addEventListener("scroll", onScroll);
     onScroll();
@@ -1210,7 +1211,7 @@ export default function Home() {
             <div className="w-full text-center space-y-4">
               {t.startSub ? <p className="text-zinc-500 text-lg font-medium">{t.startSub}</p> : null}
               
-              {/* ✅ 버튼만 형이 좋아한 디자인 유지 */}
+              {/* ✅ 버튼만 형이 좋아한 디자인 유지 (메인 버튼) */}
               <button
                 onClick={() => setStep("form")}
                 className="group relative inline-flex items-center gap-3 bg-zinc-900 hover:bg-zinc-800 text-white px-8 py-4 rounded-full text-lg font-bold shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
@@ -2027,22 +2028,7 @@ export default function Home() {
         )}
       </div>
 
-      {/* =======================
-          FIXED FLOATING CTA (스크롤 시 등장) - 개선된 버전 유지
-      ======================= */}
-      <div
-        className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-50 transition-all duration-500 transform ${
-          step === "home" && showStartHint ? "translate-y-0 opacity-100" : "translate-y-20 opacity-0 pointer-events-none"
-        }`}
-      >
-        <button
-          onClick={() => setStep("form")}
-          className="flex items-center gap-2 bg-white/90 backdrop-blur-md border border-zinc-200 text-zinc-900 px-6 py-3 rounded-full shadow-2xl hover:bg-zinc-50 transition-all active:scale-95"
-        >
-          <span className="text-sm font-bold">{t.startBtn}</span>
-          <IconArrowRight className="w-4 h-4 text-zinc-400" />
-        </button>
-      </div>
+      {/* ✅ 하단에 둥둥 떠다니던 Floating Button(흰색) 코드 삭제됨 */}
     </main>
   );
 }
