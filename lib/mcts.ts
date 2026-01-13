@@ -8,7 +8,8 @@ export type Stats = {
   consumer_needs: number;
 
   concept_fit: number;
-  monetization: number;
+  price_fit: number;
+  business_model_fit: number;
   distribution: number;
   market_scope: number;
   potential_customers: number;
@@ -22,7 +23,7 @@ type WeightMap = Partial<Record<keyof Stats, number>>;
 // ✅ 이전 버전 호환: route/front가 team으로 보내도 founder로 취급
 export type StatsInput = Partial<Stats> & { team?: number };
 
-function clamp0to100(v: any, fallback = 50): number {
+function clamp0to100(v: any, fallback = 35): number {
   const n = Number(v);
   if (!Number.isFinite(n)) return fallback;
   return Math.max(0, Math.min(100, Math.round(n)));
@@ -242,7 +243,8 @@ function resolveMarketAssumptions(
 export class StartupMCTS {
   private iterations: number;
   private stageWeights: Record<Stage, WeightMap>;
-  private stageDifficulty: Record<Stage, number>;
+  private stageHurdle: Record<Stage, number>;
+  private stageScale: Record<Stage, number>;
 
   constructor(iterations: number = 1000) {
     this.iterations = iterations;
@@ -251,7 +253,8 @@ export class StartupMCTS {
       Seed: {
         founder: 0.20,
         concept_fit: 0.16,
-        monetization: 0.16,
+        price_fit: 0.08,
+        business_model_fit: 0.08,
         consumer_needs: 0.18,
         product: 0.12,
         potential_customers: 0.10,
@@ -263,7 +266,8 @@ export class StartupMCTS {
       MVP: {
         founder: 0.14,
         concept_fit: 0.14,
-        monetization: 0.14,
+        price_fit: 0.07,
+        business_model_fit: 0.07,
         consumer_needs: 0.18,
         product: 0.14,
         distribution: 0.10,
@@ -277,7 +281,8 @@ export class StartupMCTS {
         product: 0.16,
         distribution: 0.16,
         marketing: 0.14,
-        monetization: 0.14,
+        price_fit: 0.07,
+        business_model_fit: 0.07,
         concept_fit: 0.10,
         potential_customers: 0.08,
         strategy: 0.04,
@@ -289,7 +294,8 @@ export class StartupMCTS {
         marketing: 0.20,
         market_scope: 0.14,
         distribution: 0.14,
-        monetization: 0.10,
+        price_fit: 0.05,
+        business_model_fit: 0.05,
         potential_customers: 0.10,
         product: 0.06,
         concept_fit: 0.04,
@@ -302,7 +308,8 @@ export class StartupMCTS {
         market_scope: 0.18,
         distribution: 0.12,
         potential_customers: 0.12,
-        monetization: 0.08,
+        price_fit: 0.04,
+        business_model_fit: 0.04,
         product: 0.04,
         concept_fit: 0.02,
         consumer_needs: 0.02,
@@ -310,12 +317,20 @@ export class StartupMCTS {
       },
     };
 
-    this.stageDifficulty = {
-      Seed: 0.70,
-      MVP: 0.60,
-      PMF: 0.50,
-      "Scale-up": 0.42,
-      Unicorn: 0.34,
+    this.stageHurdle = {
+      Seed: 55,
+      MVP: 60,
+      PMF: 65,
+      "Scale-up": 70,
+      Unicorn: 75,
+    };
+
+    this.stageScale = {
+      Seed: 10,
+      MVP: 10,
+      PMF: 11,
+      "Scale-up": 12,
+      Unicorn: 12,
     };
   }
 
@@ -335,14 +350,22 @@ export class StartupMCTS {
     }
 
     const normalized = weightSum > 0 ? score / weightSum : 0; // 0~100
-    const base = normalized / 100.0; // 0~1
-    const p = base * this.stageDifficulty[stage];
+    const hurdle = this.stageHurdle[stage];
+    const scale = this.stageScale[stage];
+    const p = scoreToFrac(normalized, hurdle, scale);
 
     return Math.max(0.0, Math.min(1.0, p));
   }
 
   public run(stats: StatsInput) {
     const deathCounts: Record<Stage, number> = {
+      Seed: 0,
+      MVP: 0,
+      PMF: 0,
+      "Scale-up": 0,
+      Unicorn: 0,
+    };
+    const stageEntries: Record<Stage, number> = {
       Seed: 0,
       MVP: 0,
       PMF: 0,
@@ -356,6 +379,7 @@ export class StartupMCTS {
       let diedAt: Stage | null = null;
 
       for (const stage of STAGES) {
+        stageEntries[stage]++;
         if (Math.random() > this.getSurvivalProb(stats, stage)) {
           diedAt = stage;
           break;
@@ -366,8 +390,40 @@ export class StartupMCTS {
       else survivors++;
     }
 
-    const bottleneckStage = (Object.keys(deathCounts) as Stage[]).reduce((a, b) =>
-      deathCounts[a] > deathCounts[b] ? a : b
+    const stagePassProbabilities = (Object.keys(stageEntries) as Stage[]).reduce(
+      (acc, stage) => {
+        acc[stage] = this.getSurvivalProb(stats, stage);
+        return acc;
+      },
+      {} as Record<Stage, number>
+    );
+
+    const deathRates = (Object.keys(stageEntries) as Stage[]).reduce(
+      (acc, stage) => {
+        acc[stage] = stageEntries[stage] > 0 ? deathCounts[stage] / stageEntries[stage] : 0;
+        return acc;
+      },
+      {} as Record<Stage, number>
+    );
+
+    const stageSurvivalRates = (Object.keys(stageEntries) as Stage[]).reduce(
+      (acc, stage) => {
+        acc[stage] = stageEntries[stage] > 0 ? 1 - deathRates[stage] : 0;
+        return acc;
+      },
+      {} as Record<Stage, number>
+    );
+
+    const stageReachRates = (Object.keys(stageEntries) as Stage[]).reduce(
+      (acc, stage) => {
+        acc[stage] = stageEntries[stage] / this.iterations;
+        return acc;
+      },
+      {} as Record<Stage, number>
+    );
+
+    const bottleneckStage = (Object.keys(deathRates) as Stage[]).reduce((a, b) =>
+      deathRates[a] > deathRates[b] ? a : b
     );
 
     const audienceScore = clamp0to100((stats as any)?.potential_customers, 50);
@@ -378,6 +434,11 @@ export class StartupMCTS {
     return {
       survival_rate: survivalRate,
       death_counts: deathCounts,
+      stage_entries: stageEntries,
+      stage_pass_probabilities: stagePassProbabilities,
+      death_rates: deathRates,
+      stage_survival_rates: stageSurvivalRates,
+      stage_reach_rates: stageReachRates,
       bottleneck_stage: bottleneckStage,
 
       potential_customers_score: audienceScore,
@@ -386,6 +447,11 @@ export class StartupMCTS {
       // legacy
       survivalRate,
       deathCounts,
+      stageEntries,
+      stagePassProbabilities,
+      deathRates,
+      stageSurvivalRates,
+      stageReachRates,
       bottleneck: bottleneckStage,
       potentialCustomersScore: audienceScore,
       potentialCustomersBand: band,
@@ -417,13 +483,43 @@ export class StartupMCTS {
     const myRev: number[] = [];
     const mktRev: number[] = [];
     const samRev: number[] = [];
+    const somRev: number[] = [];
 
     const mktCust: number[] = [];
     const samCust: number[] = [];
     const acqCust: number[] = [];
+    const somCust: number[] = [];
 
     for (let i = 0; i < this.iterations; i++) {
-      // 1) 어디 stage까지 도달?
+      // 1) 샘플링 (시장규모는 생존 여부와 무관하게 계산)
+      const price = Math.max(0, sampleTri(resolved.price!));
+      const freq = Math.max(0, sampleTri(resolved.purchase_freq_per_year!));
+      const maxPen = clamp01(sampleTri(resolved.max_penetration!));
+
+      const marketCustomers = resolved.market_customers ? Math.max(0, sampleTri(resolved.market_customers)) : 0;
+
+      // 2) addressable (SAM) 비율: market_scope + potential_customers
+      const scopeScore = clamp0to100((stats as any)?.market_scope, 50);
+      const audienceScore = clamp0to100((stats as any)?.potential_customers, 50);
+
+      const addressableFrac =
+        0.5 * scoreToFrac(scopeScore, 55, 12) + 0.5 * scoreToFrac(audienceScore, 55, 12);
+
+      const samCustomers = marketCustomers * clamp01(addressableFrac);
+      const somCustomers = samCustomers * maxPen;
+
+      // 3) penetration(침투) 비율: executionScore → 0~maxPen
+      const p = clamp0to100((stats as any)?.product, 50);
+      const mk = clamp0to100((stats as any)?.marketing, 50);
+      const d = clamp0to100((stats as any)?.distribution, 50);
+      const st = clamp0to100((stats as any)?.strategy, 50);
+      const pr = clamp0to100((stats as any)?.price_fit, 50);
+      const bm = clamp0to100((stats as any)?.business_model_fit, 50);
+
+      const executionScore = 0.25 * p + 0.25 * mk + 0.2 * d + 0.2 * st + 0.05 * pr + 0.05 * bm;
+      const penFrac = clamp01(scoreToFrac(executionScore, 58, 10) * maxPen);
+
+      // 4) 어디 stage까지 도달?
       let reachedIndex = -1;
 
       for (let s = 0; s < STAGES.length; s++) {
@@ -432,54 +528,15 @@ export class StartupMCTS {
         reachedIndex = s;
       }
 
-      if (reachedIndex < 0) {
-        shares.push(0);
-        myRev.push(0);
-        mktRev.push(0);
-        samRev.push(0);
-
-        mktCust.push(0);
-        samCust.push(0);
-        acqCust.push(0);
-        continue;
-      }
-
-      const reachedStage = STAGES[reachedIndex];
-
-      // 2) 샘플링
-      const price = Math.max(0, sampleTri(resolved.price!));
-      const freq = Math.max(0, sampleTri(resolved.purchase_freq_per_year!));
-      const maxPen = clamp01(sampleTri(resolved.max_penetration!));
-
-      const marketCustomers = resolved.market_customers ? Math.max(0, sampleTri(resolved.market_customers)) : 0;
-
-      // 3) addressable (SAM) 비율: market_scope + potential_customers
-      const scopeScore = clamp0to100((stats as any)?.market_scope, 50);
-      const audienceScore = clamp0to100((stats as any)?.potential_customers, 50);
-
-      const addressableFrac =
-        0.5 * scoreToFrac(scopeScore, 55, 12) + 0.5 * scoreToFrac(audienceScore, 55, 12);
-
-      const samCustomers = marketCustomers * clamp01(addressableFrac);
-
-      // 4) penetration(침투) 비율: executionScore → 0~maxPen
-      const p = clamp0to100((stats as any)?.product, 50);
-      const mk = clamp0to100((stats as any)?.marketing, 50);
-      const d = clamp0to100((stats as any)?.distribution, 50);
-      const st = clamp0to100((stats as any)?.strategy, 50);
-      const mo = clamp0to100((stats as any)?.monetization, 50);
-
-      const executionScore = 0.25 * p + 0.25 * mk + 0.2 * d + 0.2 * st + 0.1 * mo;
-      const penFrac = clamp01(scoreToFrac(executionScore, 58, 10) * maxPen);
-
+      const reachedStage = reachedIndex >= 0 ? STAGES[reachedIndex] : null;
       const acquiredCustomers = Math.max(0, samCustomers * penFrac);
 
       // 5) stage factor (optional, default 1)
-      const stageTri = resolved.stage_revenue_factor?.[reachedStage];
+      const stageTri = reachedStage ? resolved.stage_revenue_factor?.[reachedStage] : undefined;
       const stageFactor = stageTri ? Math.max(0, sampleTri(stageTri)) : 1;
 
       // 6) 매출
-      const myRevenue = acquiredCustomers * price * freq * stageFactor;
+      const myRevenue = reachedStage ? acquiredCustomers * price * freq * stageFactor : 0;
 
       // 분모(시장 매출)
       let marketRevenue = 0;
@@ -490,27 +547,32 @@ export class StartupMCTS {
       }
 
       const samRevenue = Math.max(0, samCustomers * price * freq);
+      const somRevenue = Math.max(0, somCustomers * price * freq);
 
-      const share = clamp01(myRevenue / marketRevenue);
+      const share = reachedStage ? clamp01(myRevenue / marketRevenue) : 0;
 
       shares.push(share);
       myRev.push(myRevenue);
       mktRev.push(marketRevenue);
       samRev.push(samRevenue);
+      somRev.push(somRevenue);
 
       mktCust.push(marketCustomers);
       samCust.push(samCustomers);
       acqCust.push(acquiredCustomers);
+      somCust.push(somCustomers);
     }
 
     const sharesSorted = [...shares].sort((a, b) => a - b);
     const myRevSorted = [...myRev].sort((a, b) => a - b);
     const mktRevSorted = [...mktRev].sort((a, b) => a - b);
     const samRevSorted = [...samRev].sort((a, b) => a - b);
+    const somRevSorted = [...somRev].sort((a, b) => a - b);
 
     const mktCustSorted = [...mktCust].sort((a, b) => a - b);
     const samCustSorted = [...samCust].sort((a, b) => a - b);
     const acqCustSorted = [...acqCust].sort((a, b) => a - b);
+    const somCustSorted = [...somCust].sort((a, b) => a - b);
 
     const market_share = {
       share_mean_pct: mean(shares) * 100,
@@ -530,8 +592,13 @@ export class StartupMCTS {
       sam_revenue_p50: quantile(samRevSorted, 0.5),
       sam_revenue_p90: quantile(samRevSorted, 0.9),
 
+      som_revenue_p10: quantile(somRevSorted, 0.1),
+      som_revenue_p50: quantile(somRevSorted, 0.5),
+      som_revenue_p90: quantile(somRevSorted, 0.9),
+
       market_customers_p50: quantile(mktCustSorted, 0.5),
       sam_customers_p50: quantile(samCustSorted, 0.5),
+      som_customers_p50: quantile(somCustSorted, 0.5),
       acquired_customers_p50: quantile(acqCustSorted, 0.5),
     };
 
@@ -540,11 +607,13 @@ export class StartupMCTS {
       revenue: {
         total_market_p50: market_share.market_revenue_p50,
         addressable_sam_p50: market_share.sam_revenue_p50,
+        obtainable_som_p50: market_share.som_revenue_p50,
         your_revenue_p50: market_share.my_revenue_p50,
       },
       customers: {
         total_market_p50: market_share.market_customers_p50,
         addressable_sam_p50: market_share.sam_customers_p50,
+        obtainable_som_p50: market_share.som_customers_p50,
         your_customers_p50: market_share.acquired_customers_p50,
       },
     };
