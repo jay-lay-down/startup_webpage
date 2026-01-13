@@ -255,9 +255,9 @@ const translations = {
     marketShareTitle: "예상 시장점유율(Revenue 기준)",
     marketShareNote: "모델은 '생존'을 통과한 시뮬레이션 런에서만 점유율을 계산합니다.",
     marketGraphTitle: "면적그래프",
-    marketTotal: "전체 시장(추정)",
-    marketSAM: "도달 가능한 시장(SAM)",
-    marketSOM: "도달 가능 점유율(SOM)",
+    marketTotal: "전체 시장(TAM)",
+    marketSAM:"유효 시장(SAM)",
+    marketSOM: "수익 시장(SOM)",
     marketYou: "추정 매출",
   },
   en: {
