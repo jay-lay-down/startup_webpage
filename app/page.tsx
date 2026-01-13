@@ -256,7 +256,7 @@ const translations = {
     marketShareNote: "모델은 '생존'을 통과한 시뮬레이션 런에서만 점유율을 계산합니다.",
     marketGraphTitle: "면적그래프",
     marketTotal: "전체 시장(TAM)",
-    marketSAM:"유효 시장(SAM)",
+    marketSAM: "유효 시장(SAM)",
     marketSOM: "수익 시장(SOM)",
     marketYou: "추정 매출",
   },
@@ -1645,7 +1645,7 @@ export default function Home() {
             STEP 3) RESULT (최대 폭 제한 및 가독성 개선)
         ======================= */}
         {step === "result" && result && (
-          <div className="max-w-5xl mx-auto space-y-8 px-4 md:px-0"> {/* ✅ max-w-5xl 추가하여 폭 제한 */}
+          <div className="max-w-7xl mx-auto space-y-8 px-4 sm:px-6 lg:px-8"> {/* ✅ max-w-7xl로 변경 및 패딩 조정 */}
             {/* 상단 액션 버튼 */}
             <div className="flex flex-col md:flex-row gap-3 justify-end">
               <button
