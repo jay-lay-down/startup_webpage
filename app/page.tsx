@@ -1138,26 +1138,26 @@ export default function Home() {
   // Render
   // ------------------------------
   return (
-    <main className="min-h-screen bg-white text-zinc-900 p-4 md:p-8 font-sans">
-      <div className="max-w-[1680px] mx-auto space-y-10 relative">
+    <main className="min-h-screen bg-white text-zinc-900 px-0 py-6 font-sans">
+      <div className="w-full mx-auto space-y-10 relative">
         {/* 언어 버튼 */}
-        <div className="absolute top-0 right-0 flex gap-2">
+        <div className="absolute top-0 right-0 flex gap-4">
           <button
             onClick={() => setLang("ko")}
-            className={`px-3 py-1 text-sm font-bold rounded-md border ${
+            className={`text-sm font-semibold border-b-2 ${
               lang === "ko"
-                ? "bg-zinc-200 border-zinc-200 text-zinc-900"
-                : "border-zinc-700 text-zinc-400 hover:bg-zinc-900"
+                ? "border-zinc-900 text-zinc-900"
+                : "border-transparent text-zinc-400 hover:text-zinc-700"
             }`}
           >
             KO
           </button>
           <button
             onClick={() => setLang("en")}
-            className={`px-3 py-1 text-sm font-bold rounded-md border ${
+            className={`text-sm font-semibold border-b-2 ${
               lang === "en"
-                ? "bg-zinc-200 border-zinc-200 text-zinc-900"
-                : "border-zinc-700 text-zinc-400 hover:bg-zinc-900"
+                ? "border-zinc-900 text-zinc-900"
+                : "border-transparent text-zinc-400 hover:text-zinc-700"
             }`}
           >
             EN
@@ -1178,8 +1178,8 @@ export default function Home() {
         {step === "home" && (
           <div className="space-y-6">
             <div className="w-full flex justify-center">
-              <div className="w-full max-w-6xl overflow-hidden border border-zinc-200 bg-white shadow-sm">
-                <div className="px-4 py-3 text-sm md:text-base font-medium text-zinc-700 border-b border-zinc-200 bg-zinc-50">
+              <div className="w-full overflow-hidden bg-white">
+                <div className="px-0 pb-3 text-sm md:text-base font-medium text-zinc-700 border-b border-zinc-200">
                   <span className="text-zinc-600">{t.homeHint}</span>
                 </div>
 
@@ -1189,18 +1189,15 @@ export default function Home() {
                     alt="Main visual"
                     className="w-full h-auto object-cover"
                   />
-                  <div className="absolute bottom-3 right-3 text-[11px] md:text-xs px-2 py-1 rounded-md bg-white/80 text-zinc-700 border border-zinc-200">
-                    analysis v2
-                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="max-w-4xl mx-auto text-center space-y-3">
+            <div className="w-full text-center space-y-3">
               <p className="text-zinc-600">{t.startSub}</p>
               <button
                 onClick={() => setStep("form")}
-                className="w-full max-w-xl mx-auto bg-zinc-900 hover:bg-zinc-800 text-white font-semibold py-4 px-6 text-lg transition-all"
+                className="w-full bg-zinc-900 hover:bg-zinc-800 text-white font-semibold py-4 px-6 text-lg transition-all"
               >
                 {t.startBtn}
               </button>
@@ -1217,8 +1214,8 @@ export default function Home() {
               {t.backBtn}
             </button>
 
-            <div className="bg-white border border-zinc-200 shadow-sm backdrop-blur-sm p-6">
-              <div className="mb-6 border-b border-zinc-800 pb-4">
+            <div className="bg-white border-0 shadow-none p-0">
+              <div className="mb-6 border-b border-zinc-200 pb-4">
                 <h2 className="text-2xl font-semibold flex items-center gap-2 text-zinc-900">
                   <IconTerminal className="w-6 h-6 text-zinc-500" />
                   {t.formTitle}
@@ -1230,12 +1227,12 @@ export default function Home() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* ✅ 품목/카테고리 */}
                   <div className="space-y-2 md:col-span-2">
-                    <label className="text-sm font-bold text-zinc-300 block">{t.itemCategory}</label>
+                    <label className="text-sm font-semibold text-zinc-600 block">{t.itemCategory}</label>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <select
                         value={categoryPreset}
                         onChange={(e) => setCategoryPreset(e.target.value)}
-                        className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-zinc-500"
+                        className="w-full p-2 bg-transparent border-b border-zinc-300 text-zinc-900 focus:outline-none focus:border-zinc-900"
                       >
                         <option value="가전">{lang === "ko" ? "가전" : "Home Appliance"}</option>
                         <option value="생활용품">{lang === "ko" ? "생활용품" : "Household"}</option>
@@ -1255,7 +1252,7 @@ export default function Home() {
                           placeholder={t.itemCategoryDirectPlace}
                           value={categoryCustom}
                           onChange={(e) => setCategoryCustom(e.target.value)}
-                          className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-zinc-500"
+                          className="w-full p-2 bg-transparent border-b border-zinc-300 text-zinc-900 focus:outline-none focus:border-zinc-900"
                         />
                       ) : (
                         <input
@@ -1263,7 +1260,7 @@ export default function Home() {
                           placeholder={t.itemCategoryPlace}
                           value={itemCategory}
                           readOnly
-                          className="w-full p-3 bg-zinc-900/40 border border-zinc-800 rounded-lg text-zinc-400"
+                          className="w-full p-2 bg-transparent border-b border-zinc-200 text-zinc-500"
                         />
                       )}
                     </div>
@@ -1275,107 +1272,107 @@ export default function Home() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-zinc-300 block">{t.sellerInfo}</label>
+                    <label className="text-sm font-semibold text-zinc-600 block">{t.sellerInfo}</label>
                     <input
                       type="text"
                       placeholder={t.sellerPlace}
                       value={sellerInfo}
                       onChange={(e) => setSellerInfo(e.target.value)}
-                      className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-zinc-500"
+                      className="w-full p-2 bg-transparent border-b border-zinc-300 text-zinc-900 focus:outline-none focus:border-zinc-900"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-zinc-300 block">{t.buyerInfo}</label>
+                    <label className="text-sm font-semibold text-zinc-600 block">{t.buyerInfo}</label>
                     <input
                       type="text"
                       placeholder={t.buyerPlace}
                       value={buyerInfo}
                       onChange={(e) => setBuyerInfo(e.target.value)}
-                      className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-zinc-500"
+                      className="w-full p-2 bg-transparent border-b border-zinc-300 text-zinc-900 focus:outline-none focus:border-zinc-900"
                     />
                   </div>
 
                   <div className="space-y-2 md:col-span-2">
-                    <label className="text-sm font-bold text-zinc-300 block">{t.itemName}</label>
+                    <label className="text-sm font-semibold text-zinc-600 block">{t.itemName}</label>
                     <input
                       type="text"
                       placeholder={t.itemNamePlace}
                       value={productName}
                       onChange={(e) => setProductName(e.target.value)}
-                      className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white font-bold focus:outline-none focus:border-zinc-500"
+                      className="w-full p-2 bg-transparent border-b border-zinc-300 text-zinc-900 font-semibold focus:outline-none focus:border-zinc-900"
                     />
                   </div>
 
                   <div className="space-y-2 md:col-span-2">
-                    <label className="text-sm font-bold text-zinc-300 block">{t.itemDesc}</label>
+                    <label className="text-sm font-semibold text-zinc-600 block">{t.itemDesc}</label>
                     <textarea
                       placeholder={t.itemDescPlace}
                       value={productDesc}
                       onChange={(e) => setProductDesc(e.target.value)}
-                      className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white min-h-[120px] focus:outline-none focus:border-zinc-500"
+                      className="w-full p-2 bg-transparent border-b border-zinc-300 text-zinc-900 min-h-[120px] focus:outline-none focus:border-zinc-900"
                     />
                   </div>
 
                   {/* optional fields (help auto market research + scoring) */}
                   <div className="space-y-2 md:col-span-2">
-                    <label className="text-sm font-bold text-zinc-300 block">{t.concept}</label>
+                    <label className="text-sm font-semibold text-zinc-600 block">{t.concept}</label>
                     <input
                       type="text"
                       placeholder={t.conceptPlace}
                       value={concept}
                       onChange={(e) => setConcept(e.target.value)}
-                      className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-zinc-500"
+                      className="w-full p-2 bg-transparent border-b border-zinc-300 text-zinc-900 focus:outline-none focus:border-zinc-900"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-zinc-300 block">{t.price}</label>
+                    <label className="text-sm font-semibold text-zinc-600 block">{t.price}</label>
                     <input
                       type="text"
                       placeholder={t.pricePlace}
                       value={priceText}
                       onChange={(e) => setPriceText(e.target.value)}
-                      className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-zinc-500"
+                      className="w-full p-2 bg-transparent border-b border-zinc-300 text-zinc-900 focus:outline-none focus:border-zinc-900"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-zinc-300 block">{t.businessModel}</label>
+                    <label className="text-sm font-semibold text-zinc-600 block">{t.businessModel}</label>
                     <input
                       type="text"
                       placeholder={t.businessModelPlace}
                       value={businessModel}
                       onChange={(e) => setBusinessModel(e.target.value)}
-                      className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-zinc-500"
+                      className="w-full p-2 bg-transparent border-b border-zinc-300 text-zinc-900 focus:outline-none focus:border-zinc-900"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-zinc-300 block">{t.salesChannel}</label>
+                    <label className="text-sm font-semibold text-zinc-600 block">{t.salesChannel}</label>
                     <input
                       type="text"
                       placeholder={t.salesChannelPlace}
                       value={salesChannel}
                       onChange={(e) => setSalesChannel(e.target.value)}
-                      className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-zinc-500"
+                      className="w-full p-2 bg-transparent border-b border-zinc-300 text-zinc-900 focus:outline-none focus:border-zinc-900"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-zinc-300 block">{t.salesCountry}</label>
+                    <label className="text-sm font-semibold text-zinc-600 block">{t.salesCountry}</label>
                     <input
                       type="text"
                       placeholder={t.salesCountryPlace}
                       value={salesCountry}
                       onChange={(e) => setSalesCountry(e.target.value)}
-                      className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-zinc-500"
+                      className="w-full p-2 bg-transparent border-b border-zinc-300 text-zinc-900 focus:outline-none focus:border-zinc-900"
                     />
                   </div>
                 </div>
 
                 {/* Market share section */}
-                <div className="bg-zinc-900/40 border border-zinc-800 rounded-xl p-6">
+                <div className="border-t border-zinc-200 pt-6">
                   <div className="flex items-center gap-2 mb-2">
                     <h3 className="text-lg font-extrabold text-white">{t.marketSectionTitle}</h3>
                     <InfoTip text={statTooltips.market} />
@@ -1387,10 +1384,10 @@ export default function Home() {
                     <button
                       type="button"
                       onClick={() => setMarketMode("none")}
-                      className={`p-4 rounded-xl border font-bold text-sm text-left transition ${
+                      className={`p-4 border-b font-semibold text-sm text-left transition ${
                         marketMode === "none"
-                          ? "border-zinc-200 bg-zinc-200 text-zinc-900"
-                          : "border-zinc-800 bg-zinc-950/30 text-zinc-300 hover:bg-zinc-900"
+                          ? "border-zinc-900 text-zinc-900"
+                          : "border-zinc-200 text-zinc-500 hover:text-zinc-800"
                       }`}
                     >
                       {t.marketModeNone}
@@ -1399,10 +1396,10 @@ export default function Home() {
                     <button
                       type="button"
                       onClick={() => setMarketMode("auto")}
-                      className={`p-4 rounded-xl border font-bold text-sm text-left transition ${
+                      className={`p-4 border-b font-semibold text-sm text-left transition ${
                         marketMode === "auto"
-                          ? "border-zinc-200 bg-zinc-200 text-zinc-900"
-                          : "border-zinc-800 bg-zinc-950/30 text-zinc-300 hover:bg-zinc-900"
+                          ? "border-zinc-900 text-zinc-900"
+                          : "border-zinc-200 text-zinc-500 hover:text-zinc-800"
                       }`}
                     >
                       {t.marketModeAuto}
@@ -1411,10 +1408,10 @@ export default function Home() {
                     <button
                       type="button"
                       onClick={() => setMarketMode("manual")}
-                      className={`p-4 rounded-xl border font-bold text-sm text-left transition ${
+                      className={`p-4 border-b font-semibold text-sm text-left transition ${
                         marketMode === "manual"
-                          ? "border-zinc-200 bg-zinc-200 text-zinc-900"
-                          : "border-zinc-800 bg-zinc-950/30 text-zinc-300 hover:bg-zinc-900"
+                          ? "border-zinc-900 text-zinc-900"
+                          : "border-zinc-200 text-zinc-500 hover:text-zinc-800"
                       }`}
                     >
                       {t.marketModeManual}
@@ -1428,7 +1425,7 @@ export default function Home() {
                       {/* inputs */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* market revenue */}
-                        <div className="p-4 rounded-xl bg-zinc-950/40 border border-zinc-800">
+                        <div className="p-4 border-b border-zinc-200">
                           <div className="text-sm font-bold text-zinc-200 mb-2">
                             시장매출(연간) <span className="text-zinc-500 text-xs">(숫자)</span>
                           </div>
@@ -1437,25 +1434,25 @@ export default function Home() {
                               value={mRevMin}
                               onChange={(e) => setMRevMin(e.target.value)}
                               placeholder="min"
-                              className="p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                              className="p-2 bg-transparent border-b border-zinc-300 text-zinc-900"
                             />
                             <input
                               value={mRevMode}
                               onChange={(e) => setMRevMode(e.target.value)}
                               placeholder="mode"
-                              className="p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                              className="p-2 bg-transparent border-b border-zinc-300 text-zinc-900"
                             />
                             <input
                               value={mRevMax}
                               onChange={(e) => setMRevMax(e.target.value)}
                               placeholder="max"
-                              className="p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                              className="p-2 bg-transparent border-b border-zinc-300 text-zinc-900"
                             />
                           </div>
                         </div>
 
                         {/* market customers */}
-                        <div className="p-4 rounded-xl bg-zinc-950/40 border border-zinc-800">
+                        <div className="p-4 border-b border-zinc-200">
                           <div className="text-sm font-bold text-zinc-200 mb-2">
                             시장 고객수(연간 구매자) <span className="text-zinc-500 text-xs">(선택)</span>
                           </div>
@@ -1464,25 +1461,25 @@ export default function Home() {
                               value={mCustMin}
                               onChange={(e) => setMCustMin(e.target.value)}
                               placeholder="min"
-                              className="p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                              className="p-2 bg-transparent border-b border-zinc-300 text-zinc-900"
                             />
                             <input
                               value={mCustMode}
                               onChange={(e) => setMCustMode(e.target.value)}
                               placeholder="mode"
-                              className="p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                              className="p-2 bg-transparent border-b border-zinc-300 text-zinc-900"
                             />
                             <input
                               value={mCustMax}
                               onChange={(e) => setMCustMax(e.target.value)}
                               placeholder="max"
-                              className="p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                              className="p-2 bg-transparent border-b border-zinc-300 text-zinc-900"
                             />
                           </div>
                         </div>
 
                         {/* price */}
-                        <div className="p-4 rounded-xl bg-zinc-950/40 border border-zinc-800">
+                        <div className="p-4 border-b border-zinc-200">
                           <div className="text-sm font-bold text-zinc-200 mb-2">
                             평균 가격(1회 결제) <span className="text-zinc-500 text-xs">(숫자)</span>
                           </div>
@@ -1491,25 +1488,25 @@ export default function Home() {
                               value={mPriceMin}
                               onChange={(e) => setMPriceMin(e.target.value)}
                               placeholder="min"
-                              className="p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                              className="p-2 bg-transparent border-b border-zinc-300 text-zinc-900"
                             />
                             <input
                               value={mPriceMode}
                               onChange={(e) => setMPriceMode(e.target.value)}
                               placeholder="mode"
-                              className="p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                              className="p-2 bg-transparent border-b border-zinc-300 text-zinc-900"
                             />
                             <input
                               value={mPriceMax}
                               onChange={(e) => setMPriceMax(e.target.value)}
                               placeholder="max"
-                              className="p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                              className="p-2 bg-transparent border-b border-zinc-300 text-zinc-900"
                             />
                           </div>
                         </div>
 
                         {/* freq */}
-                        <div className="p-4 rounded-xl bg-zinc-950/40 border border-zinc-800">
+                        <div className="p-4 border-b border-zinc-200">
                           <div className="text-sm font-bold text-zinc-200 mb-2">
                             구매빈도(연/인) <span className="text-zinc-500 text-xs">(숫자)</span>
                           </div>
@@ -1518,25 +1515,25 @@ export default function Home() {
                               value={mFreqMin}
                               onChange={(e) => setMFreqMin(e.target.value)}
                               placeholder="min"
-                              className="p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                              className="p-2 bg-transparent border-b border-zinc-300 text-zinc-900"
                             />
                             <input
                               value={mFreqMode}
                               onChange={(e) => setMFreqMode(e.target.value)}
                               placeholder="mode"
-                              className="p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                              className="p-2 bg-transparent border-b border-zinc-300 text-zinc-900"
                             />
                             <input
                               value={mFreqMax}
                               onChange={(e) => setMFreqMax(e.target.value)}
                               placeholder="max"
-                              className="p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                              className="p-2 bg-transparent border-b border-zinc-300 text-zinc-900"
                             />
                           </div>
                         </div>
 
                         {/* max penetration */}
-                        <div className="p-4 rounded-xl bg-zinc-950/40 border border-zinc-800 md:col-span-2">
+                        <div className="p-4 border-b border-zinc-200 md:col-span-2">
                           <div className="text-sm font-bold text-zinc-200 mb-2">
                             침투율 상한(0~1) <span className="text-zinc-500 text-xs">(필수, 예: 0.001 ~ 0.01)</span>
                           </div>
@@ -1545,19 +1542,19 @@ export default function Home() {
                               value={mPenMin}
                               onChange={(e) => setMPenMin(e.target.value)}
                               placeholder="min (0~1)"
-                              className="p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                              className="p-2 bg-transparent border-b border-zinc-300 text-zinc-900"
                             />
                             <input
                               value={mPenMode}
                               onChange={(e) => setMPenMode(e.target.value)}
                               placeholder="mode (0~1)"
-                              className="p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                              className="p-2 bg-transparent border-b border-zinc-300 text-zinc-900"
                             />
                             <input
                               value={mPenMax}
                               onChange={(e) => setMPenMax(e.target.value)}
                               placeholder="max (0~1)"
-                              className="p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white"
+                              className="p-2 bg-transparent border-b border-zinc-300 text-zinc-900"
                             />
                           </div>
                         </div>
@@ -1583,7 +1580,7 @@ export default function Home() {
                 {/* 창업자 특성 */}
                 <div>
                   <h3 className="text-lg font-bold text-zinc-200 mb-4">{t.traitsTitle}</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 p-6 bg-zinc-800/30 rounded-xl border border-zinc-700/50">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 p-6 border-t border-zinc-200">
                     {Object.keys(t.traits).map((key) => (
                       <div key={key} className="space-y-2">
                         <div className="flex justify-between text-sm">
