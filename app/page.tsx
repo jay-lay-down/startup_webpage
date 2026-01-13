@@ -131,14 +131,14 @@ function InfoTip({ text }: { text: string }) {
   return (
     <span className="relative inline-flex items-center group align-middle">
       <span
-        className="ml-2 inline-flex items-center justify-center w-5 h-5 rounded-full border border-zinc-300 text-zinc-500 text-xs font-semibold bg-zinc-100 cursor-help select-none"
+        className="ml-2 inline-flex items-center justify-center w-5 h-5 rounded-full border border-zinc-200 text-zinc-400 text-xs font-semibold bg-white cursor-help select-none hover:bg-zinc-50 hover:text-zinc-600 transition-colors"
         aria-label="info"
         title={text}
       >
         i
       </span>
       <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-2 w-[260px] opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">
-        <span className="block text-xs leading-relaxed text-zinc-600 bg-white border border-zinc-200 rounded-md p-3 shadow-sm">
+        <span className="block text-xs leading-relaxed text-zinc-600 bg-white border border-zinc-100 rounded-xl p-3 shadow-xl">
           {text}
         </span>
       </span>
@@ -1645,12 +1645,12 @@ export default function Home() {
             STEP 3) RESULT (최대 폭 제한 및 가독성 개선)
         ======================= */}
         {step === "result" && result && (
-          <div className="max-w-7xl mx-auto space-y-8 px-4 sm:px-6 lg:px-8"> {/* ✅ max-w-7xl로 변경 및 패딩 조정 */}
+          <div className="max-w-[1600px] mx-auto space-y-8 px-4 sm:px-6 lg:px-8"> {/* ✅ 8xl 상당으로 확장 */}
             {/* 상단 액션 버튼 */}
             <div className="flex flex-col md:flex-row gap-3 justify-end">
               <button
                 onClick={() => setStep("form")}
-                className="text-sm font-semibold text-zinc-700 underline underline-offset-4 hover:text-zinc-900"
+                className="text-sm font-semibold text-zinc-500 underline underline-offset-4 hover:text-zinc-800 transition-colors"
               >
                 {t.editBtn}
               </button>
@@ -1659,47 +1659,47 @@ export default function Home() {
                   setResult(null);
                   setStep("home");
                 }}
-                className="text-sm font-semibold text-zinc-700 underline underline-offset-4 hover:text-zinc-900"
+                className="text-sm font-semibold text-zinc-500 underline underline-offset-4 hover:text-zinc-800 transition-colors"
               >
                 {t.retryBtn}
               </button>
             </div>
 
-            {/* 요약 카드 */}
-            <div className="bg-white border border-zinc-200 shadow-sm relative overflow-hidden p-6">
-              <div className="pb-4 relative z-10 border-b border-zinc-200 mb-4">
-                <h2 className="text-2xl font-semibold flex items-center gap-2 text-zinc-800">
-                  <IconAlertTriangle className="h-6 w-6 text-zinc-500" />
+            {/* 요약 카드 (애플 스타일 적용) */}
+            <div className="bg-zinc-50/50 backdrop-blur-sm border border-zinc-100 shadow-sm rounded-3xl relative overflow-hidden p-8 hover:bg-zinc-100/80 transition-all duration-300">
+              <div className="pb-4 relative z-10 border-b border-zinc-200/50 mb-6">
+                <h2 className="text-2xl font-bold flex items-center gap-3 text-zinc-900 tracking-tight">
+                  <IconAlertTriangle className="h-7 w-7 text-zinc-400" />
                   {t.resultTitle}
                 </h2>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center relative z-10">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center relative z-10">
                 <div>
-                  <p className="text-zinc-400 text-sm font-bold mb-1">{t.survival}</p>
-                  <p className="text-4xl font-semibold text-zinc-900">{survival.toFixed(1)}%</p>
+                  <p className="text-zinc-400 text-sm font-semibold mb-2 uppercase tracking-wider">{t.survival}</p>
+                  <p className="text-5xl font-extrabold text-zinc-900 tracking-tighter">{survival.toFixed(1)}%</p>
                 </div>
                 <div>
-                  <p className="text-zinc-400 text-sm font-bold mb-1">{t.deathCause}</p>
+                  <p className="text-zinc-400 text-sm font-semibold mb-2 uppercase tracking-wider">{t.deathCause}</p>
                   {/* ✅ 텍스트 크기 키우고(text-base), 줄바꿈 허용(whitespace-normal) */}
-                  <span className="inline-block px-3 py-1 border-b border-zinc-300 text-zinc-700 text-base font-semibold whitespace-normal leading-relaxed">
+                  <span className="inline-block px-4 py-2 bg-white rounded-xl border border-zinc-100 text-zinc-700 text-base font-medium whitespace-normal leading-relaxed shadow-sm">
                     {cleanText(result.report.death_cause)}
                   </span>
                 </div>
                 <div>
-                  <p className="text-zinc-400 text-sm font-bold mb-1">{t.bottleneck}</p>
-                  <p className="text-xl font-semibold text-zinc-900">{String(bottleneck || "-")}</p>
+                  <p className="text-zinc-400 text-sm font-semibold mb-2 uppercase tracking-wider">{t.bottleneck}</p>
+                  <p className="text-2xl font-bold text-zinc-800">{String(bottleneck || "-")}</p>
                 </div>
                 <div>
-                  <p className="text-zinc-400 text-sm font-bold mb-1">{t.needsMatch}</p>
-                  <p className="text-2xl font-semibold text-zinc-900">{result.stats.consumer_needs}점</p>
+                  <p className="text-zinc-400 text-sm font-semibold mb-2 uppercase tracking-wider">{t.needsMatch}</p>
+                  <p className="text-3xl font-bold text-zinc-900">{result.stats.consumer_needs}점</p>
                 </div>
               </div>
             </div>
 
             {/* 탭 */}
             <div className="w-full">
-              <div className="grid w-full grid-cols-5 bg-zinc-100 p-1 mb-6">
+              <div className="grid w-full grid-cols-5 bg-zinc-100/80 p-1.5 mb-8 rounded-2xl backdrop-blur-md">
                 {(
                   [
                     ["summary", t.tabSummary],
@@ -1712,8 +1712,10 @@ export default function Home() {
                   <button
                     key={k}
                     onClick={() => setActiveTab(k)}
-                    className={`py-2 text-sm font-bold rounded-md transition-all ${
-                      activeTab === k ? "bg-zinc-200 text-zinc-900" : "text-zinc-500 hover:text-zinc-800"
+                    className={`py-2.5 text-sm font-bold rounded-xl transition-all duration-300 ${
+                      activeTab === k 
+                        ? "bg-white text-zinc-900 shadow-sm" 
+                        : "text-zinc-400 hover:text-zinc-600 hover:bg-white/50"
                     }`}
                   >
                     {label}
@@ -1723,60 +1725,61 @@ export default function Home() {
 
               {/* Summary */}
               {activeTab === "summary" && (
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="bg-white border border-zinc-200 h-full p-6">
-                      <h3 className="flex items-center gap-2 text-lg font-semibold text-zinc-800 mb-6">
-                        <IconTrendingUp className="w-5 h-5 text-blue-600" />
+                <div className="space-y-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* 카드 스타일 적용 */}
+                    <div className="bg-zinc-50/50 border border-zinc-100 rounded-3xl p-8 hover:bg-zinc-100/80 transition-all duration-300 hover:shadow-sm group h-full">
+                      <h3 className="flex items-center gap-3 text-xl font-bold text-zinc-900 mb-8 tracking-tight group-hover:text-black transition-colors">
+                        <IconTrendingUp className="w-6 h-6 text-blue-500" />
                         11 Stats
                       </h3>
 
-                      <div className="grid grid-cols-1 gap-6">
+                      <div className="grid grid-cols-1 gap-8">
                         {/* core 5 */}
                         <div className="space-y-6">
                           <StatBar
                             label={t.statProduct}
                             value={result.stats.product}
                             icon={IconShoppingCart}
-                            colorClass="text-zinc-700"
-                            barColor="#2563EB"
+                            colorClass="text-zinc-600 font-medium"
+                            barColor="#3b82f6"
                             tooltip={statTooltips.product}
                           />
                           <StatBar
                             label={t.statFounder}
                             value={getFounderScore(result)}
                             icon={IconUsers}
-                            colorClass="text-zinc-700"
-                            barColor="#2563EB"
+                            colorClass="text-zinc-600 font-medium"
+                            barColor="#3b82f6"
                             tooltip={statTooltips.founder}
                           />
                           <StatBar
                             label={t.statStrategy}
                             value={result.stats.strategy}
                             icon={IconTarget}
-                            colorClass="text-zinc-700"
-                            barColor="#2563EB"
+                            colorClass="text-zinc-600 font-medium"
+                            barColor="#3b82f6"
                             tooltip={statTooltips.strategy}
                           />
                           <StatBar
                             label={t.statMarketing}
                             value={result.stats.marketing}
                             icon={IconTrendingUp}
-                            colorClass="text-zinc-700"
-                            barColor="#2563EB"
+                            colorClass="text-zinc-600 font-medium"
+                            barColor="#3b82f6"
                             tooltip={statTooltips.marketing}
                           />
                           <StatBar
                             label={t.statNeeds}
                             value={result.stats.consumer_needs}
                             icon={IconHeart}
-                            colorClass="text-zinc-700"
-                            barColor="#2563EB"
+                            colorClass="text-zinc-600 font-medium"
+                            barColor="#3b82f6"
                             tooltip={statTooltips.consumer_needs}
                           />
                         </div>
 
-                        <div className="h-px bg-zinc-800" />
+                        <div className="h-px bg-zinc-200" />
 
                         {/* biz 5 */}
                         <div className="space-y-6">
@@ -1784,57 +1787,57 @@ export default function Home() {
                             label={t.statConcept}
                             value={result.stats.concept_fit}
                             icon={IconTarget}
-                            colorClass="text-zinc-700"
-                            barColor="#2563EB"
+                            colorClass="text-zinc-600 font-medium"
+                            barColor="#3b82f6"
                             tooltip={statTooltips.concept_fit}
                           />
                           <StatBar
                             label={t.statPriceFit}
                             value={result.stats.price_fit}
                             icon={IconDollar}
-                            colorClass="text-zinc-700"
-                            barColor="#2563EB"
+                            colorClass="text-zinc-600 font-medium"
+                            barColor="#3b82f6"
                             tooltip={statTooltips.price_fit}
                           />
                           <StatBar
                             label={t.statBusinessModel}
                             value={result.stats.business_model_fit}
                             icon={IconCash}
-                            colorClass="text-zinc-700"
-                            barColor="#2563EB"
+                            colorClass="text-zinc-600 font-medium"
+                            barColor="#3b82f6"
                             tooltip={statTooltips.business_model_fit}
                           />
                           <StatBar
                             label={t.statDistribution}
                             value={result.stats.distribution}
                             icon={IconTruck}
-                            colorClass="text-zinc-700"
-                            barColor="#2563EB"
+                            colorClass="text-zinc-600 font-medium"
+                            barColor="#3b82f6"
                             tooltip={statTooltips.distribution}
                           />
                           <StatBar
                             label={t.statScope}
                             value={result.stats.market_scope}
                             icon={IconGlobe}
-                            colorClass="text-zinc-700"
-                            barColor="#2563EB"
+                            colorClass="text-zinc-600 font-medium"
+                            barColor="#3b82f6"
                             tooltip={statTooltips.market_scope}
                           />
                           <StatBar
                             label={t.statPotential}
                             value={result.stats.potential_customers}
                             icon={IconPie}
-                            colorClass="text-zinc-700"
-                            barColor="#2563EB"
+                            colorClass="text-zinc-600 font-medium"
+                            barColor="#3b82f6"
                             tooltip={statTooltips.potential_customers}
                           />
                         </div>
                       </div>
                     </div>
 
-                    <div className="bg-white border border-zinc-200 h-full p-6">
-                      <h3 className="flex items-center gap-2 text-lg font-semibold text-zinc-800 mb-6">
-                        <IconAlertTriangle className="w-5 h-5 text-blue-600" />
+                    <div className="bg-zinc-50/50 border border-zinc-100 rounded-3xl p-8 hover:bg-zinc-100/80 transition-all duration-300 hover:shadow-sm group h-full">
+                      <h3 className="flex items-center gap-3 text-xl font-bold text-zinc-900 mb-8 tracking-tight group-hover:text-black transition-colors">
+                        <IconAlertTriangle className="w-6 h-6 text-blue-500" />
                         {t.funnelTitle}
                         <InfoTip text={statTooltips.funnel} />
                       </h3>
@@ -1842,8 +1845,8 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="bg-white border border-zinc-200 p-6">
-                    <h3 className="text-lg font-semibold text-zinc-800 mb-4">{t.cloudTitle}</h3>
+                  <div className="bg-zinc-50/50 border border-zinc-100 rounded-3xl p-8 hover:bg-zinc-100/80 transition-all duration-300 hover:shadow-sm group">
+                    <h3 className="text-xl font-bold text-zinc-900 mb-6 tracking-tight">{t.cloudTitle}</h3>
                     <TagCloud words={keywords} />
                     <PriceReferenceCard priceReference={result?.priceReference} />
                   </div>
@@ -1852,24 +1855,24 @@ export default function Home() {
 
               {/* Autopsy */}
               {activeTab === "autopsy" && (
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="bg-white border border-zinc-200 p-6">
-                      <h3 className="text-lg font-semibold text-zinc-800 mb-4">{t.autopsyTitle}</h3>
+                <div className="space-y-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="bg-zinc-50/50 border border-zinc-100 rounded-3xl p-8 hover:bg-zinc-100/80 transition-all duration-300 hover:shadow-sm">
+                      <h3 className="text-xl font-bold text-zinc-900 mb-6 tracking-tight">{t.autopsyTitle}</h3>
                       <TextBlock text={result.report.autopsy_report} />
                     </div>
 
-                    <div className="bg-white border border-zinc-200 p-6">
-                      <h3 className="text-lg font-bold text-orange-400 mb-4">{t.needsTitle}</h3>
+                    <div className="bg-zinc-50/50 border border-zinc-100 rounded-3xl p-8 hover:bg-zinc-100/80 transition-all duration-300 hover:shadow-sm">
+                      <h3 className="text-xl font-bold text-orange-500 mb-6 tracking-tight">{t.needsTitle}</h3>
                       <TextBlock text={result.report.needs_analysis} />
                     </div>
                   </div>
 
-                  <div className="bg-white border border-zinc-200 shadow-sm overflow-hidden">
-                    <div className="p-6 border-b border-zinc-200">
-                      <h3 className="text-xl font-semibold text-zinc-800">{t.actionTitle}</h3>
+                  <div className="bg-zinc-50/50 border border-zinc-100 rounded-3xl overflow-hidden hover:bg-zinc-100/80 transition-all duration-300 hover:shadow-sm">
+                    <div className="p-8 border-b border-zinc-200/50">
+                      <h3 className="text-2xl font-bold text-zinc-900 tracking-tight">{t.actionTitle}</h3>
                     </div>
-                    <div className="p-6 bg-white">
+                    <div className="p-8">
                       <ActionList text={result.report.action_plan} />
                     </div>
                   </div>
@@ -1878,9 +1881,9 @@ export default function Home() {
 
               {/* Debate */}
               {activeTab === "voc" && (
-                <div className="bg-white border border-zinc-200 shadow-sm p-6">
-                  <h3 className="text-xl font-semibold text-zinc-800 mb-4">{t.vocTitle}</h3>
-                  <div className="bg-zinc-50 p-6 border border-zinc-200 text-zinc-700 leading-relaxed whitespace-pre-wrap font-mono text-sm">
+                <div className="bg-zinc-50/50 border border-zinc-100 rounded-3xl shadow-sm p-8 hover:bg-zinc-100/80 transition-all duration-300">
+                  <h3 className="text-2xl font-bold text-zinc-900 mb-6 tracking-tight">{t.vocTitle}</h3>
+                  <div className="bg-white p-8 border border-zinc-200 rounded-2xl text-zinc-700 leading-relaxed whitespace-pre-wrap font-mono text-sm shadow-inner">
                     {cleanText(result.debate)}
                   </div>
                 </div>
@@ -1888,50 +1891,52 @@ export default function Home() {
 
               {/* Market */}
               {activeTab === "market" && (
-                <div className="space-y-6">
-                  <div className="bg-white border border-zinc-200 p-6">
-                    <h3 className="text-xl font-semibold text-zinc-800 mb-2 flex items-center gap-2">
-                      <IconPie className="w-6 h-6 text-blue-600" />
+                <div className="space-y-8">
+                  <div className="bg-zinc-50/50 border border-zinc-100 rounded-3xl p-8 hover:bg-zinc-100/80 transition-all duration-300 hover:shadow-sm group">
+                    <h3 className="text-2xl font-bold text-zinc-900 mb-4 flex items-center gap-3 tracking-tight">
+                      <IconPie className="w-8 h-8 text-blue-500" />
                       {t.marketTabTitle}
                     </h3>
-                    <div className="text-sm text-zinc-500">{t.marketShareNote}</div>
+                    <div className="text-sm text-zinc-500 font-medium">{t.marketShareNote}</div>
 
                     {marketNeeded && (
-                      <div className="mt-4 p-4 border border-zinc-200 bg-zinc-50 text-zinc-700 text-sm font-semibold">
+                      <div className="mt-6 p-6 border border-zinc-200 bg-white rounded-2xl text-zinc-600 text-sm font-medium shadow-sm">
                         {t.marketNeededMsg}
                       </div>
                     )}
 
                     {!marketNeeded && (
                       <>
-                        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div className="p-4 border border-zinc-200">
-                            <div className="text-zinc-500 text-xs font-semibold">{t.marketShareTitle}</div>
-                            <div className="text-3xl font-semibold text-zinc-900 mt-2">{shareP50.toFixed(2)}%</div>
-                            <div className="text-xs text-zinc-500 mt-2">
+                        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+                          <div className="p-6 border border-zinc-100 bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+                            <div className="text-zinc-400 text-xs font-bold uppercase tracking-wider">{t.marketShareTitle}</div>
+                            <div className="text-4xl font-extrabold text-zinc-900 mt-3 tracking-tighter">{shareP50.toFixed(2)}%</div>
+                            <div className="text-xs text-zinc-500 mt-3 font-medium">
                               p10 {shareP10.toFixed(2)}% · p90 {shareP90.toFixed(2)}%
                             </div>
                           </div>
 
-                          <div className="p-4 border border-zinc-200">
-                            <div className="text-zinc-500 text-xs font-semibold">Band</div>
-                            <div className="text-2xl font-semibold text-zinc-900 mt-2">{shareBand || "-"}</div>
-                            <div className="text-xs text-zinc-500 mt-2">
+                          <div className="p-6 border border-zinc-100 bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+                            <div className="text-zinc-400 text-xs font-bold uppercase tracking-wider">Band</div>
+                            <div className="text-3xl font-extrabold text-zinc-900 mt-3 tracking-tighter">{shareBand || "-"}</div>
+                            <div className="text-xs text-zinc-500 mt-3 font-medium leading-relaxed">
                               {result.report.market_takeaway ? cleanText(result.report.market_takeaway) : ""}
                             </div>
                           </div>
 
-                          <div className="p-4 border border-zinc-200">
-                            <div className="text-zinc-500 text-xs font-semibold">{t.marketAssumptionsTitle}</div>
-                            <div className="mt-3">
+                          <div className="p-6 border border-zinc-100 bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+                            <div className="text-zinc-400 text-xs font-bold uppercase tracking-wider">{t.marketAssumptionsTitle}</div>
+                            <div className="mt-4">
                               <MarketAssumptionsCard assumptions={result.marketAssumptionsUsed ?? null} />
                             </div>
                           </div>
                         </div>
 
-                        <div className="mt-6">
-                          <h4 className="text-lg font-semibold text-zinc-800 mb-3">{t.marketGraphTitle}</h4>
-                          <MarketAreaBar total={revLayers.total} sam={revLayers.sam} som={revLayers.som} you={revLayers.you} />
+                        <div className="mt-8">
+                          <h4 className="text-xl font-bold text-zinc-900 mb-4 tracking-tight">{t.marketGraphTitle}</h4>
+                          <div className="bg-white p-6 rounded-2xl border border-zinc-100 shadow-sm">
+                            <MarketAreaBar total={revLayers.total} sam={revLayers.sam} som={revLayers.som} you={revLayers.you} />
+                          </div>
                         </div>
                       </>
                     )}
@@ -1939,30 +1944,32 @@ export default function Home() {
 
                   {/* Auto sources */}
                   {(result.marketSizingSources?.length ?? 0) > 0 && (
-                    <div className="bg-white border border-zinc-200 p-6">
-                      <h3 className="text-lg font-semibold text-zinc-800 mb-4">{t.marketSourcesTitle}</h3>
-                      <div className="space-y-3">
+                    <div className="bg-zinc-50/50 border border-zinc-100 rounded-3xl p-8 hover:bg-zinc-100/80 transition-all duration-300 hover:shadow-sm">
+                      <h3 className="text-xl font-bold text-zinc-900 mb-6 tracking-tight">{t.marketSourcesTitle}</h3>
+                      <div className="space-y-4">
                         {result.marketSizingSources!.slice(0, 6).map((c, i) => (
                           <a
                             key={i}
                             href={c.url}
                             target="_blank"
                             rel="noreferrer"
-                            className="block p-4 border border-zinc-200 bg-white hover:bg-zinc-50 transition"
+                            className="block p-6 border border-zinc-100 bg-white rounded-2xl hover:border-zinc-300 hover:shadow-md transition-all duration-200 group"
                           >
-                            <div className="text-zinc-100 font-bold">{c.title}</div>
-                            <div className="text-zinc-400 text-sm mt-2 line-clamp-3">{String(c.content ?? "").slice(0, 240)}...</div>
-                            <div className="text-xs text-zinc-500 mt-2">링크 열기</div>
+                            <div className="text-zinc-900 font-bold text-lg group-hover:text-blue-600 transition-colors">{c.title}</div>
+                            <div className="text-zinc-500 text-sm mt-3 line-clamp-2 leading-relaxed">{String(c.content ?? "").slice(0, 240)}...</div>
+                            <div className="text-xs text-zinc-400 mt-3 font-medium flex items-center gap-1">
+                              링크 열기 <span className="group-hover:translate-x-1 transition-transform">→</span>
+                            </div>
                           </a>
                         ))}
                       </div>
 
                       {result.marketAutoMeta && (
-                        <div className="mt-6 p-4 border border-zinc-200 bg-zinc-50">
-                          <h4 className="text-sm font-semibold text-zinc-800 mb-2">{t.marketMetaTitle}</h4>
-                          <div className="text-xs text-zinc-600">
-                            <div className="mb-2">
-                              <span className="font-semibold text-zinc-700">assumed_fields:</span>{" "}
+                        <div className="mt-8 p-6 border border-zinc-100 bg-white rounded-2xl shadow-sm">
+                          <h4 className="text-sm font-bold text-zinc-900 mb-3 uppercase tracking-wide">{t.marketMetaTitle}</h4>
+                          <div className="text-xs text-zinc-600 leading-relaxed">
+                            <div className="mb-3">
+                              <span className="font-semibold text-zinc-800">assumed_fields:</span>{" "}
                               {(result.marketAutoMeta.assumed_fields ?? []).join(", ") || "-"}
                             </div>
                             <div className="whitespace-pre-wrap">{cleanText(result.marketAutoMeta.rationale ?? "")}</div>
@@ -1976,51 +1983,53 @@ export default function Home() {
 
               {/* Links / Cases */}
               {activeTab === "links" && (
-                <div className="space-y-6">
-                  <div className="bg-white border border-zinc-200 p-6">
-                    <h3 className="text-lg font-semibold text-zinc-800 mb-4">{t.youtubeTitle}</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="space-y-8">
+                  <div className="bg-zinc-50/50 border border-zinc-100 rounded-3xl p-8 hover:bg-zinc-100/80 transition-all duration-300 hover:shadow-sm">
+                    <h3 className="text-xl font-bold text-zinc-900 mb-6 tracking-tight">{t.youtubeTitle}</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       {(result.report.youtube_queries ?? []).slice(0, 3).map((q, i) => (
                         <a
                           key={i}
                           href={youtubeSearchUrl(q)}
                           target="_blank"
                           rel="noreferrer"
-                          className="block p-4 border border-zinc-200 bg-white hover:bg-zinc-50 transition"
+                          className="block p-6 border border-zinc-100 bg-white rounded-2xl hover:border-zinc-300 hover:shadow-md transition-all duration-200 group"
                         >
-                          {/* ✅ 글씨 색상 가독성 개선 (zinc-400 -> zinc-900 / zinc-100 -> zinc-900) */}
-                          <div className="text-sm text-zinc-900 font-bold mb-1">Query {i + 1}</div>
-                          <div className="text-zinc-900 font-extrabold">{q}</div>
-                          <div className="text-xs text-zinc-500 mt-2">YouTube 검색 열기</div>
+                          <div className="text-xs text-zinc-400 font-bold mb-2 uppercase tracking-wide">Query {i + 1}</div>
+                          <div className="text-zinc-900 font-extrabold text-lg group-hover:text-red-600 transition-colors">{q}</div>
+                          <div className="text-xs text-zinc-400 mt-4 font-medium flex items-center gap-1">
+                            YouTube 검색 <span className="group-hover:translate-x-1 transition-transform">→</span>
+                          </div>
                         </a>
                       ))}
                       {(!result.report.youtube_queries || result.report.youtube_queries.length === 0) && (
-                        <div className="text-zinc-500 text-sm">유튜브 추천 검색어가 비어있습니다. (API 리턴 확인)</div>
+                        <div className="text-zinc-500 text-sm font-medium">유튜브 추천 검색어가 비어있습니다. (API 리턴 확인)</div>
                       )}
                     </div>
                   </div>
 
-                  <div className="bg-white border border-zinc-200 p-6">
-                    <h3 className="text-lg font-semibold text-zinc-800 mb-4">{t.casesTitle}</h3>
-                    <div className="space-y-3">
+                  <div className="bg-zinc-50/50 border border-zinc-100 rounded-3xl p-8 hover:bg-zinc-100/80 transition-all duration-300 hover:shadow-sm">
+                    <h3 className="text-xl font-bold text-zinc-900 mb-6 tracking-tight">{t.casesTitle}</h3>
+                    <div className="space-y-4">
                       {(result.pastCases ?? []).slice(0, 6).map((c, i) => (
                         <a
                           key={i}
                           href={c.url}
                           target="_blank"
                           rel="noreferrer"
-                          className="block p-4 border border-zinc-200 bg-white hover:bg-zinc-50 transition"
+                          className="block p-6 border border-zinc-100 bg-white rounded-2xl hover:border-zinc-300 hover:shadow-md transition-all duration-200 group"
                         >
-                          {/* ✅ 글씨 색상 가독성 개선 (zinc-100 -> zinc-900 / zinc-400 -> zinc-600) */}
-                          <div className="text-zinc-900 font-bold">{c.title}</div>
-                          <div className="text-zinc-600 text-sm mt-2 line-clamp-3">
+                          <div className="text-zinc-900 font-bold text-lg group-hover:text-blue-600 transition-colors">{c.title}</div>
+                          <div className="text-zinc-500 text-sm mt-3 line-clamp-2 leading-relaxed">
                             {String(c.content ?? "").slice(0, 220)}...
                           </div>
-                          <div className="text-xs text-zinc-500 mt-2">링크 열기</div>
+                          <div className="text-xs text-zinc-400 mt-3 font-medium flex items-center gap-1">
+                            링크 열기 <span className="group-hover:translate-x-1 transition-transform">→</span>
+                          </div>
                         </a>
                       ))}
                       {(!result.pastCases || result.pastCases.length === 0) && (
-                        <div className="text-zinc-500 text-sm">검색된 유사 사례가 없습니다. (Tavily API 키/호출 확인)</div>
+                        <div className="text-zinc-500 text-sm font-medium">검색된 유사 사례가 없습니다. (Tavily API 키/호출 확인)</div>
                       )}
                     </div>
                   </div>
