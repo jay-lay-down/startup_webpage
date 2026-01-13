@@ -284,6 +284,10 @@ function extractMonthlyIncome(text: string): number | null {
   return raw;
 }
 
+/**
+ * ✅ 정교한 Context 조정 함수
+ * 반환값: 조정된 Stats, 감지된 부조화 목록(warnings)
+ */
 function applyContextAdjustments(
   stats: Stats,
   context: {
@@ -292,64 +296,76 @@ function applyContextAdjustments(
     salesChannel?: string;
     price?: string;
   }
-): Stats {
+): { stats: Stats; warnings: string[] } {
   const updated = { ...stats };
+  const warnings: string[] = [];
+
   const sellerBand = extractAgeBand(String(context.sellerInfo ?? ""));
   const buyerBand = extractAgeBand(String(context.buyerInfo ?? ""));
   const channelText = String(context.salesChannel ?? "").toLowerCase();
   const buyerIncome = extractMonthlyIncome(String(context.buyerInfo ?? ""));
   const priceValue = parsePriceValue(context.price);
 
+  // 1) Founder - Market Fit (창업자와 타겟 간의 거리)
   if (sellerBand && buyerBand) {
     const gap = Math.abs(midpoint(sellerBand) - midpoint(buyerBand));
     if (gap >= 30) {
-      updated.founder = clampScore(updated.founder - 8);
-      updated.strategy = clampScore(updated.strategy - 8);
-      updated.marketing = clampScore(updated.marketing - 6);
+      // 30세 이상 차이 (예: 50대 창업자가 10대 타겟)
+      updated.founder = clampScore(updated.founder - 12);
+      updated.strategy = clampScore(updated.strategy - 10);
+      updated.marketing = clampScore(updated.marketing - 8);
+      warnings.push(`창업자(${sellerBand.label})와 타겟(${buyerBand.label})의 세대 차이가 커서 고객 니즈 파악이 어려울 수 있습니다.`);
     } else if (gap >= 20) {
-      updated.founder = clampScore(updated.founder - 5);
+      // 20세 이상 차이
+      updated.founder = clampScore(updated.founder - 6);
       updated.strategy = clampScore(updated.strategy - 5);
-      updated.marketing = clampScore(updated.marketing - 4);
+      warnings.push(`창업자와 타겟 간의 세대 공감대 형성이 다소 어려울 수 있습니다.`);
     }
   }
 
-  const youthChannels = ["인스타", "instagram", "릴스", "reels", "틱톡", "tiktok", "쇼츠", "shorts", "snap", "디스코드"];
-  const seniorChannels = ["네이버 밴드", "밴드", "카카오톡", "카톡", "오프라인", "전단", "홈쇼핑", "신문", "라디오", "현수막", "약국", "마트", "전화"];
+  // 2) Channel - Market Fit (타겟과 채널의 불일치)
+  const youthChannels = ["인스타", "instagram", "릴스", "reels", "틱톡", "tiktok", "쇼츠", "shorts", "snap", "디스코드", "discord"];
+  const seniorChannels = ["네이버 밴드", "밴드", "band", "카카오톡", "카톡", "오프라인", "전단", "홈쇼핑", "신문", "라디오", "현수막", "약국", "마트", "전화"];
+  const proChannels = ["링크드인", "linkedin", "이메일", "콜드콜", "세미나", "컨퍼런스"];
 
   if (buyerBand) {
     const isSenior = buyerBand.min >= 50;
-    const isYoung = buyerBand.max <= 29;
-    const hasYouthChannel = youthChannels.some((k) => channelText.includes(k));
-    const hasSeniorChannel = seniorChannels.some((k) => channelText.includes(k));
+    const isYoung = buyerBand.max <= 25;
+    
+    // 시니어 타겟인데 MZ 채널 사용
+    if (isSenior && youthChannels.some((k) => channelText.includes(k))) {
+      updated.marketing = clampScore(updated.marketing - 20);
+      updated.distribution = clampScore(updated.distribution - 15);
+      updated.potential_customers = clampScore(updated.potential_customers - 10);
+      warnings.push(`고령층 타겟에게 적합하지 않은 마케팅 채널(틱톡/릴스 등)을 선택했습니다.`);
+    }
 
-    if (isSenior && hasYouthChannel) {
+    // 어린 타겟인데 시니어 채널 사용
+    if (isYoung && seniorChannels.some((k) => channelText.includes(k))) {
       updated.marketing = clampScore(updated.marketing - 15);
       updated.distribution = clampScore(updated.distribution - 10);
-    }
-
-    if (isYoung && hasSeniorChannel) {
-      updated.marketing = clampScore(updated.marketing - 12);
-      updated.distribution = clampScore(updated.distribution - 8);
+      warnings.push(`젊은 세대 타겟에게 낡은 방식의 접근(밴드/전단지 등)을 사용하고 있습니다.`);
     }
   }
 
+  // 3) Price - Income Fit (구매력 대비 가격)
   if (buyerIncome != null && priceValue != null) {
+    // 월 소득 대비 제품 가격 비율
     const affordability = priceValue / Math.max(1, buyerIncome);
+    
     if (affordability >= 0.5) {
-      updated.price_fit = clampScore(updated.price_fit - 25);
-      updated.consumer_needs = clampScore(updated.consumer_needs - 15);
-      updated.potential_customers = clampScore(updated.potential_customers - 15);
+      updated.price_fit = clampScore(updated.price_fit - 30);
+      updated.consumer_needs = clampScore(updated.consumer_needs - 20);
+      updated.potential_customers = clampScore(updated.potential_customers - 20);
+      warnings.push(`타겟의 추정 소득 대비 가격이 너무 높아 구매 장벽이 매우 높습니다.`);
     } else if (affordability >= 0.2) {
-      updated.price_fit = clampScore(updated.price_fit - 18);
+      updated.price_fit = clampScore(updated.price_fit - 15);
       updated.consumer_needs = clampScore(updated.consumer_needs - 10);
-      updated.potential_customers = clampScore(updated.potential_customers - 10);
-    } else if (affordability >= 0.1) {
-      updated.price_fit = clampScore(updated.price_fit - 10);
-      updated.potential_customers = clampScore(updated.potential_customers - 6);
+      warnings.push(`타겟 소득 대비 가격 부담이 있어 구매 전환율이 낮을 수 있습니다.`);
     }
   }
 
-  return updated;
+  return { stats: updated, warnings };
 }
 
 function compactSources(results: any[], maxLen = 600) {
@@ -685,68 +701,68 @@ export async function POST(req: Request) {
         : marketData;
 
     // ------------------------------
-    // ✅ Stats JSON (11개 스탯)
+    // ✅ Stats JSON (11개 스탯) - 정교한 채점 프롬프트 반영
     // ------------------------------
     const statsParser = new JsonOutputParser<Stats>();
 
     const statsPrompt = PromptTemplate.fromTemplate(
-      `너는 냉소적인 스타트업 검증관이다.
-아래 정보와 시장데이터를 기반으로 스탯(0~100 정수)을 JSON으로 출력하라.
+      `너는 냉소적인 VC(벤처 캐피탈리스트) 심사역이다.
+아래 스타트업 정보를 분석하여 0~100점 사이의 점수를 매겨라.
 
-중요:
-- 초기 스타트업은 팀이 없을 수 있다. 따라서 'team'을 평가하지 않는다.
-- 대신 창업자 개인 역량을 'founder' 점수로 평가한다.
-- founder 점수는 아래 '창업자 특성(1~10)'을 강하게 반영하라.
-- strategy 점수에도 창업자 특성(실행력/불확실성 내성/설득력/리소스 감각)을 반영하라.
-- sellerInfo에서 드러나는 도메인 지식/경험/연령대를 고려해 founder/strategy를 조정하라.
-- buyerInfo에서 드러나는 연령대/세그먼트를 고려해 consumer_needs와 marketing을 조정하라.
-- 창업자 연령대/경험과 타겟 연령대가 크게 어긋나면 founder/strategy/marketing을 보수적으로 낮춰라.
-- 타겟 연령대와 채널/마케팅 방식이 어긋나면 marketing/distribution을 낮춰라.
-- 컨셉이 고객 니즈/타겟과 불일치하면 concept_fit과 consumer_needs를 보수적으로 낮춰라.
+[정성적 평가 핵심 기준 - 매우 중요]
+1. Founder-Market Fit (창업자-시장 적합성):
+   - 창업자의 연령대/경험(SellerInfo)과 타겟 고객(BuyerInfo)이 매칭되는가?
+   - 예: 50대 창업자가 10대 문화를 모른 채 숏폼 앱을 만든다면 'founder', 'strategy', 'marketing' 점수를 대폭 깎아라.
+   - 예: 개발자 출신이 영업력이 필수인 B2B 사업을 하면서 영업 경험이 없다면 'founder', 'strategy' 감점.
 
-[채점 규칙(중요)]
-- 대부분의 아이디어는 30~50이 정상 범위다. 근거 없이 60+를 주지 마라.
-- 70+는 구체적 근거(명확한 타겟, 대체재 대비 큰 개선, 현실적 채널/CAC 추정 등)가 있을 때만 가능.
-- 85+는 트랙션/실적 등 강한 증거 없으면 금지.
-- business_model_fit < 40 또는 distribution < 40이면 consumer_needs는 최대 65로 캡.
-- consumer_needs가 70+면 needs_analysis에서 지불의사/긴급성/대체재 대비 우위를 반드시 긍정적으로 설명해야 한다.
-- needs_analysis가 부정적이면 consumer_needs를 55 이하로 내린다.
-- price_fit은 유사 제품/대체재 가격 범위와 사용자가 입력한 가격을 비교해 현실적으로 판단하라.
+2. Channel-Market Fit (채널-시장 적합성):
+   - 타겟 고객의 연령대/성향과 판매 채널이 일치하는가?
+   - 예: 60대 시니어 타겟인데 '틱톡/릴스' 마케팅을 한다면 'marketing', 'distribution' 점수를 대폭 깎아라.
+   - 예: 20대 타겟인데 '전단지/오프라인 영업'을 주력으로 한다면 감점하라.
 
-추가 설문 항목(반드시 반영):
+3. Product-Market Fit (제품-시장 적합성):
+   - '컨셉'이 '타겟'의 진짜 고통(Needs)을 해결하는가?
+   - 가격이 타겟의 지불 능력(Income) 대비 합리적인가?
+
+[채점 가이드라인]
+- 30~50점: 일반적이고 평범한 수준 (대부분의 초기 아이디어)
+- 60점 이상: 명확한 타겟과 엣지가 있는 경우
+- 80점 이상: 이미 트랙션(매출/유저)이 있거나, 창업자가 해당 분야 슈퍼 전문가인 경우에만 허용
+- 근거 없는 낙관적 평가는 절대 금지. 차라리 점수를 낮게 주고 이유를 리포트에 적어라.
+
+추가 설문 항목:
 - 컨셉: {concept}
 - 가격: {price}
-- BM(돈 버는 법): {businessModel}
-- 판매채널: {salesChannel}
-- 판매국가: {salesCountry}
+- BM: {businessModel}
+- 채널: {salesChannel}
+- 국가: {salesCountry}
 - 카테고리: {category}
 
-추가 스탯 정의(0~100):
-- concept_fit: 컨셉 명확도/차별성/포지셔닝 적합
-- price_fit: 가격의 합리성/지불의사/가격-가치 정합성
-- business_model_fit: BM(수익모델/마진/단위경제) 타당성
-- distribution: 판매채널 적합도 + 실행 난이도(운영/물류/파트너) + 고객획득 현실성
-- market_scope: 국가/카테고리의 규제/경쟁/확장성(멀티국가/멀티세그로 갈 수 있는지)
-- potential_customers: 잠재고객 규모(지갑 있는 사람) + 도달가능성(채널/국가/가격 기준)
-
 입력 정보:
-- 판매자: {sellerInfo}
-- 타겟: {buyerInfo}
+- 판매자(창업자): {sellerInfo}
+- 타겟 고객: {buyerInfo}
 - 아이템: {productInfo}
-- 창업자 특성(1~10): {founderTraits}
+- 창업자 자가진단(1~10): {founderTraits}
 
 시장 데이터:
 {marketData}
 
-주의:
-- JSON만 출력 (설명/문장 금지)
-- 값은 0~100 정수
+출력 포맷(JSON):
+{{
+  "product": 0,
+  "founder": 0,
+  "strategy": 0,
+  "marketing": 0,
+  "consumer_needs": 0,
+  "concept_fit": 0,
+  "price_fit": 0,
+  "business_model_fit": 0,
+  "distribution": 0,
+  "market_scope": 0,
+  "potential_customers": 0
+}}
 
-{format_instructions}
-
-JSON 키(정확히 이 키들로):
-product, founder, strategy, marketing, consumer_needs,
-concept_fit, price_fit, business_model_fit, distribution, market_scope, potential_customers`
+{format_instructions}`
     );
 
     const rawStats = await generateJsonWithFallback<Stats>(
@@ -786,7 +802,8 @@ concept_fit, price_fit, business_model_fit, distribution, market_scope, potentia
       potential_customers: toInt0to100((rawStats as any).potential_customers, 35),
     };
 
-    const contextAdjustedStats = applyContextAdjustments(safeStats, {
+    // ✅ 정교한 Context Adjustment 적용 (Warning 메시지 생성 포함)
+    const { stats: contextAdjustedStats, warnings: fitWarnings } = applyContextAdjustments(safeStats, {
       sellerInfo,
       buyerInfo,
       salesChannel,
@@ -819,8 +836,6 @@ concept_fit, price_fit, business_model_fit, distribution, market_scope, potentia
     // --- MCTS (시장점유율 포함) ---
     const mcts = new StartupMCTS(1500);
 
-    // ✅ 기본: manual/none은 synthetic fallback 금지
-    // - auto 모드에서는 부족한 값이 있어도 prior로 채워서 시장규모 계산은 진행
     const simulation = mcts.runWithMarket(
       finalStats,
       marketAssumptionsForMcts,
@@ -861,28 +876,26 @@ concept_fit, price_fit, business_model_fit, distribution, market_scope, potentia
     const reportPrompt = PromptTemplate.fromTemplate(
       `너는 냉소적인 VC다. 아래 정보를 바탕으로 '부검 리포트'를 JSON으로 작성하라.
 
+[매우 중요 - 감지된 문제점]
+아래 경고(Warnings)가 있다면, 반드시 'death_cause'와 'autopsy_report'에 포함시켜 강력하게 비판하라:
+{fitWarnings}
+
 요구 JSON 키:
-- death_cause (짧게)
-- autopsy_report (줄글)
-- needs_analysis (줄글)
-- action_plan (번호 리스트를 "1. ...\\n2. ..." 형태로. 마크다운 금지. **, *, # 같은 기호 쓰지 마.)
-- youtube_queries (배열, string 3개: "아이템/시장/실패사례"로 유튜브 검색할 문장)
-- keywords (배열, string 10개: 워드클라우드용 핵심 키워드)
-- market_takeaway (선택): 시장점유율/시장규모 기반으로 한 줄 코멘트
+- death_cause: 경고 메시지(Warnings)가 있다면 그것을 우선적으로 언급하고, 없다면 약점 TOP3를 근거로 작성. 짧고 강렬하게.
+- autopsy_report: 상세 분석 (경고 메시지의 구체적 이유 포함)
+- needs_analysis: 타겟 니즈 분석 (경고 메시지가 있다면 타겟 이해도 부족을 지적)
+- action_plan: 1. ~ \n 2. ~ 형태 (마크다운 ** 사용 금지)
+- youtube_queries: 검색어 3개
+- keywords: 키워드 10개
+- market_takeaway (선택): 시장 규모 코멘트
 
 입력:
-- 아이템/설문: {item}
+- 아이템: {item}
 - 스탯: {stats}
 - 시뮬레이션: {sim}
-- 드랍률 기준 병목: {bottleneck}
+- 병목 단계: {bottleneck}
 - 점수 약점 TOP3: {weaknessFactors}
 - 시장데이터: {marketData}
-
-주의:
-- JSON만 출력
-- action_plan에 마크다운 금지(특히 ** 사용 금지)
-- keywords는 "단어/짧은 구" 중심
-- death_cause는 bottleneck 단계가 아니라 점수 약점 TOP3를 근거로 짧게 요약
 
 {format_instructions}`
     );
@@ -897,6 +910,7 @@ concept_fit, price_fit, business_model_fit, distribution, market_scope, potentia
         bottleneck: (simulation as any).bottleneck_stage ?? (simulation as any).bottleneck ?? "",
         weaknessFactors: JSON.stringify(weaknessFactors),
         marketData: combinedMarketData,
+        fitWarnings: fitWarnings.length > 0 ? `🚨 경고:\n` + fitWarnings.map(w => `- ${w}`).join("\n") : "없음",
         format_instructions: reportParser.getFormatInstructions(),
       },
       reportParser,
@@ -922,20 +936,21 @@ concept_fit, price_fit, business_model_fit, distribution, market_scope, potentia
 
     const validateParser = new JsonOutputParser<ValidateShape>();
     const validatePrompt = PromptTemplate.fromTemplate(
-      `너는 일관성 검증관이다. 아래 stats와 needs_analysis가 모순되면 반드시 수정하라.
+      `너는 일관성 검증관이다.
+만약 아래 '감지된 문제점(Warnings)'이 존재한다면, death_cause와 needs_analysis에 그 내용이 명확히 반영되었는지 확인하고 수정하라.
+
+감지된 문제점:
+{fitWarnings}
 
 규칙:
-- needs_analysis가 부정적/회의적이면 consumer_needs는 55 이하가 자연스럽다. 문장을 그에 맞게 정리하라.
-- consumer_needs가 70 이상이면 지불의사/긴급성/대체재 대비 우위가 명확히 긍정적으로 드러나야 한다.
-- business_model_fit < 40 또는 distribution < 40이면 지나친 낙관을 제거하라.
-- concept_fit이 낮으면 니즈와 컨셉의 불일치를 간결히 언급하라.
-- death_cause는 점수 약점 TOP3를 근거로 짧게 요약하라.
+- 문제점이 있다면 death_cause에 반드시 포함.
+- needs_analysis가 부정적이면 consumer_needs 점수와 톤앤매너 일치시킬 것.
+- JSON만 출력.
 
 입력 stats: {stats}
-입력 needs_analysis: {needs}
-점수 약점 TOP3: {weaknessFactors}
+현재 death_cause: {death_cause}
+현재 needs: {needs}
 
-JSON만 출력.
 {format_instructions}`
     );
 
@@ -944,8 +959,9 @@ JSON만 출력.
       validatePrompt,
       {
         stats: JSON.stringify(finalStats),
+        death_cause: report.death_cause,
         needs: report.needs_analysis,
-        weaknessFactors: JSON.stringify(weaknessFactors),
+        fitWarnings: fitWarnings.length > 0 ? fitWarnings.join("\n") : "없음",
         format_instructions: validateParser.getFormatInstructions(),
       },
       validateParser,
@@ -970,6 +986,9 @@ JSON만 출력.
       `아래 정보를 보고 3명의 전문가가 독설 좌담회를 열어라.
 ${debateLangInstr}
 
+특히 아래 감지된 문제점이 있다면 이를 중심으로 맹렬히 비판하라:
+{fitWarnings}
+
 1) 마포구 VC (냉소적) 2) 테헤란로 창업가 (현실적) 3) 까칠한 얼리어답터 (불만 많음)
 
 아이템/설문: {item}
@@ -990,6 +1009,7 @@ ${debateLangInstr}
         stats: JSON.stringify(finalStats),
         marketData: combinedMarketData,
         marketShare: JSON.stringify((simulation as any).market_share ?? null),
+        fitWarnings: fitWarnings.length > 0 ? fitWarnings.join(", ") : "없음",
       },
       0.45
     );
@@ -1017,7 +1037,7 @@ ${debateLangInstr}
 
       pastCases, // ✅ 기존 유지
 
-      // ✅ AUTO 시장조사 결과(프론트에서 "근거 보기"에 쓰기 좋음)
+      // ✅ AUTO 시장조사 결과
       marketMode,
       marketAssumptionsUsed:
         (simulation as any)?.market_assumptions ?? (simulation as any)?.marketAssumptions ?? marketAssumptionsForMcts ?? null,
