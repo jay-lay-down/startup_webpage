@@ -233,11 +233,11 @@ const translations = {
     // market section
     marketSectionTitle: "시장점유율 시뮬레이션",
     marketModeLabel: "시장정보 입력 방식",
-    marketModeNone: "안 할래요(점유율 계산 X)",
-    marketModeAuto: "모름 → 자동 시장조사(Tavily + AI)",
-    marketModeManual: "알아요 → 직접 입력(3점 추정: min/mode/max)",
+    marketModeNone: "필요없음",
+    marketModeAuto: "AI 자동 시장조사",
+    marketModeManual: "직접 입력",
     marketManualHint:
-      "가능한 '연간' 기준으로 넣으세요. 예: 시장매출(연간), 평균가격(1회 결제), 구매빈도(연/인), 침투율 상한(0~1).",
+      "'연간' 기준으로 넣으세요. 예: 시장매출(연간), 평균가격(1회 결제), 구매빈도(연/인), 침투율 상한(0~1).",
     marketTabTitle: "시장점유율 분석",
     marketNeededMsg:
       "시장점유율 계산에 필요한 시장정보가 부족합니다. 설문에서 '자동 시장조사' 또는 '직접 입력'을 선택해주세요.",
@@ -246,11 +246,11 @@ const translations = {
     marketMetaTitle: "자동 추정 메모",
     marketShareTitle: "예상 시장점유율(Revenue 기준)",
     marketShareNote: "모델은 '생존'을 통과한 시뮬레이션 런에서만 점유율을 계산합니다.",
-    marketGraphTitle: "면적(파이) 시각화",
+    marketGraphTitle: "면적 그래프",
     marketTotal: "전체 시장(추정)",
     marketSAM: "도달 가능한 시장(SAM)",
-    marketSOM: "실제로 먹을 수 있는 파이(SOM)",
-    marketYou: "당신(추정 매출)",
+    marketSOM: "실제 도달 가능 점유율(SOM)",
+    marketYou: "추정 매출",
   },
   en: {
     title: "Question. Validate. Deliver.",
@@ -694,10 +694,10 @@ export default function Home() {
       business_model_fit: "BM/마진/단위경제 타당성.",
       distribution: "유통/채널 실행 난이도(운영·물류·파트너).",
       market_scope: "규제/경쟁/확장성(국가·세그·제품 확장 가능).",
-      potential_customers: "지갑 있는 잠재고객 + 도달가능성.",
+      potential_customers: "지갑을 열 수 있는 잠재고객 + 도달가능성.",
 
       funnel: "단계별 이탈 비율을 보여줍니다. 막대가 높을수록 위험 구간입니다.",
-      market: "시장점유율은 '시장가정 + 생존한 런' 기반으로 추정됩니다.",
+      market: "시장점유율은 '시장가정 + 생존 ' 기반으로 추정됩니다.",
     };
   }, [lang]);
 
@@ -1573,8 +1573,8 @@ export default function Home() {
                   {marketMode === "auto" && (
                     <div className="mt-4 text-sm text-zinc-400">
                       {lang === "ko"
-                        ? "자동 모드는 Tavily로 시장규모/가격/구매빈도 관련 정보를 검색하고, AI가 숫자(근거 포함)를 추출해 점유율을 계산합니다."
-                        : "Auto mode uses Tavily + AI to extract numbers (with sources) and estimate market share."}
+                        ? "자동으로 시장규모/가격/구매빈도 관련 정보를 검색하고, AI로 점유율을 계산합니다."
+                        : "Auto mode uses AI to extract numbers (with sources) and estimate market share."}
                     </div>
                   )}
                 </div>
