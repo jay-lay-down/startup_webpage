@@ -117,6 +117,14 @@ const IconPie = ({ className }: IconProps) => (
   </svg>
 );
 
+// ✅ 추가된 화살표 아이콘
+const IconArrowRight = ({ className }: IconProps) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path d="M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    <path d="m12 5 7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+  </svg>
+);
+
 /** ✅ 간단 툴팁 (외부 패키지 없이) */
 function InfoTip({ text }: { text: string }) {
   if (!text) return null;
@@ -146,7 +154,7 @@ const translations = {
     startBtn: "분석 시작",
     startSub: "",
     analyzing: "분석을 진행 중입니다...",
-    homeHint: "",
+    homeHint: "지금 바로 당신의 아이디어를 검증해보세요.",
 
     formTitle: "프로젝트 인테이크",
     formDesc: "정확한 분석을 위해 구체적으로 입력해 주세요.",
@@ -237,7 +245,7 @@ const translations = {
     marketModeAuto: "AI 자동 시장조사",
     marketModeManual: "직접 입력",
     marketManualHint:
-      "'연간' 기준으로 넣으세요. 예: 시장매출(연간), 평균가격(1회 결제), 구매빈도(연/인), 침투율 상한(0~1).",
+      "가능한 '연간' 기준으로 넣으세요. 예: 시장매출(연간), 평균가격(1회 결제), 구매빈도(연/인), 침투율 상한(0~1).",
     marketTabTitle: "시장점유율 분석",
     marketNeededMsg:
       "시장점유율 계산에 필요한 시장정보가 부족합니다. 설문에서 '자동 시장조사' 또는 '직접 입력'을 선택해주세요.",
@@ -246,10 +254,10 @@ const translations = {
     marketMetaTitle: "자동 추정 메모",
     marketShareTitle: "예상 시장점유율(Revenue 기준)",
     marketShareNote: "모델은 '생존'을 통과한 시뮬레이션 런에서만 점유율을 계산합니다.",
-    marketGraphTitle: "면적 그래프",
+    marketGraphTitle: "면적그래프",
     marketTotal: "전체 시장(추정)",
     marketSAM: "도달 가능한 시장(SAM)",
-    marketSOM: "실제 도달 가능 점유율(SOM)",
+    marketSOM: "실제 도달  (SOM)",
     marketYou: "추정 매출",
   },
   en: {
@@ -258,7 +266,7 @@ const translations = {
     startBtn: "Start Analysis",
     startSub: "",
     analyzing: "Running analysis...",
-    homeHint: "",
+    homeHint: "Validate your idea right now.",
 
     formTitle: "Project Intake",
     formDesc: "Provide clear inputs for a reliable assessment.",
@@ -694,10 +702,10 @@ export default function Home() {
       business_model_fit: "BM/마진/단위경제 타당성.",
       distribution: "유통/채널 실행 난이도(운영·물류·파트너).",
       market_scope: "규제/경쟁/확장성(국가·세그·제품 확장 가능).",
-      potential_customers: "지갑을 열 수 있는 잠재고객 + 도달가능성.",
+      potential_customers: "지갑 있는 잠재고객 + 도달가능성.",
 
       funnel: "단계별 이탈 비율을 보여줍니다. 막대가 높을수록 위험 구간입니다.",
-      market: "시장점유율은 '시장가정 + 생존 ' 기반으로 추정됩니다.",
+      market: "시장점유율은 '시장가정 + 생존한 런' 기반으로 추정됩니다.",
     };
   }, [lang]);
 
@@ -1141,7 +1149,7 @@ export default function Home() {
     <main className="min-h-screen bg-white text-zinc-900 px-0 py-6 font-sans">
       <div className="w-full mx-auto space-y-10 relative">
         {/* 언어 버튼 */}
-        <div className="absolute top-0 right-0 flex gap-4">
+        <div className="absolute top-0 right-0 flex gap-4 px-4">
           <button
             onClick={() => setLang("ko")}
             className={`text-sm font-semibold border-b-2 ${
@@ -1176,32 +1184,39 @@ export default function Home() {
             STEP 1) HOME
         ======================= */}
         {step === "home" && (
-          <div className="space-y-6">
+          <div className="space-y-8 pb-32">
             <div className="w-full flex justify-center">
-              <div className="w-full overflow-hidden bg-white">
+              <div className="w-full overflow-hidden bg-white rounded-2xl shadow-sm border border-zinc-100 max-w-5xl">
                 {t.homeHint ? (
-                  <div className="px-0 pb-3 text-sm md:text-base font-medium text-zinc-700 border-b border-zinc-200">
-                    <span className="text-zinc-600">{t.homeHint}</span>
+                  <div className="px-4 py-3 text-sm md:text-base font-medium text-zinc-600 border-b border-zinc-100 bg-zinc-50/50">
+                    {t.homeHint}
                   </div>
                 ) : null}
 
-                <div className="relative">
+                <div className="relative group">
                   <img
                     src="https://raw.githubusercontent.com/jay-lay-down/startup_webpage/main/public/images/main_v2.png"
                     alt="Main visual"
-                    className="w-full h-auto object-cover"
+                    className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
                   />
+                  {/* 이미지 위 은은한 딤처리 (가독성 확보) */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
                 </div>
               </div>
             </div>
 
-            <div className="w-full text-center space-y-2">
-              {t.startSub ? <p className="text-zinc-600">{t.startSub}</p> : null}
+            <div className="w-full text-center space-y-4">
+              {t.startSub ? <p className="text-zinc-500 text-lg font-medium">{t.startSub}</p> : null}
+              
               <button
                 onClick={() => setStep("form")}
-                className="text-base font-semibold text-blue-600 hover:text-blue-500 transition"
+                className="group relative inline-flex items-center gap-3 bg-zinc-900 hover:bg-zinc-800 text-white px-8 py-4 rounded-full text-lg font-bold shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
               >
-                {t.startBtn}
+                <span>{t.startBtn}</span>
+                <IconArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                
+                {/* 버튼 효과 */}
+                <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 opacity-20 blur-lg group-hover:opacity-40 transition duration-300" />
               </button>
             </div>
           </div>
@@ -1212,7 +1227,7 @@ export default function Home() {
         ======================= */}
         {step === "form" && (
           <div className="space-y-4">
-            <button onClick={() => setStep("home")} className="text-sm font-semibold text-zinc-500 hover:text-zinc-800">
+            <button onClick={() => setStep("home")} className="text-sm font-semibold text-zinc-500 hover:text-zinc-800 px-4">
               {t.backBtn}
             </button>
 
@@ -1628,7 +1643,7 @@ export default function Home() {
         {step === "result" && result && (
           <div className="space-y-8">
             {/* 상단 액션 버튼 */}
-            <div className="flex flex-col md:flex-row gap-3 justify-end">
+            <div className="flex flex-col md:flex-row gap-3 justify-end px-4">
               <button
                 onClick={() => setStep("form")}
                 className="text-sm font-semibold text-zinc-700 underline underline-offset-4 hover:text-zinc-900"
@@ -2008,11 +2023,23 @@ export default function Home() {
           </div>
         )}
       </div>
-      {showStartHint && step === "home" && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 text-sm text-zinc-600">
-          {t.startBtn}
-        </div>
-      )}
+
+      {/* =======================
+          FIXED FLOATING CTA (스크롤 시 등장) - 개선된 버전
+      ======================= */}
+      <div
+        className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-50 transition-all duration-500 transform ${
+          step === "home" && showStartHint ? "translate-y-0 opacity-100" : "translate-y-20 opacity-0 pointer-events-none"
+        }`}
+      >
+        <button
+          onClick={() => setStep("form")}
+          className="flex items-center gap-2 bg-white/90 backdrop-blur-md border border-zinc-200 text-zinc-900 px-6 py-3 rounded-full shadow-2xl hover:bg-zinc-50 transition-all active:scale-95"
+        >
+          <span className="text-sm font-bold">{t.startBtn}</span>
+          <IconArrowRight className="w-4 h-4 text-zinc-400" />
+        </button>
+      </div>
     </main>
   );
 }
