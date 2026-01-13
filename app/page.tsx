@@ -123,14 +123,14 @@ function InfoTip({ text }: { text: string }) {
   return (
     <span className="relative inline-flex items-center group align-middle">
       <span
-        className="ml-2 inline-flex items-center justify-center w-5 h-5 rounded-full border border-zinc-700 text-zinc-300 text-xs font-black bg-zinc-900/60 cursor-help select-none"
+        className="ml-2 inline-flex items-center justify-center w-5 h-5 rounded-full border border-zinc-300 text-zinc-500 text-xs font-semibold bg-zinc-100 cursor-help select-none"
         aria-label="info"
         title={text}
       >
         i
       </span>
       <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-2 w-[260px] opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-50">
-        <span className="block text-xs leading-relaxed text-zinc-100 bg-zinc-950 border border-zinc-800 rounded-xl p-3 shadow-2xl">
+        <span className="block text-xs leading-relaxed text-zinc-600 bg-white border border-zinc-200 rounded-md p-3 shadow-sm">
           {text}
         </span>
       </span>
@@ -463,7 +463,7 @@ function TextBlock({ text }: { text: string }) {
   if (hasOrdered) {
     const items = lines.map((l) => l.replace(/^\d+\.\s+/, "").trim()).filter(Boolean);
     return (
-      <ol className="list-decimal pl-5 space-y-2 text-zinc-200 text-sm leading-relaxed">
+      <ol className="list-decimal pl-5 space-y-2 text-zinc-700 text-sm leading-relaxed">
         {items.map((it, i) => (
           <li key={i}>{it}</li>
         ))}
@@ -474,7 +474,7 @@ function TextBlock({ text }: { text: string }) {
   if (hasBullets) {
     const items = lines.map((l) => l.replace(/^•\s+/, "").trim()).filter(Boolean);
     return (
-      <ul className="list-disc pl-5 space-y-2 text-zinc-200 text-sm leading-relaxed">
+      <ul className="list-disc pl-5 space-y-2 text-zinc-700 text-sm leading-relaxed">
         {items.map((it, i) => (
           <li key={i}>{it}</li>
         ))}
@@ -483,7 +483,7 @@ function TextBlock({ text }: { text: string }) {
   }
 
   return (
-    <div className="space-y-3 text-zinc-200 text-sm leading-relaxed whitespace-pre-wrap">
+    <div className="space-y-3 text-zinc-700 text-sm leading-relaxed whitespace-pre-wrap">
       {cleaned.split("\n\n").map((p, i) => (
         <p key={i}>{p.trim()}</p>
       ))}
@@ -499,11 +499,11 @@ function ActionList({ text }: { text: string }) {
     items = cleaned.split(",").map((l) => l.trim()).filter(Boolean);
   }
   return (
-    <ul className="space-y-3 text-zinc-200 text-sm leading-relaxed">
+    <ul className="space-y-3 text-zinc-700 text-sm leading-relaxed">
       {items.map((it, i) => (
         <li key={i} className="flex items-start gap-3">
-          <span className="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded border border-zinc-500/60 bg-zinc-900/60">
-            <span className="h-2 w-2 rounded-sm bg-zinc-300/80" />
+          <span className="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded border border-blue-200 bg-blue-50">
+            <span className="h-2 w-2 rounded-sm bg-blue-500" />
           </span>
           <span>{it.replace(/^[\-\u2022•]\s*/, "").trim()}</span>
         </li>
@@ -797,7 +797,7 @@ export default function Home() {
   // --- UI helpers ---
   const StatBar = ({ label, value, icon: Icon, colorClass, barColor, tooltip }: any) => (
     <div className="space-y-2">
-      <div className="flex justify-between text-sm font-bold items-center text-zinc-300">
+      <div className="flex justify-between text-sm font-semibold items-center text-zinc-700">
         <div className="flex items-center gap-2">
           <Icon className={`w-4 h-4 ${colorClass}`} />
           <span className="inline-flex items-center">
@@ -807,7 +807,7 @@ export default function Home() {
         </div>
         <span className={colorClass}>{value}/100</span>
       </div>
-      <div className="h-3 w-full bg-zinc-800 rounded-full overflow-hidden">
+      <div className="h-3 w-full bg-zinc-100 rounded-full overflow-hidden">
         <div
           className="h-full transition-all duration-1000"
           style={{ width: `${Math.max(0, Math.min(100, value))}%`, backgroundColor: barColor }}
@@ -840,22 +840,22 @@ export default function Home() {
           const width = survivalRate;
 
           return (
-            <div key={stage} className="space-y-2 text-sm text-zinc-300">
+            <div key={stage} className="space-y-2 text-sm text-zinc-700">
               <div className="flex items-center justify-between text-xs text-zinc-500">
                 <span className="font-bold">{stage}</span>
                 <span>N={fmtInt(entries)}</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="flex-1 h-6 bg-zinc-800 rounded-sm overflow-hidden relative">
+                <div className="flex-1 h-6 bg-zinc-100 rounded-sm overflow-hidden relative">
                   <div
-                    className={`h-full ${isBottleneck ? "bg-red-600" : "bg-zinc-600"} transition-all duration-1000`}
+                    className={`h-full ${isBottleneck ? "bg-blue-600" : "bg-blue-400"} transition-all duration-1000`}
                     style={{ width: `${Math.max(width, deaths > 0 ? 2 : 0)}%` }}
                   />
-                  <span className="absolute inset-0 flex items-center justify-end px-2 text-xs font-bold text-white/80">
+                  <span className="absolute inset-0 flex items-center justify-end px-2 text-xs font-semibold text-white/90">
                     {deaths > 0 ? `${fmtInt(deaths)} · ${dropRate}%` : ""}
                   </span>
                 </div>
-                <span className={`w-20 text-right font-bold ${isBottleneck ? "text-zinc-200" : "text-zinc-400"}`}>
+                <span className={`w-20 text-right font-semibold ${isBottleneck ? "text-zinc-800" : "text-zinc-500"}`}>
                   {survivalRate}% {survivalLabel}
                 </span>
               </div>
@@ -868,15 +868,15 @@ export default function Home() {
             {stages.map((stage) => {
               const deaths = deathCounts[stage] || 0;
               const intensity = Math.min(1, Math.max(0, deaths / maxDeaths));
-              const bg = `rgba(239, 68, 68, ${0.15 + 0.75 * intensity})`;
+              const bg = `rgba(37, 99, 235, ${0.15 + 0.75 * intensity})`;
               return (
                 <div
                   key={`heat-${stage}`}
-                  className="rounded-md border border-zinc-800 px-2 py-2 text-center text-xs font-bold text-white"
+                  className="rounded-md border border-zinc-200 px-2 py-2 text-center text-xs font-semibold text-white"
                   style={{ backgroundColor: bg }}
                   title={`${stage}: ${fmtInt(deaths)}`}
                 >
-                  <div className="text-[11px] text-white/80">{stage}</div>
+                  <div className="text-[11px] text-white/90">{stage}</div>
                   <div className="text-sm">{fmtInt(deaths)}</div>
                 </div>
               );
@@ -896,13 +896,13 @@ export default function Home() {
   const TagCloud = ({ words }: { words: string[] }) => {
     if (!words || words.length === 0) return <div className="text-zinc-500">No Data</div>;
     const sizes = ["text-sm", "text-base", "text-lg", "text-xl", "text-2xl font-bold"];
-    const colors = ["text-zinc-400", "text-zinc-300", "text-zinc-200", "text-zinc-100", "text-white"];
+    const colors = ["text-zinc-500", "text-zinc-600", "text-zinc-700", "text-blue-600", "text-zinc-900"];
     return (
-      <div className="flex flex-wrap gap-4 justify-center items-center h-full p-6 bg-zinc-900/50 rounded-xl border border-zinc-800 min-h-[180px]">
+      <div className="flex flex-wrap gap-4 justify-center items-center h-full p-6 bg-zinc-50 border border-zinc-200 min-h-[180px]">
         {words.slice(0, 10).map((w, i) => (
           <span
             key={`${w}-${i}`}
-            className={`${sizes[i % sizes.length]} ${colors[i % colors.length]} px-2 py-1 bg-zinc-800/30 rounded-lg`}
+            className={`${sizes[i % sizes.length]} ${colors[i % colors.length]} px-2 py-1 bg-zinc-100`}
           >
             {w}
           </span>
@@ -933,32 +933,32 @@ export default function Home() {
     const myPriceLabel = lang === "en" ? "Your price" : "내 가격";
 
     return (
-      <div className="mt-4 rounded-xl border border-zinc-800 bg-zinc-950/40 p-4">
-        <div className="text-sm font-bold text-zinc-200">{title}</div>
+      <div className="mt-4 border border-zinc-200 bg-white p-4">
+        <div className="text-sm font-semibold text-zinc-800">{title}</div>
         {hasRange ? (
-          <div className="mt-2 text-xs text-zinc-400">
+          <div className="mt-2 text-xs text-zinc-500">
             {rangeLabel}: {fmtInt(min)} ~ {fmtInt(max)}
           </div>
         ) : (
-          <div className="mt-2 text-xs text-zinc-400">{rangeLabel}: -</div>
+          <div className="mt-2 text-xs text-zinc-500">{rangeLabel}: -</div>
         )}
         <div className="mt-3">
-          <div className="relative h-2 rounded-full bg-zinc-800">
+          <div className="relative h-2 rounded-full bg-zinc-100">
             {hasRange && (
               <div
-                className="absolute inset-0 rounded-full bg-gradient-to-r from-emerald-500/40 via-yellow-400/40 to-red-500/40"
+                className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-500/20 via-blue-500/30 to-blue-600/40"
               />
             )}
             {hasUser && hasRange && (
               <div
-                className="absolute -top-1 h-4 w-0.5 bg-white"
+                className="absolute -top-1 h-4 w-0.5 bg-blue-600"
                 style={{ left: `calc(${position}% - 1px)` }}
               />
             )}
           </div>
           {hasUser ? (
-            <div className="mt-2 text-xs text-zinc-300">
-              {myPriceLabel}: <span className="font-bold text-white">{fmtInt(userPrice)}</span>
+            <div className="mt-2 text-xs text-zinc-600">
+              {myPriceLabel}: <span className="font-semibold text-zinc-900">{fmtInt(userPrice)}</span>
             </div>
           ) : (
             <div className="mt-2 text-xs text-zinc-500">{myPriceLabel}: -</div>
@@ -983,16 +983,16 @@ export default function Home() {
     const ready = Boolean((assumptions as any).ready);
 
     return (
-      <div className="space-y-3 text-xs text-zinc-300">
+      <div className="space-y-3 text-xs text-zinc-600">
         <div className="flex flex-wrap gap-2">
-          <span className="rounded-full border border-zinc-700 bg-zinc-950/60 px-2 py-1 text-[11px]">
+          <span className="rounded-full border border-zinc-300 bg-zinc-100 px-2 py-1 text-[11px]">
             {ready ? (lang === "en" ? "Ready" : "사용 가능") : lang === "en" ? "Missing" : "누락"}
           </span>
           {source && (
-            <span className="rounded-full border border-zinc-700 bg-zinc-950/60 px-2 py-1 text-[11px]">source: {source}</span>
+            <span className="rounded-full border border-zinc-300 bg-zinc-100 px-2 py-1 text-[11px]">source: {source}</span>
           )}
           {usedFallback && (
-            <span className="rounded-full border border-zinc-700 bg-zinc-950/60 px-2 py-1 text-[11px] text-zinc-200">
+            <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-1 text-[11px] text-blue-700">
               {lang === "en" ? "fallback used" : "보수 추정 포함"}
             </span>
           )}
@@ -1001,23 +1001,23 @@ export default function Home() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <div>
             <div className="text-zinc-500">market_customers</div>
-            <div className="font-semibold">{fmtTri((assumptions as any).market_customers)}</div>
+            <div className="font-semibold text-zinc-800">{fmtTri((assumptions as any).market_customers)}</div>
           </div>
           <div>
             <div className="text-zinc-500">market_revenue</div>
-            <div className="font-semibold">{fmtTri((assumptions as any).market_revenue)}</div>
+            <div className="font-semibold text-zinc-800">{fmtTri((assumptions as any).market_revenue)}</div>
           </div>
           <div>
             <div className="text-zinc-500">price</div>
-            <div className="font-semibold">{fmtTri((assumptions as any).price)}</div>
+            <div className="font-semibold text-zinc-800">{fmtTri((assumptions as any).price)}</div>
           </div>
           <div>
             <div className="text-zinc-500">purchase_freq_per_year</div>
-            <div className="font-semibold">{fmtTri((assumptions as any).purchase_freq_per_year)}</div>
+            <div className="font-semibold text-zinc-800">{fmtTri((assumptions as any).purchase_freq_per_year)}</div>
           </div>
           <div>
             <div className="text-zinc-500">max_penetration</div>
-            <div className="font-semibold">{fmtTri((assumptions as any).max_penetration)}</div>
+            <div className="font-semibold text-zinc-800">{fmtTri((assumptions as any).max_penetration)}</div>
           </div>
         </div>
 
@@ -1085,27 +1085,27 @@ export default function Home() {
 
     return (
       <div className="space-y-3">
-        <div className="h-10 bg-zinc-800 rounded-xl overflow-hidden relative border border-zinc-700">
+        <div className="h-10 bg-zinc-100 overflow-hidden relative border border-zinc-200">
           {/* total base */}
-          <div className="absolute inset-0 bg-zinc-700/30" />
+          <div className="absolute inset-0 bg-zinc-200/60" />
 
           {/* SAM overlay */}
-          <div className="absolute inset-y-0 left-0 bg-blue-600/30" style={{ width: `${samPct}%` }} />
+          <div className="absolute inset-y-0 left-0 bg-blue-200/80" style={{ width: `${samPct}%` }} />
 
           {/* SOM overlay */}
-          <div className="absolute inset-y-0 left-0 bg-orange-600/35" style={{ width: `${somPct}%` }} />
+          <div className="absolute inset-y-0 left-0 bg-blue-400/70" style={{ width: `${somPct}%` }} />
 
           {/* YOU overlay */}
-          <div className="absolute inset-y-0 left-0 bg-red-600/55" style={{ width: `${youPct}%` }} />
+          <div className="absolute inset-y-0 left-0 bg-blue-600/70" style={{ width: `${youPct}%` }} />
 
-          <div className="absolute inset-0 flex items-center justify-between px-3 text-xs font-bold text-white/90">
+          <div className="absolute inset-0 flex items-center justify-between px-3 text-xs font-semibold text-zinc-700">
             <span>{t.marketGraphTitle}</span>
             <span>{safeTotal > 0 ? `Total=${fmtMoney(safeTotal)}` : ""}</span>
           </div>
         </div>
 
         {!hasData && (
-          <div className="rounded-xl border border-zinc-800 bg-zinc-950/40 p-4 text-sm text-zinc-400">
+          <div className="border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-500">
             {lang === "en"
               ? "Market sizing data is incomplete. Showing placeholder bar."
               : "시장 데이터가 부족해 요약 그래프만 표시합니다."}
@@ -1113,21 +1113,21 @@ export default function Home() {
         )}
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-          <div className="p-3 rounded-xl bg-zinc-950/40 border border-zinc-800">
-            <div className="text-zinc-400 text-xs font-bold">{t.marketTotal}</div>
-            <div className="text-white font-extrabold mt-1">{fmtMoney(safeTotal)}</div>
+          <div className="p-3 border border-zinc-200">
+            <div className="text-zinc-500 text-xs font-semibold">{t.marketTotal}</div>
+            <div className="text-zinc-900 font-semibold mt-1">{fmtMoney(safeTotal)}</div>
           </div>
-          <div className="p-3 rounded-xl bg-zinc-950/40 border border-zinc-800">
-            <div className="text-zinc-400 text-xs font-bold">{t.marketSAM}</div>
-            <div className="text-blue-200 font-extrabold mt-1">{fmtMoney(safeSam)}</div>
+          <div className="p-3 border border-zinc-200">
+            <div className="text-zinc-500 text-xs font-semibold">{t.marketSAM}</div>
+            <div className="text-blue-700 font-semibold mt-1">{fmtMoney(safeSam)}</div>
           </div>
-          <div className="p-3 rounded-xl bg-zinc-950/40 border border-zinc-800">
-            <div className="text-zinc-400 text-xs font-bold">{t.marketSOM}</div>
-            <div className="text-orange-200 font-extrabold mt-1">{fmtMoney(safeSom)}</div>
+          <div className="p-3 border border-zinc-200">
+            <div className="text-zinc-500 text-xs font-semibold">{t.marketSOM}</div>
+            <div className="text-blue-700 font-semibold mt-1">{fmtMoney(safeSom)}</div>
           </div>
-          <div className="p-3 rounded-xl bg-zinc-950/40 border border-zinc-800">
-            <div className="text-zinc-400 text-xs font-bold">{t.marketYou}</div>
-            <div className="text-zinc-200 font-semibold mt-1">{fmtMoney(safeYou)}</div>
+          <div className="p-3 border border-zinc-200">
+            <div className="text-zinc-500 text-xs font-semibold">{t.marketYou}</div>
+            <div className="text-blue-700 font-semibold mt-1">{fmtMoney(safeYou)}</div>
           </div>
         </div>
       </div>
@@ -1187,7 +1187,7 @@ export default function Home() {
 
                 <div className="relative">
                   <img
-                    src="https://raw.githubusercontent.com/jay-lay-down/startup_webpage/main/public/images/main.png"
+                    src="https://raw.githubusercontent.com/jay-lay-down/startup_webpage/main/public/images/main_v2.png"
                     alt="Main visual"
                     className="w-full h-auto object-cover"
                   />
@@ -1199,7 +1199,7 @@ export default function Home() {
               {t.startSub ? <p className="text-zinc-600">{t.startSub}</p> : null}
               <button
                 onClick={() => setStep("form")}
-                className="text-sm font-semibold text-zinc-900 underline underline-offset-8 decoration-2 hover:text-zinc-600 transition"
+                className="text-base font-semibold text-blue-600 hover:text-blue-500 transition"
               >
                 {t.startBtn}
               </button>
@@ -1212,7 +1212,7 @@ export default function Home() {
         ======================= */}
         {step === "form" && (
           <div className="space-y-4">
-            <button onClick={() => setStep("home")} className="text-sm font-bold text-zinc-400 hover:text-white">
+            <button onClick={() => setStep("home")} className="text-sm font-semibold text-zinc-500 hover:text-zinc-800">
               {t.backBtn}
             </button>
 
@@ -1229,12 +1229,12 @@ export default function Home() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* ✅ 품목/카테고리 */}
                   <div className="space-y-2 md:col-span-2">
-                    <label className="text-sm font-semibold text-zinc-600 block">{t.itemCategory}</label>
+                    <label className="text-sm font-semibold text-zinc-700 block">{t.itemCategory}</label>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <select
                         value={categoryPreset}
                         onChange={(e) => setCategoryPreset(e.target.value)}
-                        className="w-full p-2 bg-transparent border-b border-zinc-300 text-zinc-900 focus:outline-none focus:border-zinc-900"
+                        className="w-full p-3 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                       >
                         <option value="가전">{lang === "ko" ? "가전" : "Home Appliance"}</option>
                         <option value="생활용품">{lang === "ko" ? "생활용품" : "Household"}</option>
@@ -1254,7 +1254,7 @@ export default function Home() {
                           placeholder={t.itemCategoryDirectPlace}
                           value={categoryCustom}
                           onChange={(e) => setCategoryCustom(e.target.value)}
-                          className="w-full p-2 bg-transparent border-b border-zinc-300 text-zinc-900 focus:outline-none focus:border-zinc-900"
+                          className="w-full p-3 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                         />
                       ) : (
                         <input
@@ -1262,7 +1262,7 @@ export default function Home() {
                           placeholder={t.itemCategoryPlace}
                           value={itemCategory}
                           readOnly
-                          className="w-full p-2 bg-transparent border-b border-zinc-200 text-zinc-500"
+                          className="w-full p-3 bg-zinc-100 border border-zinc-200 rounded-none text-zinc-500"
                         />
                       )}
                     </div>
@@ -1274,109 +1274,109 @@ export default function Home() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-semibold text-zinc-600 block">{t.sellerInfo}</label>
+                    <label className="text-sm font-semibold text-zinc-700 block">{t.sellerInfo}</label>
                     <input
                       type="text"
                       placeholder={t.sellerPlace}
                       value={sellerInfo}
                       onChange={(e) => setSellerInfo(e.target.value)}
-                      className="w-full p-2 bg-transparent border-b border-zinc-300 text-zinc-900 focus:outline-none focus:border-zinc-900"
+                      className="w-full p-3 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-semibold text-zinc-600 block">{t.buyerInfo}</label>
+                    <label className="text-sm font-semibold text-zinc-700 block">{t.buyerInfo}</label>
                     <input
                       type="text"
                       placeholder={t.buyerPlace}
                       value={buyerInfo}
                       onChange={(e) => setBuyerInfo(e.target.value)}
-                      className="w-full p-2 bg-transparent border-b border-zinc-300 text-zinc-900 focus:outline-none focus:border-zinc-900"
+                      className="w-full p-3 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                     />
                   </div>
 
                   <div className="space-y-2 md:col-span-2">
-                    <label className="text-sm font-semibold text-zinc-600 block">{t.itemName}</label>
+                    <label className="text-sm font-semibold text-zinc-700 block">{t.itemName}</label>
                     <input
                       type="text"
                       placeholder={t.itemNamePlace}
                       value={productName}
                       onChange={(e) => setProductName(e.target.value)}
-                      className="w-full p-2 bg-transparent border-b border-zinc-300 text-zinc-900 font-semibold focus:outline-none focus:border-zinc-900"
+                      className="w-full p-3 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 font-semibold focus:outline-none focus:border-blue-500"
                     />
                   </div>
 
                   <div className="space-y-2 md:col-span-2">
-                    <label className="text-sm font-semibold text-zinc-600 block">{t.itemDesc}</label>
+                    <label className="text-sm font-semibold text-zinc-700 block">{t.itemDesc}</label>
                     <textarea
                       placeholder={t.itemDescPlace}
                       value={productDesc}
                       onChange={(e) => setProductDesc(e.target.value)}
-                      className="w-full p-2 bg-transparent border-b border-zinc-300 text-zinc-900 min-h-[120px] focus:outline-none focus:border-zinc-900"
+                      className="w-full p-3 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 min-h-[120px] focus:outline-none focus:border-blue-500"
                     />
                   </div>
 
                   {/* optional fields (help auto market research + scoring) */}
                   <div className="space-y-2 md:col-span-2">
-                    <label className="text-sm font-semibold text-zinc-600 block">{t.concept}</label>
+                    <label className="text-sm font-semibold text-zinc-700 block">{t.concept}</label>
                     <input
                       type="text"
                       placeholder={t.conceptPlace}
                       value={concept}
                       onChange={(e) => setConcept(e.target.value)}
-                      className="w-full p-2 bg-transparent border-b border-zinc-300 text-zinc-900 focus:outline-none focus:border-zinc-900"
+                      className="w-full p-3 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-semibold text-zinc-600 block">{t.price}</label>
+                    <label className="text-sm font-semibold text-zinc-700 block">{t.price}</label>
                     <input
                       type="text"
                       placeholder={t.pricePlace}
                       value={priceText}
                       onChange={(e) => setPriceText(e.target.value)}
-                      className="w-full p-2 bg-transparent border-b border-zinc-300 text-zinc-900 focus:outline-none focus:border-zinc-900"
+                      className="w-full p-3 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-semibold text-zinc-600 block">{t.businessModel}</label>
+                    <label className="text-sm font-semibold text-zinc-700 block">{t.businessModel}</label>
                     <input
                       type="text"
                       placeholder={t.businessModelPlace}
                       value={businessModel}
                       onChange={(e) => setBusinessModel(e.target.value)}
-                      className="w-full p-2 bg-transparent border-b border-zinc-300 text-zinc-900 focus:outline-none focus:border-zinc-900"
+                      className="w-full p-3 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-semibold text-zinc-600 block">{t.salesChannel}</label>
+                    <label className="text-sm font-semibold text-zinc-700 block">{t.salesChannel}</label>
                     <input
                       type="text"
                       placeholder={t.salesChannelPlace}
                       value={salesChannel}
                       onChange={(e) => setSalesChannel(e.target.value)}
-                      className="w-full p-2 bg-transparent border-b border-zinc-300 text-zinc-900 focus:outline-none focus:border-zinc-900"
+                      className="w-full p-3 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-semibold text-zinc-600 block">{t.salesCountry}</label>
+                    <label className="text-sm font-semibold text-zinc-700 block">{t.salesCountry}</label>
                     <input
                       type="text"
                       placeholder={t.salesCountryPlace}
                       value={salesCountry}
                       onChange={(e) => setSalesCountry(e.target.value)}
-                      className="w-full p-2 bg-transparent border-b border-zinc-300 text-zinc-900 focus:outline-none focus:border-zinc-900"
+                      className="w-full p-3 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                     />
                   </div>
                 </div>
 
                 {/* Market share section */}
                 <div className="border-t border-zinc-200 pt-6">
-                  <div className="flex items-center gap-2 mb-2">
-                    <h3 className="text-lg font-extrabold text-white">{t.marketSectionTitle}</h3>
+                    <div className="flex items-center gap-2 mb-2">
+                    <h3 className="text-lg font-semibold text-zinc-800">{t.marketSectionTitle}</h3>
                     <InfoTip text={statTooltips.market} />
                   </div>
 
@@ -1428,7 +1428,7 @@ export default function Home() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* market revenue */}
                         <div className="p-4 border-b border-zinc-200">
-                          <div className="text-sm font-bold text-zinc-200 mb-2">
+                          <div className="text-sm font-semibold text-zinc-700 mb-2">
                             시장매출(연간) <span className="text-zinc-500 text-xs">(숫자)</span>
                           </div>
                           <div className="grid grid-cols-3 gap-2">
@@ -1436,26 +1436,26 @@ export default function Home() {
                               value={mRevMin}
                               onChange={(e) => setMRevMin(e.target.value)}
                               placeholder="min"
-                              className="p-2 bg-transparent border-b border-zinc-300 text-zinc-900"
+                              className="p-2 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                             />
                             <input
                               value={mRevMode}
                               onChange={(e) => setMRevMode(e.target.value)}
                               placeholder="mode"
-                              className="p-2 bg-transparent border-b border-zinc-300 text-zinc-900"
+                              className="p-2 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                             />
                             <input
                               value={mRevMax}
                               onChange={(e) => setMRevMax(e.target.value)}
                               placeholder="max"
-                              className="p-2 bg-transparent border-b border-zinc-300 text-zinc-900"
+                              className="p-2 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                             />
                           </div>
                         </div>
 
                         {/* market customers */}
                         <div className="p-4 border-b border-zinc-200">
-                          <div className="text-sm font-bold text-zinc-200 mb-2">
+                          <div className="text-sm font-semibold text-zinc-700 mb-2">
                             시장 고객수(연간 구매자) <span className="text-zinc-500 text-xs">(선택)</span>
                           </div>
                           <div className="grid grid-cols-3 gap-2">
@@ -1463,26 +1463,26 @@ export default function Home() {
                               value={mCustMin}
                               onChange={(e) => setMCustMin(e.target.value)}
                               placeholder="min"
-                              className="p-2 bg-transparent border-b border-zinc-300 text-zinc-900"
+                              className="p-2 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                             />
                             <input
                               value={mCustMode}
                               onChange={(e) => setMCustMode(e.target.value)}
                               placeholder="mode"
-                              className="p-2 bg-transparent border-b border-zinc-300 text-zinc-900"
+                              className="p-2 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                             />
                             <input
                               value={mCustMax}
                               onChange={(e) => setMCustMax(e.target.value)}
                               placeholder="max"
-                              className="p-2 bg-transparent border-b border-zinc-300 text-zinc-900"
+                              className="p-2 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                             />
                           </div>
                         </div>
 
                         {/* price */}
                         <div className="p-4 border-b border-zinc-200">
-                          <div className="text-sm font-bold text-zinc-200 mb-2">
+                          <div className="text-sm font-semibold text-zinc-700 mb-2">
                             평균 가격(1회 결제) <span className="text-zinc-500 text-xs">(숫자)</span>
                           </div>
                           <div className="grid grid-cols-3 gap-2">
@@ -1490,26 +1490,26 @@ export default function Home() {
                               value={mPriceMin}
                               onChange={(e) => setMPriceMin(e.target.value)}
                               placeholder="min"
-                              className="p-2 bg-transparent border-b border-zinc-300 text-zinc-900"
+                              className="p-2 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                             />
                             <input
                               value={mPriceMode}
                               onChange={(e) => setMPriceMode(e.target.value)}
                               placeholder="mode"
-                              className="p-2 bg-transparent border-b border-zinc-300 text-zinc-900"
+                              className="p-2 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                             />
                             <input
                               value={mPriceMax}
                               onChange={(e) => setMPriceMax(e.target.value)}
                               placeholder="max"
-                              className="p-2 bg-transparent border-b border-zinc-300 text-zinc-900"
+                              className="p-2 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                             />
                           </div>
                         </div>
 
                         {/* freq */}
                         <div className="p-4 border-b border-zinc-200">
-                          <div className="text-sm font-bold text-zinc-200 mb-2">
+                          <div className="text-sm font-semibold text-zinc-700 mb-2">
                             구매빈도(연/인) <span className="text-zinc-500 text-xs">(숫자)</span>
                           </div>
                           <div className="grid grid-cols-3 gap-2">
@@ -1517,26 +1517,26 @@ export default function Home() {
                               value={mFreqMin}
                               onChange={(e) => setMFreqMin(e.target.value)}
                               placeholder="min"
-                              className="p-2 bg-transparent border-b border-zinc-300 text-zinc-900"
+                              className="p-2 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                             />
                             <input
                               value={mFreqMode}
                               onChange={(e) => setMFreqMode(e.target.value)}
                               placeholder="mode"
-                              className="p-2 bg-transparent border-b border-zinc-300 text-zinc-900"
+                              className="p-2 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                             />
                             <input
                               value={mFreqMax}
                               onChange={(e) => setMFreqMax(e.target.value)}
                               placeholder="max"
-                              className="p-2 bg-transparent border-b border-zinc-300 text-zinc-900"
+                              className="p-2 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                             />
                           </div>
                         </div>
 
                         {/* max penetration */}
                         <div className="p-4 border-b border-zinc-200 md:col-span-2">
-                          <div className="text-sm font-bold text-zinc-200 mb-2">
+                          <div className="text-sm font-semibold text-zinc-700 mb-2">
                             침투율 상한(0~1) <span className="text-zinc-500 text-xs">(필수, 예: 0.001 ~ 0.01)</span>
                           </div>
                           <div className="grid grid-cols-3 gap-2">
@@ -1544,19 +1544,19 @@ export default function Home() {
                               value={mPenMin}
                               onChange={(e) => setMPenMin(e.target.value)}
                               placeholder="min (0~1)"
-                              className="p-2 bg-transparent border-b border-zinc-300 text-zinc-900"
+                              className="p-2 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                             />
                             <input
                               value={mPenMode}
                               onChange={(e) => setMPenMode(e.target.value)}
                               placeholder="mode (0~1)"
-                              className="p-2 bg-transparent border-b border-zinc-300 text-zinc-900"
+                              className="p-2 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                             />
                             <input
                               value={mPenMax}
                               onChange={(e) => setMPenMax(e.target.value)}
                               placeholder="max (0~1)"
-                              className="p-2 bg-transparent border-b border-zinc-300 text-zinc-900"
+                              className="p-2 bg-zinc-100 border border-zinc-300 rounded-none text-zinc-700 focus:outline-none focus:border-blue-500"
                             />
                           </div>
                         </div>
@@ -1581,13 +1581,13 @@ export default function Home() {
 
                 {/* 창업자 특성 */}
                 <div>
-                  <h3 className="text-lg font-bold text-zinc-200 mb-4">{t.traitsTitle}</h3>
+                  <h3 className="text-lg font-semibold text-zinc-800 mb-4">{t.traitsTitle}</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 p-6 border-t border-zinc-200">
                     {Object.keys(t.traits).map((key) => (
                       <div key={key} className="space-y-2">
                         <div className="flex justify-between text-sm">
-                          <label className="font-bold text-zinc-300">{t.traits[key as keyof typeof t.traits]}</label>
-                          <span className="text-zinc-200 font-bold">{founderTraits[key as keyof FounderTraits]}점</span>
+                          <label className="font-semibold text-zinc-600">{t.traits[key as keyof typeof t.traits]}</label>
+                          <span className="text-zinc-700 font-semibold">{founderTraits[key as keyof FounderTraits]}점</span>
                         </div>
                         <input
                           type="range"
@@ -1596,7 +1596,7 @@ export default function Home() {
                           step="1"
                           value={founderTraits[key as keyof FounderTraits]}
                           onChange={(e) => handleTraitChange(key as keyof FounderTraits, parseInt(e.target.value, 10))}
-                          className="w-full accent-zinc-400 h-2 bg-zinc-700 rounded-lg appearance-none cursor-pointer"
+                          className="w-full accent-blue-500 h-2 bg-zinc-200 rounded-lg appearance-none cursor-pointer"
                         />
                       </div>
                     ))}
@@ -1606,7 +1606,7 @@ export default function Home() {
                 <button
                   onClick={runAnalysis}
                   disabled={loading}
-                  className="w-full bg-zinc-100 hover:bg-zinc-200 text-zinc-900 font-semibold py-4 px-6 rounded-xl text-lg shadow-lg disabled:opacity-50 flex justify-center items-center gap-2 transition-all"
+                  className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-4 px-6 text-lg disabled:opacity-50 flex justify-center items-center gap-2 transition-all"
                 >
                   {loading ? (
                     <>
@@ -1631,7 +1631,7 @@ export default function Home() {
             <div className="flex flex-col md:flex-row gap-3 justify-end">
               <button
                 onClick={() => setStep("form")}
-                className="px-4 py-2 rounded-xl border border-zinc-700 text-zinc-200 hover:bg-zinc-800 font-bold"
+                className="text-sm font-semibold text-zinc-700 underline underline-offset-4 hover:text-zinc-900"
               >
                 {t.editBtn}
               </button>
@@ -1640,18 +1640,17 @@ export default function Home() {
                   setResult(null);
                   setStep("home");
                 }}
-                className="px-4 py-2 rounded-xl bg-zinc-800 text-white hover:bg-zinc-700 font-bold"
+                className="text-sm font-semibold text-zinc-700 underline underline-offset-4 hover:text-zinc-900"
               >
                 {t.retryBtn}
               </button>
             </div>
 
             {/* 요약 카드 */}
-            <div className="bg-zinc-900/80 border border-zinc-800 shadow-2xl relative overflow-hidden rounded-xl p-6">
-              <div className="absolute inset-0 bg-gradient-to-r from-zinc-800/40 to-transparent pointer-events-none" />
-              <div className="pb-4 relative z-10 border-b border-zinc-800 mb-4">
-                <h2 className="text-2xl font-semibold flex items-center gap-2 text-zinc-200">
-                  <IconAlertTriangle className="h-6 w-6 text-zinc-400" />
+            <div className="bg-white border border-zinc-200 shadow-sm relative overflow-hidden p-6">
+              <div className="pb-4 relative z-10 border-b border-zinc-200 mb-4">
+                <h2 className="text-2xl font-semibold flex items-center gap-2 text-zinc-800">
+                  <IconAlertTriangle className="h-6 w-6 text-zinc-500" />
                   {t.resultTitle}
                 </h2>
               </div>
@@ -1659,28 +1658,28 @@ export default function Home() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center relative z-10">
                 <div>
                   <p className="text-zinc-400 text-sm font-bold mb-1">{t.survival}</p>
-                  <p className="text-4xl font-semibold text-zinc-100">{survival.toFixed(1)}%</p>
+                  <p className="text-4xl font-semibold text-zinc-900">{survival.toFixed(1)}%</p>
                 </div>
                 <div>
                   <p className="text-zinc-400 text-sm font-bold mb-1">{t.deathCause}</p>
-                  <span className="inline-block px-3 py-1 rounded-full bg-zinc-800 text-zinc-200 text-sm font-semibold border border-zinc-700">
+                  <span className="inline-block px-3 py-1 border-b border-zinc-300 text-zinc-700 text-sm font-semibold">
                     {cleanText(result.report.death_cause)}
                   </span>
                 </div>
                 <div>
                   <p className="text-zinc-400 text-sm font-bold mb-1">{t.bottleneck}</p>
-                  <p className="text-xl font-bold text-white">{String(bottleneck || "-")}</p>
+                  <p className="text-xl font-semibold text-zinc-900">{String(bottleneck || "-")}</p>
                 </div>
                 <div>
                   <p className="text-zinc-400 text-sm font-bold mb-1">{t.needsMatch}</p>
-                  <p className="text-2xl font-bold text-orange-400">{result.stats.consumer_needs}점</p>
+                  <p className="text-2xl font-semibold text-zinc-900">{result.stats.consumer_needs}점</p>
                 </div>
               </div>
             </div>
 
             {/* 탭 */}
             <div className="w-full">
-              <div className="grid w-full grid-cols-5 bg-zinc-800/50 p-1 rounded-lg mb-6">
+              <div className="grid w-full grid-cols-5 bg-zinc-100 p-1 mb-6">
                 {(
                   [
                     ["summary", t.tabSummary],
@@ -1694,7 +1693,7 @@ export default function Home() {
                     key={k}
                     onClick={() => setActiveTab(k)}
                     className={`py-2 text-sm font-bold rounded-md transition-all ${
-                      activeTab === k ? "bg-zinc-200 text-zinc-900" : "text-zinc-400 hover:text-white"
+                      activeTab === k ? "bg-zinc-200 text-zinc-900" : "text-zinc-500 hover:text-zinc-800"
                     }`}
                   >
                     {label}
@@ -1706,9 +1705,9 @@ export default function Home() {
               {activeTab === "summary" && (
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="bg-zinc-900/50 border border-zinc-800 h-full rounded-xl p-6">
-                      <h3 className="flex items-center gap-2 text-lg font-bold text-white mb-6">
-                        <IconTrendingUp className="w-5 h-5 text-blue-400" />
+                    <div className="bg-white border border-zinc-200 h-full p-6">
+                      <h3 className="flex items-center gap-2 text-lg font-semibold text-zinc-800 mb-6">
+                        <IconTrendingUp className="w-5 h-5 text-blue-600" />
                         11 Stats
                       </h3>
 
@@ -1719,40 +1718,40 @@ export default function Home() {
                             label={t.statProduct}
                             value={result.stats.product}
                             icon={IconShoppingCart}
-                            colorClass="text-zinc-300"
-                            barColor="#A1A1AA"
+                            colorClass="text-zinc-700"
+                            barColor="#2563EB"
                             tooltip={statTooltips.product}
                           />
                           <StatBar
                             label={t.statFounder}
                             value={getFounderScore(result)}
                             icon={IconUsers}
-                            colorClass="text-zinc-300"
-                            barColor="#A1A1AA"
+                            colorClass="text-zinc-700"
+                            barColor="#2563EB"
                             tooltip={statTooltips.founder}
                           />
                           <StatBar
                             label={t.statStrategy}
                             value={result.stats.strategy}
                             icon={IconTarget}
-                            colorClass="text-zinc-300"
-                            barColor="#A1A1AA"
+                            colorClass="text-zinc-700"
+                            barColor="#2563EB"
                             tooltip={statTooltips.strategy}
                           />
                           <StatBar
                             label={t.statMarketing}
                             value={result.stats.marketing}
                             icon={IconTrendingUp}
-                            colorClass="text-zinc-300"
-                            barColor="#A1A1AA"
+                            colorClass="text-zinc-700"
+                            barColor="#2563EB"
                             tooltip={statTooltips.marketing}
                           />
                           <StatBar
                             label={t.statNeeds}
                             value={result.stats.consumer_needs}
                             icon={IconHeart}
-                            colorClass="text-zinc-300"
-                            barColor="#A1A1AA"
+                            colorClass="text-zinc-700"
+                            barColor="#2563EB"
                             tooltip={statTooltips.consumer_needs}
                           />
                         </div>
@@ -1765,57 +1764,57 @@ export default function Home() {
                             label={t.statConcept}
                             value={result.stats.concept_fit}
                             icon={IconTarget}
-                            colorClass="text-zinc-300"
-                            barColor="#A1A1AA"
+                            colorClass="text-zinc-700"
+                            barColor="#2563EB"
                             tooltip={statTooltips.concept_fit}
                           />
                           <StatBar
                             label={t.statPriceFit}
                             value={result.stats.price_fit}
                             icon={IconDollar}
-                            colorClass="text-zinc-300"
-                            barColor="#A1A1AA"
+                            colorClass="text-zinc-700"
+                            barColor="#2563EB"
                             tooltip={statTooltips.price_fit}
                           />
                           <StatBar
                             label={t.statBusinessModel}
                             value={result.stats.business_model_fit}
                             icon={IconCash}
-                            colorClass="text-zinc-300"
-                            barColor="#A1A1AA"
+                            colorClass="text-zinc-700"
+                            barColor="#2563EB"
                             tooltip={statTooltips.business_model_fit}
                           />
                           <StatBar
                             label={t.statDistribution}
                             value={result.stats.distribution}
                             icon={IconTruck}
-                            colorClass="text-zinc-300"
-                            barColor="#A1A1AA"
+                            colorClass="text-zinc-700"
+                            barColor="#2563EB"
                             tooltip={statTooltips.distribution}
                           />
                           <StatBar
                             label={t.statScope}
                             value={result.stats.market_scope}
                             icon={IconGlobe}
-                            colorClass="text-zinc-300"
-                            barColor="#A1A1AA"
+                            colorClass="text-zinc-700"
+                            barColor="#2563EB"
                             tooltip={statTooltips.market_scope}
                           />
                           <StatBar
                             label={t.statPotential}
                             value={result.stats.potential_customers}
                             icon={IconPie}
-                            colorClass="text-zinc-300"
-                            barColor="#A1A1AA"
+                            colorClass="text-zinc-700"
+                            barColor="#2563EB"
                             tooltip={statTooltips.potential_customers}
                           />
                         </div>
                       </div>
                     </div>
 
-                    <div className="bg-zinc-900/50 border border-zinc-800 h-full rounded-xl p-6">
-                      <h3 className="flex items-center gap-2 text-lg font-bold text-white mb-6">
-                        <IconAlertTriangle className="w-5 h-5 text-zinc-400" />
+                    <div className="bg-white border border-zinc-200 h-full p-6">
+                      <h3 className="flex items-center gap-2 text-lg font-semibold text-zinc-800 mb-6">
+                        <IconAlertTriangle className="w-5 h-5 text-blue-600" />
                         {t.funnelTitle}
                         <InfoTip text={statTooltips.funnel} />
                       </h3>
@@ -1823,8 +1822,8 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6">
-                    <h3 className="text-lg font-bold text-white mb-4">{t.cloudTitle}</h3>
+                  <div className="bg-white border border-zinc-200 p-6">
+                    <h3 className="text-lg font-semibold text-zinc-800 mb-4">{t.cloudTitle}</h3>
                     <TagCloud words={keywords} />
                     <PriceReferenceCard priceReference={result?.priceReference} />
                   </div>
@@ -1835,22 +1834,22 @@ export default function Home() {
               {activeTab === "autopsy" && (
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6">
-                      <h3 className="text-lg font-bold text-zinc-200 mb-4">{t.autopsyTitle}</h3>
+                    <div className="bg-white border border-zinc-200 p-6">
+                      <h3 className="text-lg font-semibold text-zinc-800 mb-4">{t.autopsyTitle}</h3>
                       <TextBlock text={result.report.autopsy_report} />
                     </div>
 
-                    <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6">
+                    <div className="bg-white border border-zinc-200 p-6">
                       <h3 className="text-lg font-bold text-orange-400 mb-4">{t.needsTitle}</h3>
                       <TextBlock text={result.report.needs_analysis} />
                     </div>
                   </div>
 
-                  <div className="bg-zinc-900/40 border border-zinc-800 shadow-lg rounded-xl overflow-hidden">
-                    <div className="p-6 border-b border-zinc-800">
-                      <h3 className="text-xl font-semibold text-zinc-200">{t.actionTitle}</h3>
+                  <div className="bg-white border border-zinc-200 shadow-sm overflow-hidden">
+                    <div className="p-6 border-b border-zinc-200">
+                      <h3 className="text-xl font-semibold text-zinc-800">{t.actionTitle}</h3>
                     </div>
-                    <div className="p-6 bg-zinc-900/30">
+                    <div className="p-6 bg-white">
                       <ActionList text={result.report.action_plan} />
                     </div>
                   </div>
@@ -1859,9 +1858,9 @@ export default function Home() {
 
               {/* Debate */}
               {activeTab === "voc" && (
-                <div className="bg-zinc-900/50 border border-zinc-800 shadow-xl rounded-xl p-6">
-                  <h3 className="text-xl font-bold text-white mb-4">{t.vocTitle}</h3>
-                  <div className="bg-zinc-950/50 p-6 rounded-xl border border-zinc-800/50 text-zinc-300 leading-relaxed whitespace-pre-wrap font-mono text-sm">
+                <div className="bg-white border border-zinc-200 shadow-sm p-6">
+                  <h3 className="text-xl font-semibold text-zinc-800 mb-4">{t.vocTitle}</h3>
+                  <div className="bg-zinc-50 p-6 border border-zinc-200 text-zinc-700 leading-relaxed whitespace-pre-wrap font-mono text-sm">
                     {cleanText(result.debate)}
                   </div>
                 </div>
@@ -1870,15 +1869,15 @@ export default function Home() {
               {/* Market */}
               {activeTab === "market" && (
                 <div className="space-y-6">
-                  <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6">
-                    <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
-                      <IconPie className="w-6 h-6 text-zinc-300" />
+                  <div className="bg-white border border-zinc-200 p-6">
+                    <h3 className="text-xl font-semibold text-zinc-800 mb-2 flex items-center gap-2">
+                      <IconPie className="w-6 h-6 text-blue-600" />
                       {t.marketTabTitle}
                     </h3>
-                    <div className="text-sm text-zinc-400">{t.marketShareNote}</div>
+                    <div className="text-sm text-zinc-500">{t.marketShareNote}</div>
 
                     {marketNeeded && (
-                      <div className="mt-4 p-4 rounded-xl border border-zinc-800 bg-zinc-900/40 text-zinc-200 text-sm font-semibold">
+                      <div className="mt-4 p-4 border border-zinc-200 bg-zinc-50 text-zinc-700 text-sm font-semibold">
                         {t.marketNeededMsg}
                       </div>
                     )}
@@ -1886,24 +1885,24 @@ export default function Home() {
                     {!marketNeeded && (
                       <>
                         <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div className="p-4 rounded-xl bg-zinc-950/40 border border-zinc-800">
-                            <div className="text-zinc-400 text-xs font-bold">{t.marketShareTitle}</div>
-                            <div className="text-3xl font-semibold text-zinc-200 mt-2">{shareP50.toFixed(2)}%</div>
+                          <div className="p-4 border border-zinc-200">
+                            <div className="text-zinc-500 text-xs font-semibold">{t.marketShareTitle}</div>
+                            <div className="text-3xl font-semibold text-zinc-900 mt-2">{shareP50.toFixed(2)}%</div>
                             <div className="text-xs text-zinc-500 mt-2">
                               p10 {shareP10.toFixed(2)}% · p90 {shareP90.toFixed(2)}%
                             </div>
                           </div>
 
-                          <div className="p-4 rounded-xl bg-zinc-950/40 border border-zinc-800">
-                            <div className="text-zinc-400 text-xs font-bold">Band</div>
-                            <div className="text-2xl font-extrabold text-white mt-2">{shareBand || "-"}</div>
+                          <div className="p-4 border border-zinc-200">
+                            <div className="text-zinc-500 text-xs font-semibold">Band</div>
+                            <div className="text-2xl font-semibold text-zinc-900 mt-2">{shareBand || "-"}</div>
                             <div className="text-xs text-zinc-500 mt-2">
                               {result.report.market_takeaway ? cleanText(result.report.market_takeaway) : ""}
                             </div>
                           </div>
 
-                          <div className="p-4 rounded-xl bg-zinc-950/40 border border-zinc-800">
-                            <div className="text-zinc-400 text-xs font-bold">{t.marketAssumptionsTitle}</div>
+                          <div className="p-4 border border-zinc-200">
+                            <div className="text-zinc-500 text-xs font-semibold">{t.marketAssumptionsTitle}</div>
                             <div className="mt-3">
                               <MarketAssumptionsCard assumptions={result.marketAssumptionsUsed ?? null} />
                             </div>
@@ -1911,7 +1910,7 @@ export default function Home() {
                         </div>
 
                         <div className="mt-6">
-                          <h4 className="text-lg font-extrabold text-white mb-3">{t.marketGraphTitle}</h4>
+                          <h4 className="text-lg font-semibold text-zinc-800 mb-3">{t.marketGraphTitle}</h4>
                           <MarketAreaBar total={revLayers.total} sam={revLayers.sam} som={revLayers.som} you={revLayers.you} />
                         </div>
                       </>
@@ -1920,8 +1919,8 @@ export default function Home() {
 
                   {/* Auto sources */}
                   {(result.marketSizingSources?.length ?? 0) > 0 && (
-                    <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6">
-                      <h3 className="text-lg font-bold text-white mb-4">{t.marketSourcesTitle}</h3>
+                    <div className="bg-white border border-zinc-200 p-6">
+                      <h3 className="text-lg font-semibold text-zinc-800 mb-4">{t.marketSourcesTitle}</h3>
                       <div className="space-y-3">
                         {result.marketSizingSources!.slice(0, 6).map((c, i) => (
                           <a
@@ -1929,7 +1928,7 @@ export default function Home() {
                             href={c.url}
                             target="_blank"
                             rel="noreferrer"
-                            className="block p-4 rounded-xl border border-zinc-800 bg-zinc-950/40 hover:bg-zinc-900 transition"
+                            className="block p-4 border border-zinc-200 bg-white hover:bg-zinc-50 transition"
                           >
                             <div className="text-zinc-100 font-bold">{c.title}</div>
                             <div className="text-zinc-400 text-sm mt-2 line-clamp-3">{String(c.content ?? "").slice(0, 240)}...</div>
@@ -1939,11 +1938,11 @@ export default function Home() {
                       </div>
 
                       {result.marketAutoMeta && (
-                        <div className="mt-6 p-4 rounded-xl border border-zinc-800 bg-zinc-950/30">
-                          <h4 className="text-sm font-extrabold text-white mb-2">{t.marketMetaTitle}</h4>
-                          <div className="text-xs text-zinc-400">
+                        <div className="mt-6 p-4 border border-zinc-200 bg-zinc-50">
+                          <h4 className="text-sm font-semibold text-zinc-800 mb-2">{t.marketMetaTitle}</h4>
+                          <div className="text-xs text-zinc-600">
                             <div className="mb-2">
-                              <span className="font-bold text-zinc-300">assumed_fields:</span>{" "}
+                              <span className="font-semibold text-zinc-700">assumed_fields:</span>{" "}
                               {(result.marketAutoMeta.assumed_fields ?? []).join(", ") || "-"}
                             </div>
                             <div className="whitespace-pre-wrap">{cleanText(result.marketAutoMeta.rationale ?? "")}</div>
@@ -1958,8 +1957,8 @@ export default function Home() {
               {/* Links / Cases */}
               {activeTab === "links" && (
                 <div className="space-y-6">
-                  <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6">
-                    <h3 className="text-lg font-bold text-white mb-4">{t.youtubeTitle}</h3>
+                  <div className="bg-white border border-zinc-200 p-6">
+                    <h3 className="text-lg font-semibold text-zinc-800 mb-4">{t.youtubeTitle}</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                       {(result.report.youtube_queries ?? []).slice(0, 3).map((q, i) => (
                         <a
@@ -1967,7 +1966,7 @@ export default function Home() {
                           href={youtubeSearchUrl(q)}
                           target="_blank"
                           rel="noreferrer"
-                          className="block p-4 rounded-xl border border-zinc-800 bg-zinc-950/40 hover:bg-zinc-900 transition"
+                          className="block p-4 border border-zinc-200 bg-white hover:bg-zinc-50 transition"
                         >
                           <div className="text-sm text-zinc-400 font-bold mb-1">Query {i + 1}</div>
                           <div className="text-zinc-100 font-extrabold">{q}</div>
@@ -1980,8 +1979,8 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6">
-                    <h3 className="text-lg font-bold text-white mb-4">{t.casesTitle}</h3>
+                  <div className="bg-white border border-zinc-200 p-6">
+                    <h3 className="text-lg font-semibold text-zinc-800 mb-4">{t.casesTitle}</h3>
                     <div className="space-y-3">
                       {(result.pastCases ?? []).slice(0, 6).map((c, i) => (
                         <a
@@ -1989,7 +1988,7 @@ export default function Home() {
                           href={c.url}
                           target="_blank"
                           rel="noreferrer"
-                          className="block p-4 rounded-xl border border-zinc-800 bg-zinc-950/40 hover:bg-zinc-900 transition"
+                          className="block p-4 border border-zinc-200 bg-white hover:bg-zinc-50 transition"
                         >
                           <div className="text-zinc-100 font-bold">{c.title}</div>
                           <div className="text-zinc-400 text-sm mt-2 line-clamp-3">
