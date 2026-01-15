@@ -1201,9 +1201,12 @@ export default function Home() {
                   <img
                     src="https://raw.githubusercontent.com/jay-lay-down/startup_webpage/main/public/images/main_v2.png"
                     alt="Main visual"
-                    className="w-full h-auto object-cover"
+                    className="w-full h-[420px] md:h-[520px] object-cover"
                   />
-                  {/* 오버레이 제거됨 */}
+                  <div className="absolute bottom-3 right-4 text-[11px] md:text-xs text-zinc-500 text-right leading-relaxed max-w-[260px]">
+                    <p>입력한 데이터는 분석 후 절대 저장되지 않습니다. 아이디어는 안전하게 보호됩니다.</p>
+                    <p>AI 모델을 사용했으므로 결과에는 오차가 있을 수 있습니다. (참고용)</p>
+                  </div>
                 </div>
               </div>
             </div>
