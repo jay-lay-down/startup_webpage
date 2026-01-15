@@ -1203,8 +1203,8 @@ export default function Home() {
                     alt="Main visual"
                     className="w-full h-[420px] md:h-[520px] object-cover"
                   />
-                  <div className="absolute bottom-3 right-4 text-[11px] md:text-xs text-zinc-500 text-right leading-relaxed max-w-[260px]">
-                    <p>입력한 데이터는 분석 후 절대 저장되지 않습니다. 아이디어는 안전하게 보호됩니다.</p>
+                  <div className="absolute bottom-3 right-4 max-w-[260px] rounded-md bg-black/70 px-3 py-2 text-[11px] md:text-xs text-zinc-300 text-right leading-relaxed">
+                    <p>입력한 데이터는 분석 후 절대 저장되지 않으며, 아이디어는 안전하게 보호됩니다.</p>
                     <p>AI 모델을 사용했으므로 결과에는 오차가 있을 수 있습니다. (참고용)</p>
                   </div>
                 </div>
