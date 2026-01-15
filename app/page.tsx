@@ -1175,7 +1175,7 @@ export default function Home() {
 
         {/* 공통 헤더 */}
         <div className="text-center space-y-3 pt-6 md:pt-10">
-          <h1 className="text-4xl md:text-5xl font-semibold tracking-tight text-zinc-900">
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-zinc-900">
             {t.title}
           </h1>
           <p className="text-zinc-600 text-base md:text-lg">{t.subtitle}</p>
